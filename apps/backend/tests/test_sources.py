@@ -7,11 +7,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 from db.fixtures.identity_fixtures import DEV_WORKSPACE_ID
-from httpx import Response
+from httpx import Request, Response
+from sqlalchemy import select
 
 from company_profile.db.models.company import CompanyProfile
 from company_profile.db.models.identity import Workspace
-from company_profile.db.models.source import calculate_content_hash, normalize_url
+from company_profile.db.models.source import DocumentBlock, calculate_content_hash, normalize_url
 from company_profile.integrations.search.fixture_search import FixtureSearchProvider
 from company_profile.integrations.storage.local_storage import LocalObjectStorage
 from company_profile.modules.companies.repository import CompanyRepository
@@ -77,6 +78,7 @@ async def test_web_fetcher_fetch_and_store(
                 status_code=200,
                 content=mock_html,
                 headers={"content-type": "text/html; charset=utf-8"},
+                request=Request("GET", _url),
             )
 
         monkeypatch.setattr("httpx.AsyncClient.get", mock_get)
@@ -96,3 +98,13 @@ async def test_web_fetcher_fetch_and_store(
         # Verify object stored in LocalObjectStorage
         stored_bytes = await storage.get_object(res.snapshot.object_key)
         assert stored_bytes == mock_html
+
+        # Verify DocumentBlocks extracted
+        block_stmt = select(DocumentBlock).where(
+            DocumentBlock.source_snapshot_id == res.snapshot.id
+        )
+        block_res = await db_session.execute(block_stmt)
+        blocks = block_res.scalars().all()
+        assert len(blocks) == 1
+        assert blocks[0].block_type == "heading"
+        assert "Source Test Corp" in blocks[0].text_content
