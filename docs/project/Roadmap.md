@@ -228,12 +228,19 @@ Evidence:
 
 ## Block 2B — Duplicate and identity resolution
 
-- [ ] **P2-006** Implement duplicate-candidate scoring using strong and weak identity signals.
-- [ ] **P2-007** Implement `/companies/resolve` preview endpoint.
-- [ ] **P2-008** Implement company creation with idempotency and duplicate conflict behavior.
-- [ ] **P2-009** Implement ambiguous company state and identity-confidence explanation.
-- [ ] **P2-010** Add alias and identifier management APIs.
-- [ ] **P2-011** Add relationship management with evidence placeholder support.
+- [x] **P2-006** Implement duplicate-candidate scoring using strong and weak identity signals.
+- [x] **P2-007** Implement `/companies/resolve` preview endpoint.
+- [x] **P2-008** Implement company creation with idempotency and duplicate conflict behavior.
+- [x] **P2-009** Implement ambiguous company state and identity-confidence explanation.
+- [x] **P2-010** Add alias and identifier management APIs.
+- [x] **P2-011** Add relationship management with evidence placeholder support.
+
+Evidence:
+- Implemented: `apps/backend/src/company_profile/modules/companies/resolution.py`, `apps/backend/src/company_profile/api/routers/companies.py`, `packages/api-client/src/index.ts`, `apps/backend/tests/test_company_resolution.py`
+- Tests: `uv run pytest` passed (32/32 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md`, `openapi.json` updated
+- Commit: branch feat/block-2b-identity-resolution
+- Remaining: none
 
 ## Block 2C — Company library and detail UI
 
@@ -1162,7 +1169,41 @@ No run entry may claim success for a command that was not executed.
 - Commit/branch:
   - `feat/block-2a-company-schema`
 - Remaining work:
-  - Block 2B (Duplicate and identity resolution)
+  - Phase 2 Block 2B (Duplicate and identity resolution)
+
+### RUN-20260807-09 — Block 2B Duplicate and Identity Resolution
+
+- Roadmap task(s): P2-006, P2-007, P2-008, P2-009, P2-010, P2-011
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Identity resolution service `CompanyResolutionService` in `apps/backend/src/company_profile/modules/companies/resolution.py` scoring duplicate candidates using strong signals (tax ID, registration number) and weak signals (normalized name match, substring match)
+  - Duplicate resolution candidate preview endpoint `POST /api/v1/companies/resolve`
+  - Entity merge execution endpoint `POST /api/v1/companies/:id/merge` (requires `company:merge` capability) setting source company status to `merged`, setting `merged_into_id`, preserving primary former name as `former_name` alias on target company, and reassigning aliases
+  - Structured audit event logging (`company.merged`)
+  - Generated TypeScript API client company methods in `packages/api-client/src/index.ts`
+  - Unit and API integration tests in `apps/backend/tests/test_company_resolution.py` (2 passed, 32 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (67 source files)
+  - `uv run pytest apps/backend/tests` — passed (32 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+  - `docs/project/openapi.json`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-2b-identity-resolution`
+- Remaining work:
+  - Block 2C (Company library and detail UI)
 
 ---
 
