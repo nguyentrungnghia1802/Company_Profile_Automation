@@ -170,3 +170,82 @@ class DomainPolicy(Base):
         UniqueConstraint("workspace_id", "domain", name="uq_domain_policies_domain"),
         Index("ix_domain_policies_workspace", "workspace_id", "domain"),
     )
+
+
+class SourceFetchAttempt(Base):
+    """Audit log entry for an HTTP fetch attempt against a source URL."""
+
+    __tablename__ = "source_fetch_attempts"
+
+    id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(), ForeignKey("sources.id", ondelete="CASCADE"), nullable=False
+    )
+    research_job_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(), ForeignKey("research_jobs.id", ondelete="SET NULL"), nullable=True
+    )
+    adapter: Mapped[str] = mapped_column(String(64), nullable=False, default="httpx")
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    requested_url: Mapped[str] = mapped_column(Text(), nullable=False)
+    final_url: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    http_status: Mapped[int | None] = mapped_column(Integer(), nullable=True)
+    content_type: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    byte_count: Mapped[int] = mapped_column(Integer(), nullable=False, default=0)
+    outcome_code: Mapped[str] = mapped_column(String(32), nullable=False, default="success")
+    error_message: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "outcome_code IN ('success', 'http_error', 'timeout', "
+            "'malware_detected', 'size_exceeded')",
+            name="ck_fetch_attempts_outcome",
+        ),
+        Index("ix_source_fetch_attempts_source", "workspace_id", "source_id"),
+    )
+
+
+class DocumentBlock(Base):
+    """Extracted text paragraph, heading, or table block from a source document snapshot."""
+
+    __tablename__ = "document_blocks"
+
+    id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    source_snapshot_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(), ForeignKey("source_snapshots.id", ondelete="CASCADE"), nullable=False
+    )
+    block_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    block_type: Mapped[str] = mapped_column(String(32), nullable=False, default="paragraph")
+    text_content: Mapped[str] = mapped_column(Text(), nullable=False)
+    block_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    snapshot: Mapped[SourceSnapshot] = relationship("SourceSnapshot", backref="blocks")
+
+    __table_args__ = (
+        CheckConstraint(
+            "block_type IN ('heading', 'paragraph', 'table', 'list')",
+            name="ck_document_blocks_type",
+        ),
+        UniqueConstraint("source_snapshot_id", "block_key", name="uq_document_blocks_key"),
+        Index("ix_document_blocks_snapshot", "workspace_id", "source_snapshot_id"),
+    )

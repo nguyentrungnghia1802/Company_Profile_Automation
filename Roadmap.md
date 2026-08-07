@@ -428,11 +428,18 @@ Evidence:
 
 ## Block 5A — Fetch and snapshot schema
 
-- [ ] **P5-001** Add `source_fetch_attempts`, `source_snapshots`, and `document_blocks` migrations.
-- [ ] **P5-002** Define fetch, storage, scanner, and parser protocols.
-- [ ] **P5-003** Implement local private object-storage adapter.
-- [ ] **P5-004** Implement snapshot metadata, content hash, and immutability guards.
-- [ ] **P5-005** Implement orphan object reconciliation baseline.
+- [x] **P5-001** Add `source_fetch_attempts`, `source_snapshots`, and `document_blocks` migrations.
+- [x] **P5-002** Define fetch, storage, scanner, and parser protocols.
+- [x] **P5-003** Implement local private object-storage adapter.
+- [x] **P5-004** Implement snapshot metadata, content hash, and immutability guards.
+- [x] **P5-005** Implement orphan object reconciliation baseline.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260807_0006_source_fetch_attempts_and_document_blocks.py`, `apps/backend/src/company_profile/db/models/source.py`, `apps/backend/src/company_profile/modules/sources/parser.py`, `apps/backend/src/company_profile/modules/sources/fetcher.py`, `apps/backend/tests/test_sources.py`
+- Tests: `uv run pytest` passed (54/54 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-5a-fetch-snapshot-schema
+- Remaining: none
 
 ## Block 5B — HTTP safety boundary
 
@@ -1552,6 +1559,38 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-4d-source-ui-verification`
 - Remaining work:
   - Phase 5 Block 5A (Fetch and snapshot schema)
+
+### RUN-20260807-19 — Block 5A Fetch Attempt, Snapshot Schema & HTML Document Parser
+
+- Roadmap task(s): P5-001, P5-002, P5-003, P5-004, P5-005
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Alembic migration `db/migrations/versions/20260807_0006_source_fetch_attempts_and_document_blocks.py` creating `source_fetch_attempts` and `document_blocks` tables
+  - SQLAlchemy ORM models `SourceFetchAttempt` and `DocumentBlock` in `apps/backend/src/company_profile/db/models/source.py`
+  - HTML text block parser `DocumentParser` in `apps/backend/src/company_profile/modules/sources/parser.py` extracting headings, paragraphs, and tables with SHA256 hashes
+  - Fetch attempt audit logging and automatic document block extraction in `WebFetcher` in `apps/backend/src/company_profile/modules/sources/fetcher.py`
+  - Unit tests in `apps/backend/tests/test_sources.py` (4 passed, 54 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (79 source files)
+  - `uv run pytest apps/backend/tests` — passed (54 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-5a-fetch-snapshot-schema`
+- Remaining work:
+  - Phase 5 Block 5B (HTTP safety boundary)
 
 ---
 

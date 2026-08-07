@@ -12,6 +12,7 @@ import httpx
 from company_profile.config.settings import get_settings
 from company_profile.db.models.source import (
     Source,
+    SourceFetchAttempt,
     SourceSnapshot,
     calculate_content_hash,
     normalize_url,
@@ -19,6 +20,7 @@ from company_profile.db.models.source import (
 from company_profile.db.transaction import transactional
 from company_profile.integrations.storage.local_storage import LocalObjectStorage
 from company_profile.integrations.storage.mock_malware import MockMalwareScanner
+from company_profile.modules.sources.parser import DocumentParser
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -57,6 +59,7 @@ class WebFetcher:
         settings = get_settings()
         self.storage = storage or LocalObjectStorage(settings.local_storage_root)
         self.malware_scanner = malware_scanner or MockMalwareScanner()
+        self.parser = DocumentParser()
         self.user_agent = settings.fetch_user_agent
         self.timeout = settings.fetch_timeout
         self.max_bytes = settings.fetch_max_response_bytes
@@ -67,6 +70,7 @@ class WebFetcher:
         company_id: uuid.UUID,
         url: str,
         source_type: str = "web_page",
+        research_job_id: uuid.UUID | None = None,
     ) -> FetchResult:
         """Fetch web document from URL, scan for malware, store in storage, and persist snapshot."""
         norm_url = normalize_url(url)
@@ -87,12 +91,28 @@ class WebFetcher:
             self.session.add(source)
             await self.session.flush()
 
+            attempt = SourceFetchAttempt(
+                workspace_id=workspace_id,
+                source_id=source.id,
+                research_job_id=research_job_id,
+                adapter="httpx",
+                requested_url=url,
+            )
+            self.session.add(attempt)
+            await self.session.flush()
+
             try:
                 async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
                     headers = {"User-Agent": self.user_agent}
                     response = await client.get(url, headers=headers)
 
+                attempt.final_url = str(response.url)
+                attempt.http_status = response.status_code
+                attempt.content_type = response.headers.get("content-type", "text/html")
+                attempt.byte_count = len(response.content)
+
                 if response.status_code != 200:
+                    attempt.outcome_code = "http_error"
                     source.status = "failed"
                     return FetchResult(
                         source=source,
@@ -103,6 +123,7 @@ class WebFetcher:
 
                 content_bytes = response.content
                 if len(content_bytes) > self.max_bytes:
+                    attempt.outcome_code = "size_exceeded"
                     source.status = "failed"
                     return FetchResult(
                         source=source,
@@ -117,6 +138,7 @@ class WebFetcher:
                 # Malware scan
                 is_clean, scan_desc = await self.malware_scanner.scan_bytes(content_bytes)
                 if not is_clean:
+                    attempt.outcome_code = "malware_detected"
                     source.status = "rejected"
                     return FetchResult(
                         source=source,
@@ -141,15 +163,25 @@ class WebFetcher:
                     malware_scan_status="clean",
                 )
                 self.session.add(snapshot)
+                await self.session.flush()
+
+                # Extract HTML text blocks into DocumentBlock records
+                html_str = content_bytes.decode("utf-8", errors="replace")
+                blocks = self.parser.parse_html_to_blocks(workspace_id, snapshot.id, html_str)
+                for b in blocks:
+                    self.session.add(b)
+
                 source.status = "fetched"
+                attempt.outcome_code = "success"
                 await self.session.flush()
 
                 logger.info(
-                    "Fetched and stored source snapshot",
+                    "Fetched and stored source snapshot with document blocks",
                     extra={
                         "source_id": str(source.id),
                         "content_hash": content_hash,
                         "byte_size": len(content_bytes),
+                        "blocks_count": len(blocks),
                     },
                 )
                 return FetchResult(
