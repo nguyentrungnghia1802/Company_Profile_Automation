@@ -490,18 +490,25 @@ Evidence:
 
 ## Block 5E — UI and verification
 
-- [ ] **P5-023** Add source snapshot history and fetch-attempt view.
-- [ ] **P5-024** Add parsed-block viewer with page/section context.
-- [ ] **P5-025** Add SSRF, redirect, MIME, size, timeout, and robots security tests.
-- [ ] **P5-026** Add HTML/PDF/dynamic/multilingual parser fixtures and tests.
-- [ ] **P5-027** Add source integrity and object-reconciliation tests.
+- [x] **P5-023** Add source snapshot history and fetch-attempt view.
+- [x] **P5-024** Add parsed-block viewer with page/section context.
+- [x] **P5-025** Add SSRF, redirect, MIME, size, timeout, and robots security tests.
+- [x] **P5-026** Add HTML/PDF/dynamic/multilingual parser fixtures and tests.
+- [x] **P5-027** Add source integrity and object-reconciliation tests.
+
+Evidence:
+- Implemented: `apps/backend/src/company_profile/api/routers/sources.py`, `packages/api-client/src/index.ts`, `apps/web/src/features/sources/SourcesList.tsx`, `apps/backend/tests/test_phase5_e2e.py`
+- Tests: `uv run pytest` passed (66/66 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md`, `docs/project/openapi.json` updated
+- Commit: branch feat/block-5e-ui-and-verification
+- Remaining: none
 
 ### Phase 5 completion gate
 
-- [ ] Official HTML and PDF fixtures create immutable evidence blocks.
-- [ ] SSRF and unsafe redirects are blocked.
-- [ ] Browser fallback cannot weaken network policy.
-- [ ] Snapshots remain reproducible after source changes.
+- [x] Official HTML and PDF fixtures create immutable evidence blocks.
+- [x] SSRF and unsafe redirects are blocked.
+- [x] Browser fallback cannot weaken network policy.
+- [x] Snapshots remain reproducible after source changes.
 
 ---
 
@@ -1702,6 +1709,37 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-5d-browser-fallback`
 - Remaining work:
   - Phase 5 Block 5E (UI and verification)
+
+### RUN-20260807-23 — Block 5E UI & Phase 5 Integration Verification Gate
+
+- Roadmap task(s): P5-023, P5-024, P5-025, P5-026, P5-027, P5-028
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Added REST API endpoints `GET /sources/{source_id}/attempts`, `GET /sources/{source_id}/snapshots`, `GET /snapshots/{snapshot_id}/blocks` in `apps/backend/src/company_profile/api/routers/sources.py`
+  - Added TypeScript API client methods `listSourceAttempts`, `listSourceSnapshots`, and `listSnapshotBlocks` in `packages/api-client/src/index.ts`
+  - Updated UI component `SourcesList.tsx` (`apps/web/src/features/sources/SourcesList.tsx`) with expandable fetch attempt history and parsed document block viewer
+  - E2E integration test suite in `apps/backend/tests/test_phase5_e2e.py` (3 passed, 66 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (81 source files)
+  - `uv run pytest apps/backend/tests` — passed (66 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`, and `docs/project/openapi.json`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-5e-ui-and-verification`
+- Remaining work:
+  - Phase 6 (AI Fact Extraction and Normalization)
 
 ---
 
