@@ -310,3 +310,75 @@ async def merge_company(
             version=merged.version,
         ),
     )
+
+
+@router.post("/companies/{company_id}/archive", response_model=CompanyDetailResponse)
+async def archive_company(
+    company_id: uuid.UUID,
+    actor: RequestActor = Depends(require_capability("company:archive")),
+    session: AsyncSession = Depends(get_db_session),
+) -> CompanyDetailResponse:
+    """Archive a company profile."""
+    workspace_id = verify_active_workspace(actor)
+    service = CompanyService(session)
+
+    try:
+        archived = await service.archive_company(
+            workspace_id, company_id, actor_id=str(actor.user_id)
+        )
+    except ValueError as err:
+        raise NotFoundError(code="COMPANY_NOT_FOUND", message=str(err)) from err
+
+    return CompanyDetailResponse(
+        success=True,
+        data=CompanyResponseData(
+            id=archived.id,
+            workspace_id=archived.workspace_id,
+            company_name=archived.company_name,
+            normalized_name=archived.normalized_name,
+            tax_id=archived.tax_id,
+            legal_name=archived.legal_name,
+            registration_number=archived.registration_number,
+            industry=archived.industry,
+            website_url=archived.website_url,
+            status=archived.status,
+            confidence_score=archived.confidence_score,
+            version=archived.version,
+        ),
+    )
+
+
+@router.post("/companies/{company_id}/restore", response_model=CompanyDetailResponse)
+async def restore_company(
+    company_id: uuid.UUID,
+    actor: RequestActor = Depends(require_capability("company:restore")),
+    session: AsyncSession = Depends(get_db_session),
+) -> CompanyDetailResponse:
+    """Restore an archived company profile."""
+    workspace_id = verify_active_workspace(actor)
+    service = CompanyService(session)
+
+    try:
+        restored = await service.restore_company(
+            workspace_id, company_id, actor_id=str(actor.user_id)
+        )
+    except ValueError as err:
+        raise ValidationError(code="RESTORE_FAILED", message=str(err)) from err
+
+    return CompanyDetailResponse(
+        success=True,
+        data=CompanyResponseData(
+            id=restored.id,
+            workspace_id=restored.workspace_id,
+            company_name=restored.company_name,
+            normalized_name=restored.normalized_name,
+            tax_id=restored.tax_id,
+            legal_name=restored.legal_name,
+            registration_number=restored.registration_number,
+            industry=restored.industry,
+            website_url=restored.website_url,
+            status=restored.status,
+            confidence_score=restored.confidence_score,
+            version=restored.version,
+        ),
+    )

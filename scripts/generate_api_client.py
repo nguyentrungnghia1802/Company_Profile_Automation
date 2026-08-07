@@ -291,6 +291,28 @@ export class ApiClient {
     );
     return res.data;
   }
+
+  async archiveCompany(token: string, workspaceId: string, companyId: string): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(
+      `/companies/${companyId}/archive`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+    return res.data;
+  }
+
+  async restoreCompany(token: string, workspaceId: string, companyId: string): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(
+      `/companies/${companyId}/restore`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+    return res.data;
+  }
 }
 
 let defaultClientInstance: ApiClient | null = null;
