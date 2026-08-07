@@ -63,7 +63,13 @@ When sources disagree:
 
 Do not silently choose whichever source is easiest.
 
-## 4. Before making changes
+## 4. Strict workspace boundary rule
+
+- **Workspace Isolation:** All file creations, temporary scripts, cache files, and command executions MUST be restricted strictly to the workspace root directory of `Company_Profile_Automation` (or its subdirectories).
+- **Prohibition of External Paths:** Never write, modify, or execute files in system user directories (such as `AppData`, `C:\Users\...\AppData`, `/tmp`, `~`, or system Temp folders outside the workspace).
+- **In-Workspace Temporary Storage:** If temporary scripts or transient files are required for operations (such as git filters, data transformations, or test fixtures), they must be created inside `<workspace_root>/.tmp/` or `<workspace_root>/scratch/` and cleaned up immediately after execution.
+
+## 5. Before making changes
 
 Perform all applicable steps:
 
