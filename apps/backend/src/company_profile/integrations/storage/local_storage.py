@@ -12,7 +12,12 @@ class LocalObjectStorage:
         self.root_path = Path(storage_root)
         self.root_path.mkdir(parents=True, exist_ok=True)
 
-    async def put_object(self, key: str, data: bytes, _content_type: str = "text/plain") -> str:
+    async def put_object(
+        self,
+        key: str,
+        data: bytes,
+        content_type: str = "text/plain",  # noqa: ARG002
+    ) -> str:
         """Store bytes at relative storage key."""
         target_path = self.root_path / key
         target_path.parent.mkdir(parents=True, exist_ok=True)
