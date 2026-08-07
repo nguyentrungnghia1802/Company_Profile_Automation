@@ -100,6 +100,15 @@ class MemberMutationResponse(BaseModel):
     data: WorkspaceMemberItem
 
 
+def verify_workspace_membership(actor: RequestActor, workspace_id: uuid.UUID) -> None:
+    """Verify that actor holds an active membership in the target workspace."""
+    if not any(ws.id == workspace_id for ws in actor.workspaces):
+        raise ForbiddenError(
+            code="WORKSPACE_ACCESS_DENIED",
+            message="Actor is not a member of the requested workspace.",
+        )
+
+
 @router.get("/workspaces", response_model=WorkspaceListResponse)
 async def list_workspaces(
     actor: RequestActor = Depends(get_current_actor),
@@ -134,13 +143,8 @@ async def get_workspace(
     session: AsyncSession = Depends(get_db_session),
 ) -> WorkspaceDetailResponse:
     """Get workspace details for authorized member."""
-    # Verify membership
-    authorized_summary = next((ws for ws in actor.workspaces if ws.id == workspace_id), None)
-    if not authorized_summary:
-        raise ForbiddenError(
-            code="WORKSPACE_ACCESS_DENIED",
-            message="Actor is not a member of the requested workspace.",
-        )
+    verify_workspace_membership(actor, workspace_id)
+    authorized_summary = next(ws for ws in actor.workspaces if ws.id == workspace_id)
 
     ws_repo = WorkspaceRepository(session)
     ws = await ws_repo.get_by_id(workspace_id)
@@ -164,10 +168,11 @@ async def get_workspace(
 @router.get("/workspaces/{workspace_id}/members", response_model=WorkspaceMemberListResponse)
 async def list_workspace_members(
     workspace_id: uuid.UUID,
-    _actor: RequestActor = Depends(require_capability("member:manage")),
+    actor: RequestActor = Depends(require_capability("member:manage")),
     session: AsyncSession = Depends(get_db_session),
 ) -> WorkspaceMemberListResponse:
     """List all members of a workspace (requires member:manage capability)."""
+    verify_workspace_membership(actor, workspace_id)
     member_repo = WorkspaceMemberRepository(session)
     user_repo = UserRepository(session)
 
@@ -196,10 +201,11 @@ async def list_workspace_members(
 async def add_workspace_member(
     workspace_id: uuid.UUID,
     payload: AddMemberRequest,
-    _actor: RequestActor = Depends(require_capability("member:manage")),
+    actor: RequestActor = Depends(require_capability("member:manage")),
     session: AsyncSession = Depends(get_db_session),
 ) -> MemberMutationResponse:
     """Invite or add a user to the workspace."""
+    verify_workspace_membership(actor, workspace_id)
     user_repo = UserRepository(session)
     member_repo = WorkspaceMemberRepository(session)
 
@@ -259,6 +265,7 @@ async def update_workspace_member(
     session: AsyncSession = Depends(get_db_session),
 ) -> MemberMutationResponse:
     """Update role or status of a workspace member."""
+    verify_workspace_membership(actor, workspace_id)
     service = WorkspaceService(session)
     user_repo = UserRepository(session)
 
@@ -308,6 +315,7 @@ async def deactivate_workspace_member(
     session: AsyncSession = Depends(get_db_session),
 ) -> MemberMutationResponse:
     """Deactivate a member's workspace membership."""
+    verify_workspace_membership(actor, workspace_id)
     service = WorkspaceService(session)
     user_repo = UserRepository(session)
 

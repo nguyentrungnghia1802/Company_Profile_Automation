@@ -204,7 +204,7 @@ The architecture documents are authoritative for implementation boundaries. Exac
 | --- | --- | --- |
 | Documentation baseline | Drafted | Initial canonical specification exists |
 | Repository foundation | Implemented | Phase 0 repository foundation, tooling, CI, database migration framework, and mock adapters complete |
-| Authentication and roles | Planned | Contracts defined in requirements |
+| Authentication and roles | Implemented | Phase 1 complete: AuthProvider protocol, mock/firebase adapters, /me, workspace member administration, capability authorization, and security isolation verified |
 | Company identity | Planned | Domain and persistence designs defined |
 | Research pipeline | Planned | Job and provider boundaries defined |
 | Source acquisition | Planned | Compliance rules and adapters defined |
