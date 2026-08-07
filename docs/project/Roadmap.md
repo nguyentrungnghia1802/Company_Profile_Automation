@@ -79,22 +79,29 @@ Evidence:
 
 ## Block 0B — Quality and CI
 
-- [ ] **P0-011** Configure Python format, lint, and type-check commands.
-- [ ] **P0-012** Configure TypeScript format, lint, and type-check commands.
-- [ ] **P0-013** Configure backend and frontend test runners.
-- [ ] **P0-014** Add secret scanning and dependency vulnerability checks.
-- [ ] **P0-015** Add Markdown/link/document checks.
-- [ ] **P0-016** Add requirement-ID and Roadmap-ID uniqueness checks.
-- [ ] **P0-017** Add OpenAPI generation and committed contract snapshot workflow.
-- [ ] **P0-018** Add generated TypeScript API-client workflow.
-- [ ] **P0-019** Add CI workflow for lint, typecheck, tests, migrations, docs, build, and E2E placeholders.
-- [ ] **P0-020** Add pull-request template with requirement/task/docs/test mapping.
+- [x] **P0-011** Configure Python format, lint, and type-check commands.
+- [x] **P0-012** Configure TypeScript format, lint, and type-check commands.
+- [x] **P0-013** Configure backend and frontend test runners.
+- [x] **P0-014** Add secret scanning and dependency vulnerability checks.
+- [x] **P0-015** Add Markdown/link/document checks.
+- [x] **P0-016** Add requirement-ID and Roadmap-ID uniqueness checks.
+- [x] **P0-017** Add OpenAPI generation and committed contract snapshot workflow.
+- [x] **P0-018** Add generated TypeScript API-client workflow.
+- [x] **P0-019** Add CI workflow for lint, typecheck, tests, migrations, docs, build, and E2E placeholders.
+- [x] **P0-020** Add pull-request template with requirement/task/docs/test mapping.
+
+Evidence:
+- Implemented: `scripts/check_secrets.py`, `scripts/check_docs.py`, `scripts/check_requirement_ids.py`, `scripts/generate_openapi.py`, `scripts/check_openapi_drift.py`, `scripts/generate_api_client.py`, `packages/api-client/`, `.github/workflows/ci.yml`, `.github/PULL_REQUEST_TEMPLATE.md`
+- Tests: `python scripts/check_secrets.py` passed, `python scripts/check_secrets.py --test-fixture` passed, `python scripts/check_docs.py` passed, `python scripts/check_requirement_ids.py` passed, `uv run python scripts/check_openapi_drift.py` passed, `uv run ruff check` passed, `uv run mypy` passed, `uv run pytest` passed
+- Docs: `Roadmap.md`, `00_PROJECT_CONTEXT.md` updated
+- Commit: branch feat/block-0b-quality-and-ci
+- Remaining: none
 
 ### Acceptance for Block 0B
 
-- [ ] CI runs on pull requests and pushed branches.
-- [ ] A deliberate docs/API drift causes CI failure.
-- [ ] A committed secret fixture is detected in a safe test or scanner validation.
+- [x] CI runs on pull requests and pushed branches.
+- [x] A deliberate docs/API drift causes CI failure.
+- [x] A committed secret fixture is detected in a safe test or scanner validation.
 
 ## Block 0C — Database and fixtures foundation
 
@@ -868,6 +875,43 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-0a-repository-skeleton`
 - Remaining work:
   - Block 0B (Quality and CI)
+
+### RUN-20260807-02 — Block 0B Quality and CI Automation
+
+- Roadmap task(s): P0-011, P0-012, P0-013, P0-014, P0-015, P0-016, P0-017, P0-018, P0-019, P0-020
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Python format, lint, and typecheck commands in Makefile
+  - TypeScript quality and build commands in `apps/web/package.json`
+  - Secret scanning script `scripts/check_secrets.py` with test fixture validation
+  - Documentation and link validation script `scripts/check_docs.py`
+  - Requirement, Roadmap, and Defect ID uniqueness script `scripts/check_requirement_ids.py`
+  - FastAPI OpenAPI schema generator `scripts/generate_openapi.py` and contract snapshot `docs/project/openapi.json`
+  - OpenAPI contract drift checker `scripts/check_openapi_drift.py`
+  - TypeScript API client generator `scripts/generate_api_client.py` and package `@vcps/api-client` (`packages/api-client/src/index.ts`)
+  - GitHub Actions CI workflow `.github/workflows/ci.yml`
+  - Pull request template `.github/PULL_REQUEST_TEMPLATE.md`
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests` — passed
+  - `uv run mypy apps/backend/src` — passed
+  - `uv run pytest apps/backend/tests` — passed (2 passed)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_secrets.py --test-fixture` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+  - `docs/project/00_PROJECT_CONTEXT.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-0b-quality-and-ci`
+- Remaining work:
+  - Block 0C (Database and fixtures foundation)
 
 ---
 
