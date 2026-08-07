@@ -100,9 +100,8 @@ class ResearchJob(Base):
     def request_cancel(self) -> None:
         """Request cancellation of running job."""
         self.cancel_requested_at = datetime.now(UTC)
-        if self.status in ("pending", "queued"):
-            self.status = "cancelled"
-            self.completed_at = datetime.now(UTC)
+        self.status = "cancelled"
+        self.completed_at = datetime.now(UTC)
         self.version = (self.version or 1) + 1
 
 
