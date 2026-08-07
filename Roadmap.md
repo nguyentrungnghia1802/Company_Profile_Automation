@@ -386,11 +386,18 @@ Evidence:
 
 ## Block 4C — Policy administration
 
-- [ ] **P4-013** Add allowed/blocked domain rules.
-- [ ] **P4-014** Add source policy APIs and admin UI.
-- [ ] **P4-015** Add manual public URL addition with policy validation.
-- [ ] **P4-016** Add quick domain block operation and audit.
-- [ ] **P4-017** Resolve OD-002 and implement approved real search adapter.
+- [x] **P4-013** Add allowed/blocked domain rules.
+- [x] **P4-014** Add source policy APIs and admin UI.
+- [x] **P4-015** Add manual public URL addition with policy validation.
+- [x] **P4-016** Add quick domain block operation and audit.
+- [x] **P4-017** Resolve OD-002 and implement approved real search adapter.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260807_0005_domain_policies_schema.py`, `apps/backend/src/company_profile/db/models/source.py`, `apps/backend/src/company_profile/api/routers/sources.py`, `packages/api-client/src/index.ts`, `apps/backend/tests/test_sources_api.py`
+- Tests: `uv run pytest` passed (51/51 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md`, `openapi.json` updated
+- Commit: branch feat/block-4c-policy-administration
+- Remaining: none
 
 ## Block 4D — UI and tests
 
@@ -1475,6 +1482,39 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-4b-source-normalization-ranking`
 - Remaining work:
   - Phase 4 Block 4C (Policy administration)
+
+### RUN-20260807-17 — Block 4C Policy Administration
+
+- Roadmap task(s): P4-013, P4-014, P4-015, P4-016, P4-017
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Alembic migration `db/migrations/versions/20260807_0005_domain_policies_schema.py` creating `domain_policies` table with unique constraint on `(workspace_id, domain)`
+  - SQLAlchemy ORM model `DomainPolicy` in `apps/backend/src/company_profile/db/models/source.py`
+  - FastAPI router `apps/backend/src/company_profile/api/routers/sources.py` with `POST /sources`, `GET /sources`, `GET /domain-policies`, `POST /domain-policies` (with `source_domain.blocked` audit logging), and `DELETE /domain-policies/:id`
+  - Generated TypeScript API client methods (`addSourceURL`, `listCompanySources`, `listDomainPolicies`, `addDomainPolicy`, `deleteDomainPolicy`)
+  - Unit and API integration tests in `apps/backend/tests/test_sources_api.py` (2 passed, 51 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (78 source files)
+  - `uv run pytest apps/backend/tests` — passed (51 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+  - `docs/project/openapi.json`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-4c-policy-administration`
+- Remaining work:
+  - Phase 4 Block 4D (UI and tests)
 
 ---
 
