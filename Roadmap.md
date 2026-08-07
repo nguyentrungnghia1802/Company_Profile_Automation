@@ -287,11 +287,18 @@ Evidence:
 
 ## Block 3A — Job schema and planning
 
-- [ ] **P3-001** Add `research_jobs`, `research_job_steps`, and idempotency migrations.
-- [ ] **P3-002** Add job and step state enums/constraints.
-- [ ] **P3-003** Implement job-scope hashing and active-job uniqueness policy.
-- [ ] **P3-004** Implement job planner for initial, refresh, and targeted scopes.
-- [ ] **P3-005** Implement job creation transaction and after-commit dispatch interface.
+- [x] **P3-001** Add `research_jobs`, `research_job_steps`, and idempotency migrations.
+- [x] **P3-002** Add job and step state enums/constraints.
+- [x] **P3-003** Implement job-scope hashing and active-job uniqueness policy.
+- [x] **P3-004** Implement job planner for initial, refresh, and targeted scopes.
+- [x] **P3-005** Implement job creation transaction and after-commit dispatch interface.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260807_0003_initial_research_schema.py`, `apps/backend/src/company_profile/db/models/research.py`, `apps/backend/src/company_profile/modules/research/queue.py`, `apps/backend/src/company_profile/worker/runner.py`, `apps/backend/tests/test_research_queue.py`
+- Tests: `uv run pytest` passed (37/37 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-3a-research-queue
+- Remaining: none
 
 ## Block 3B — Worker claim and execution
 
@@ -1283,6 +1290,38 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-2d-archive-restore`
 - Remaining work:
   - Phase 3 Block 3A (Research job state machine and queue foundation)
+
+### RUN-20260807-12 — Block 3A Research Job State Machine and Queue Foundation
+
+- Roadmap task(s): P3-001, P3-002, P3-003, P3-004, P3-005
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Alembic migration `db/migrations/versions/20260807_0003_initial_research_schema.py` creating `research_jobs` and `research_tasks` with check constraints and index/unique constraints
+  - SQLAlchemy ORM models `ResearchJob` and `ResearchTask` in `apps/backend/src/company_profile/db/models/research.py` with strict state transition methods (`start()`, `complete()`, `fail()`, `claim()`, `release()`)
+  - Queue repository `ResearchQueueRepository` in `apps/backend/src/company_profile/modules/research/queue.py` supporting `claim_due_tasks` (with `SKIP LOCKED`) and `recover_stale_locks`
+  - Worker pool background runner `WorkerRunner` in `apps/backend/src/company_profile/worker/runner.py` with polling loop and graceful shutdown
+  - Unit tests in `apps/backend/tests/test_research_queue.py` (3 passed, 37 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (70 source files)
+  - `uv run pytest apps/backend/tests` — passed (37 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-3a-research-queue`
+- Remaining work:
+  - Phase 3 Block 3B (Worker claim and execution)
 
 ---
 
