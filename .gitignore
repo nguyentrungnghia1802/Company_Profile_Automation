@@ -1,0 +1,61 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.so
+.venv/
+venv/
+.uv/
+uv.lock
+
+# === Node.js ===
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# === Environment and secrets ===
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# === IDE ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# === Docker ===
+*.log
+
+# === Database ===
+*.sqlite3
+*.db
+data/
+
+# === Coverage and testing ===
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.pytest_cache/
+.mypy_cache/
+
+# === Generated ===
+packages/api-client/src/
+*.generated.*
+
+# === OS ===
+.DS_Store
+desktop.ini
