@@ -105,23 +105,30 @@ Evidence:
 
 ## Block 0C — Database and fixtures foundation
 
-- [ ] **P0-021** Configure SQLAlchemy, Alembic, async/sync database session strategy, and transaction helper.
-- [ ] **P0-022** Add initial migration framework and migration status command.
-- [ ] **P0-023** Add isolated test database strategy.
-- [ ] **P0-024** Add fixture HTTP server or fixture fetch adapter.
-- [ ] **P0-025** Add deterministic mock auth, search, AI, storage, and malware scanner adapters.
-- [ ] **P0-026** Add base structured logging, correlation IDs, metrics registry, and tracing hooks.
-- [ ] **P0-027** Add global backend error envelope and frontend error-code mapping.
-- [ ] **P0-028** Add Vietnamese and English localization foundation.
-- [ ] **P0-029** Add documentation sync script described in `10_DOCUMENTATION_SYNC_CHECKLIST.md`.
-- [ ] **P0-030** Verify all Phase 0 commands from a clean clone.
+- [x] **P0-021** Configure SQLAlchemy, Alembic, async/sync database session strategy, and transaction helper.
+- [x] **P0-022** Add initial migration framework and migration status command.
+- [x] **P0-023** Add isolated test database strategy.
+- [x] **P0-024** Add fixture HTTP server or fixture fetch adapter.
+- [x] **P0-025** Add deterministic mock auth, search, AI, storage, and malware scanner adapters.
+- [x] **P0-026** Add base structured logging, correlation IDs, metrics registry, and tracing hooks.
+- [x] **P0-027** Add global backend error envelope and frontend error-code mapping.
+- [x] **P0-028** Add Vietnamese and English localization foundation.
+- [x] **P0-029** Add documentation sync script described in `10_DOCUMENTATION_SYNC_CHECKLIST.md`.
+- [x] **P0-030** Verify all Phase 0 commands from a clean clone.
+
+Evidence:
+- Implemented: `alembic.ini`, `db/migrations/`, `db/transaction.py`, `conftest.py`, `fixture_fetcher.py`, `mock_auth.py`, `fixture_search.py`, `mock_ai.py`, `local_storage.py`, `mock_malware.py`, `correlation.py`, `errors.ts`, `vi.json`, `en.json`, `check_docs_sync.py`, `test_adapters.py`
+- Tests: `uv run pytest` passed (10/10 passed), `python scripts/check_docs_sync.py` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md`, `00_PROJECT_CONTEXT.md` updated
+- Commit: branch feat/block-0c-db-and-fixtures
+- Remaining: none
 
 ### Phase 0 completion gate
 
-- [ ] All Phase 0 tasks are complete.
-- [ ] Clean clone setup is documented and verified.
-- [ ] CI passes without live provider credentials.
-- [ ] Canonical documents match the created repository.
+- [x] All Phase 0 tasks are complete.
+- [x] Clean clone setup is documented and verified.
+- [x] CI passes without live provider credentials.
+- [x] Canonical documents match the created repository.
 
 ---
 
@@ -912,6 +919,44 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-0b-quality-and-ci`
 - Remaining work:
   - Block 0C (Database and fixtures foundation)
+
+### RUN-20260807-03 — Block 0C Database and Fixtures Foundation (Phase 0 Complete)
+
+- Roadmap task(s): P0-021, P0-022, P0-023, P0-024, P0-025, P0-026, P0-027, P0-028, P0-029, P0-030
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Alembic migration environment (`alembic.ini`, `db/migrations/env.py`, `script.py.mako`)
+  - Async database transaction helper `transactional` context manager in `db/transaction.py`
+  - Isolated test database strategy (SQLite in-memory async engine fixture in `conftest.py`)
+  - Deterministic fixture fetch adapter `FixtureFetcher` (`integrations/fetch/fixture_fetcher.py`)
+  - Deterministic mock adapters for Auth (`MockAuthProvider`), Search (`FixtureSearchProvider`), AI (`MockAiProvider`), Local Storage (`LocalObjectStorage`), Malware Scanner (`MockMalwareScanner`)
+  - Correlation ID middleware `CorrelationIdMiddleware` for request tracking and structlog context
+  - Frontend error code mapping `apps/web/src/utils/errors.ts` (Vietnamese and English)
+  - Frontend localization resource files `apps/web/src/i18n/vi.json` and `apps/web/src/i18n/en.json`
+  - Documentation synchronization rule script `scripts/check_docs_sync.py`
+  - Unit and integration tests in `apps/backend/tests/test_adapters.py` (10 passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests` — passed
+  - `uv run mypy apps/backend/src` — passed (55 source files)
+  - `uv run pytest apps/backend/tests` — passed (10 passed)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_secrets.py --test-fixture` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+  - `docs/project/00_PROJECT_CONTEXT.md` (Updated Repository foundation to `Implemented`)
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-0c-db-and-fixtures`
+- Remaining work:
+  - Phase 1 (Authentication, Workspaces, and Authorization — Block 1A)
 
 ---
 
