@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from company_profile.api.errors import register_error_handlers
+from company_profile.api.middleware.correlation import CorrelationIdMiddleware
 from company_profile.api.routers import health
 from company_profile.config.settings import get_settings
 from company_profile.operations.logging import setup_logging
@@ -34,6 +35,9 @@ def create_app() -> FastAPI:
         openapi_url="/api/v1/openapi.json",
         lifespan=lifespan,
     )
+
+    # Correlation ID
+    app.add_middleware(CorrelationIdMiddleware)
 
     # CORS
     app.add_middleware(

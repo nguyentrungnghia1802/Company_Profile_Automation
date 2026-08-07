@@ -203,7 +203,7 @@ The architecture documents are authoritative for implementation boundaries. Exac
 | Area | Status | Meaning |
 | --- | --- | --- |
 | Documentation baseline | Drafted | Initial canonical specification exists |
-| Repository foundation | In progress | Block 0A repository skeleton implemented and verified; Block 0B/0C in progress |
+| Repository foundation | Implemented | Phase 0 repository foundation, tooling, CI, database migration framework, and mock adapters complete |
 | Authentication and roles | Planned | Contracts defined in requirements |
 | Company identity | Planned | Domain and persistence designs defined |
 | Research pipeline | Planned | Job and provider boundaries defined |
