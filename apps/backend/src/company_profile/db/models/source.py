@@ -138,3 +138,35 @@ class SourceSnapshot(Base):
         UniqueConstraint("source_id", "content_hash", name="uq_source_snapshots_hash"),
         Index("ix_source_snapshots_source_id", "source_id"),
     )
+
+
+class DomainPolicy(Base):
+    """Allowed or blocked domain rule within a workspace."""
+
+    __tablename__ = "domain_policies"
+
+    id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        GUID(), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    domain: Mapped[str] = mapped_column(String(255), nullable=False)
+    policy_type: Mapped[str] = mapped_column(String(32), nullable=False, default="blocked")
+    reason: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "policy_type IN ('blocked', 'allowed', 'trusted')",
+            name="ck_domain_policies_type",
+        ),
+        UniqueConstraint("workspace_id", "domain", name="uq_domain_policies_domain"),
+        Index("ix_domain_policies_workspace", "workspace_id", "domain"),
+    )

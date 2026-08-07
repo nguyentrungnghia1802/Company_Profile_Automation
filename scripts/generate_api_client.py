@@ -356,6 +356,57 @@ export class ApiClient {
     );
     return res.data;
   }
+
+  async addSourceURL(
+    token: string,
+    workspaceId: string,
+    payload: { company_id: string; url: string; source_type?: string }
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>("/sources", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  }
+
+  async listCompanySources(token: string, workspaceId: string, companyId: string): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>(
+      `/sources?company_id=${encodeURIComponent(companyId)}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+    return res.data;
+  }
+
+  async listDomainPolicies(token: string, workspaceId: string): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>("/domain-policies", {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+    return res.data;
+  }
+
+  async addDomainPolicy(
+    token: string,
+    workspaceId: string,
+    payload: { domain: string; policy_type?: string; reason?: string }
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>("/domain-policies", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  }
+
+  async deleteDomainPolicy(token: string, workspaceId: string, id: string): Promise<any> {
+    const res = await this.request<{ success: boolean }>(`/domain-policies/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+    return res;
+  }
 }
 
 let defaultClientInstance: ApiClient | null = null;
