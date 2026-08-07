@@ -55,6 +55,18 @@ class ConflictError(AppError):
         super().__init__(code=code, message=message, status_code=409, details=details)
 
 
+class ValidationError(AppError):
+    """Validation or bad request error."""
+
+    def __init__(
+        self,
+        code: str = "VALIDATION_ERROR",
+        message: str = "Validation failed",
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(code=code, message=message, status_code=400, details=details)
+
+
 def _error_response(error: AppError) -> JSONResponse:
     return JSONResponse(
         status_code=error.status_code,
