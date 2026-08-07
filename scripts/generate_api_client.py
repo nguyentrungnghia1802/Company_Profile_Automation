@@ -140,6 +140,78 @@ export class ApiClient {
     });
     return res.data;
   }
+
+  async listWorkspaces(token: string): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>("/workspaces", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  }
+
+  async getWorkspace(token: string, workspaceId: string): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(`/workspaces/${workspaceId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  }
+
+  async listWorkspaceMembers(token: string, workspaceId: string): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>(
+      `/workspaces/${workspaceId}/members`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return res.data;
+  }
+
+  async addWorkspaceMember(
+    token: string,
+    workspaceId: string,
+    payload: { email: string; display_name?: string; role?: string }
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(
+      `/workspaces/${workspaceId}/members`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.data;
+  }
+
+  async updateWorkspaceMember(
+    token: string,
+    workspaceId: string,
+    memberId: string,
+    payload: { role?: string; status?: string }
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(
+      `/workspaces/${workspaceId}/members/${memberId}`,
+      {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.data;
+  }
+
+  async deactivateWorkspaceMember(
+    token: string,
+    workspaceId: string,
+    memberId: string
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(
+      `/workspaces/${workspaceId}/members/${memberId}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return res.data;
+  }
 }
 
 let defaultClientInstance: ApiClient | null = null;
