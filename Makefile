@@ -53,7 +53,7 @@ test-security: ## Run security-focused tests
 	uv run pytest apps/backend/tests -m "security" -v
 
 test-contract: ## Run API contract tests
-	@echo "Contract tests will be available after OpenAPI generation (P0-017)"
+	uv run python scripts/check_openapi_drift.py
 
 test-frontend: ## Run frontend tests
 	@echo "Frontend tests will be available after test runner setup (P0-013)"
@@ -61,8 +61,14 @@ test-frontend: ## Run frontend tests
 test-e2e: ## Run end-to-end browser tests
 	@echo "E2E tests will be available after Playwright setup (P0-013)"
 
-test-docs: ## Run documentation drift checks
-	@echo "Doc checks will be available after sync script (P0-029)"
+test-docs: ## Run documentation and link drift checks
+	python scripts/check_docs.py
+
+check-secrets: ## Scan codebase for hardcoded secrets
+	python scripts/check_secrets.py
+
+check-requirement-ids: ## Verify Requirement and Roadmap ID uniqueness
+	python scripts/check_requirement_ids.py
 
 # --- Build ---
 
@@ -85,5 +91,9 @@ db-fixtures: ## Load development fixtures
 
 # --- API ---
 
-openapi: ## Generate OpenAPI schema and TypeScript client
-	@echo "OpenAPI generation will be available after setup (P0-017)"
+openapi: ## Generate OpenAPI schema snapshot and TypeScript client
+	uv run python scripts/generate_openapi.py
+	uv run python scripts/generate_api_client.py
+
+check-openapi: ## Verify committed OpenAPI schema snapshot has not drifted
+	uv run python scripts/check_openapi_drift.py
