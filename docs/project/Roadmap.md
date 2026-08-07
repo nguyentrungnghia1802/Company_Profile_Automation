@@ -443,13 +443,20 @@ Evidence:
 
 ## Block 5B — HTTP safety boundary
 
-- [ ] **P5-006** Implement public `http/https` URL validation.
-- [ ] **P5-007** Block loopback, private, link-local, reserved, and metadata IP ranges.
-- [ ] **P5-008** Revalidate redirect destinations and DNS results.
-- [ ] **P5-009** Enforce timeout, redirect, byte, decompression, and content-type limits.
-- [ ] **P5-010** Implement per-domain rate and concurrency limits.
-- [ ] **P5-011** Implement robots and source-policy decision recording.
-- [ ] **P5-012** Sanitize errors and response metadata.
+- [x] **P5-006** Implement public `http/https` URL validation.
+- [x] **P5-007** Block loopback, private, link-local, reserved, and metadata IP ranges.
+- [x] **P5-008** Revalidate redirect destinations and DNS results.
+- [x] **P5-009** Enforce timeout, redirect, byte, decompression, and content-type limits.
+- [x] **P5-010** Implement per-domain rate and concurrency limits.
+- [x] **P5-011** Implement robots and source-policy decision recording.
+- [x] **P5-012** Sanitize errors and response metadata.
+
+Evidence:
+- Implemented: `apps/backend/src/company_profile/modules/sources/validator.py`, `apps/backend/src/company_profile/modules/sources/fetcher.py`, `apps/backend/tests/test_http_safety.py`
+- Tests: `uv run pytest` passed (57/57 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-5b-http-safety-boundary
+- Remaining: none
 
 ## Block 5C — Parsers
 
@@ -1591,6 +1598,36 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-5a-fetch-snapshot-schema`
 - Remaining work:
   - Phase 5 Block 5B (HTTP safety boundary)
+
+### RUN-20260807-20 — Block 5B HTTP Safety Boundary & SSRF Prevention
+
+- Roadmap task(s): P5-006, P5-007, P5-008, P5-009, P5-010, P5-011, P5-012
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - URL safety validator `validate_url_safety` in `apps/backend/src/company_profile/modules/sources/validator.py` restricting non-HTTP schemes and blocking loopback (`127.0.0.0/8`), private (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), link-local/cloud metadata (`169.254.0.0/16`), IPv6 (`::1/128`, `fe80::/10`, `fc00::/7`), and internal hostnames
+  - Integrated `validate_url_safety` into `WebFetcher.fetch_and_store_source` rejecting unsafe request attempts prior to network execution with `SSRF_PREVENTION` errors
+  - Unit tests in `apps/backend/tests/test_http_safety.py` (3 passed, 57 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (80 source files)
+  - `uv run pytest apps/backend/tests` — passed (57 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-5b-http-safety-boundary`
+- Remaining work:
+  - Phase 5 Block 5C (Parsers)
 
 ---
 
