@@ -20,6 +20,7 @@ from company_profile.db.models.source import (
 from company_profile.db.transaction import transactional
 from company_profile.integrations.storage.local_storage import LocalObjectStorage
 from company_profile.integrations.storage.mock_malware import MockMalwareScanner
+from company_profile.modules.sources.browser_adapter import PlaywrightBrowserAdapter
 from company_profile.modules.sources.parser import DocumentParser
 from company_profile.modules.sources.validator import validate_url_safety
 
@@ -38,12 +39,14 @@ class FetchResult:
         snapshot: SourceSnapshot | None,
         status_code: int,
         content_type: str = "text/html",
+        adapter_used: str = "httpx",
         error_message: str | None = None,
     ) -> None:
         self.source = source
         self.snapshot = snapshot
         self.status_code = status_code
         self.content_type = content_type
+        self.adapter_used = adapter_used
         self.error_message = error_message
 
 
@@ -58,9 +61,11 @@ class WebFetcher:
     ) -> None:
         self.session = session
         settings = get_settings()
+        self.settings = settings
         self.storage = storage or LocalObjectStorage(settings.local_storage_root)
         self.malware_scanner = malware_scanner or MockMalwareScanner()
         self.parser = DocumentParser()
+        self.browser_adapter = PlaywrightBrowserAdapter(timeout_seconds=settings.fetch_timeout)
         self.user_agent = settings.fetch_user_agent
         self.timeout = settings.fetch_timeout
         self.max_bytes = settings.fetch_max_response_bytes
@@ -130,17 +135,35 @@ class WebFetcher:
                 attempt.content_type = response.headers.get("content-type", "text/html")
                 attempt.byte_count = len(response.content)
 
-                if response.status_code != 200:
+                content_bytes = response.content
+                adapter_used = "httpx"
+
+                if (
+                    response.status_code != 200 or len(content_bytes) < 100
+                ) and self.settings.fetch_browser_fallback_enabled:
+                    rendered = await self.browser_adapter.fetch_rendered_page(url)
+                    if rendered.http_status == 200 and rendered.content_html:
+                        content_bytes = rendered.content_html.encode("utf-8")
+                        attempt.adapter = "playwright"
+                        adapter_used = "playwright"
+                        attempt.http_status = rendered.http_status
+                        attempt.final_url = rendered.final_url
+                        attempt.byte_count = len(content_bytes)
+                        logger.info(
+                            "Used browser fallback for %s (reason: %s)", url, rendered.reason
+                        )
+
+                if response.status_code != 200 and adapter_used == "httpx":
                     attempt.outcome_code = "http_error"
                     source.status = "failed"
                     return FetchResult(
                         source=source,
                         snapshot=None,
                         status_code=response.status_code,
+                        adapter_used=adapter_used,
                         error_message=f"HTTP {response.status_code}",
                     )
 
-                content_bytes = response.content
                 if len(content_bytes) > self.max_bytes:
                     attempt.outcome_code = "size_exceeded"
                     source.status = "failed"
@@ -148,6 +171,7 @@ class WebFetcher:
                         source=source,
                         snapshot=None,
                         status_code=200,
+                        adapter_used=adapter_used,
                         error_message="Response exceeded max byte limit.",
                     )
 
@@ -163,6 +187,7 @@ class WebFetcher:
                         source=source,
                         snapshot=None,
                         status_code=200,
+                        adapter_used=adapter_used,
                         error_message=f"Malware scan failed: {scan_desc}",
                     )
 
@@ -208,6 +233,7 @@ class WebFetcher:
                     snapshot=snapshot,
                     status_code=200,
                     content_type=content_type,
+                    adapter_used=adapter_used,
                 )
 
             except Exception as exc:
