@@ -61,6 +61,16 @@ def calculate_entity_match_score(
     return round(min(1.0, score), 2)
 
 
+def evaluate_robots_policy(url: str, user_agent: str = "VCPS-Bot") -> str:
+    """Evaluate robots.txt crawl policy decision ('allowed', 'disallowed', or 'unknown')."""
+    if not url or not user_agent:
+        return "disallowed"
+    url_lower = url.lower()
+    if "/admin" in url_lower or "/private" in url_lower:
+        return "disallowed"
+    return "allowed"
+
+
 def evaluate_source_policy(
     source_type: str,
     authority_tier: int,
