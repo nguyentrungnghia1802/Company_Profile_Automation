@@ -104,7 +104,7 @@ def main() -> int:
     # Check if test fixture validation mode requested
     if "--test-fixture" in sys.argv:
         print("Running secret scanner test fixture validation...")
-        test_line = "api_key = 'sk_' + 'live_1234567890abcdef1234567890'"
+        test_line = "api_key = 'sk_" + "live_1234567890abcdef1234567890'"
         matched = False
         for name, pattern in SECRET_PATTERNS:
             if pattern.search(test_line):
