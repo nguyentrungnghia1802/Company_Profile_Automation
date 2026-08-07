@@ -21,6 +21,7 @@ from company_profile.db.transaction import transactional
 from company_profile.integrations.storage.local_storage import LocalObjectStorage
 from company_profile.integrations.storage.mock_malware import MockMalwareScanner
 from company_profile.modules.sources.parser import DocumentParser
+from company_profile.modules.sources.validator import validate_url_safety
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -73,9 +74,16 @@ class WebFetcher:
         research_job_id: uuid.UUID | None = None,
     ) -> FetchResult:
         """Fetch web document from URL, scan for malware, store in storage, and persist snapshot."""
-        norm_url = normalize_url(url)
-        parsed = urlparse(norm_url)
-        domain = parsed.netloc
+        is_safe, safety_reason = validate_url_safety(url)
+
+        norm_url = (
+            normalize_url(url) if is_safe or "UNSUPPORTED_SCHEME" not in safety_reason else url
+        )
+        try:
+            parsed = urlparse(norm_url)
+            domain = parsed.netloc or "unknown"
+        except Exception:
+            domain = "unknown"
 
         async with transactional(self.session):
             # Create or retrieve Source record
@@ -100,6 +108,17 @@ class WebFetcher:
             )
             self.session.add(attempt)
             await self.session.flush()
+
+            if not is_safe:
+                source.status = "rejected"
+                attempt.outcome_code = "malware_detected"
+                attempt.error_message = safety_reason
+                return FetchResult(
+                    source=source,
+                    snapshot=None,
+                    status_code=400,
+                    error_message=f"SSRF_PREVENTION: {safety_reason}",
+                )
 
             try:
                 async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
