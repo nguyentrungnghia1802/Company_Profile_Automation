@@ -103,7 +103,7 @@ disallow_untyped_defs = false
 # --- Pytest ---
 [tool.pytest.ini_options]
 testpaths = ["apps/backend/tests"]
-pythonpath = ["apps/backend/src"]
+pythonpath = ["apps/backend/src", "."]
 asyncio_mode = "auto"
 markers = [
     "unit: unit tests (no external dependencies)",

@@ -138,11 +138,18 @@ Evidence:
 
 ## Block 1A — Identity and membership schema
 
-- [ ] **P1-001** Add `users`, `workspaces`, and `workspace_members` migrations.
-- [ ] **P1-002** Add role/status enums and database constraints.
-- [ ] **P1-003** Add SQLAlchemy models and scoped repositories.
-- [ ] **P1-004** Add deterministic development users and workspace fixtures.
-- [ ] **P1-005** Add membership activation/deactivation audit events.
+- [x] **P1-001** Add `users`, `workspaces`, and `workspace_members` migrations.
+- [x] **P1-002** Add role/status enums and database constraints.
+- [x] **P1-003** Add SQLAlchemy models and scoped repositories.
+- [x] **P1-004** Add deterministic development users and workspace fixtures.
+- [x] **P1-005** Add membership activation/deactivation audit events.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260807_0001_initial_identity_schema.py`, `apps/backend/src/company_profile/db/models/identity.py`, `apps/backend/src/company_profile/modules/workspaces/repository.py`, `db/fixtures/identity_fixtures.py`, `apps/backend/src/company_profile/modules/workspaces/service.py`, `apps/backend/tests/test_identity.py`
+- Tests: `uv run pytest` passed (15/15 passed), `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md`, `00_PROJECT_CONTEXT.md` updated
+- Commit: branch feat/block-1a-identity-schema
+- Remaining: none
 
 ## Block 1B — Auth adapters and current actor
 
@@ -957,6 +964,39 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-0c-db-and-fixtures`
 - Remaining work:
   - Phase 1 (Authentication, Workspaces, and Authorization — Block 1A)
+
+### RUN-20260807-04 — Block 1A Identity and Membership Schema
+
+- Roadmap task(s): P1-001, P1-002, P1-003, P1-004, P1-005
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Initial identity schema migration `db/migrations/versions/20260807_0001_initial_identity_schema.py` (`users`, `workspaces`, `workspace_members`)
+  - Database check constraints and unique constraints for user status, workspace status, member roles (`researcher`, `reviewer`, `officer`, `workspace_admin`), and member status
+  - SQLAlchemy models `User`, `Workspace`, `WorkspaceMember` in `apps/backend/src/company_profile/db/models/identity.py`
+  - Scoped repositories `UserRepository`, `WorkspaceRepository`, `WorkspaceMemberRepository` in `apps/backend/src/company_profile/modules/workspaces/repository.py`
+  - Deterministic development user and workspace fixtures in `db/fixtures/identity_fixtures.py` (`DEV_USER_ID`, `DEV_ADMIN_ID`, `DEV_REVIEWER_ID`, `DEV_WORKSPACE_ID`)
+  - Workspace application service `WorkspaceService` with membership role and status updates and structured audit logging (`membership.status_changed`, `membership.role_changed`)
+  - Unit tests in `apps/backend/tests/test_identity.py` (5 passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (58 source files)
+  - `uv run pytest apps/backend/tests` — passed (15 passed)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-1a-identity-schema`
+- Remaining work:
+  - Block 1B (Auth adapters and current actor)
 
 ---
 
