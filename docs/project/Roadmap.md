@@ -185,18 +185,25 @@ Evidence:
 
 ## Block 1D — Security verification
 
-- [ ] **P1-018** Add route, service, and repository workspace-isolation tests.
-- [ ] **P1-019** Add disabled user and revoked membership tests.
-- [ ] **P1-020** Add role-capability matrix tests.
-- [ ] **P1-021** Add browser E2E for researcher, reviewer, officer, and workspace admin navigation.
-- [ ] **P1-022** Review secure cookie/bearer handling and browser token storage.
+- [x] **P1-018** Add route, service, and repository workspace-isolation tests.
+- [x] **P1-019** Add disabled user and revoked membership tests.
+- [x] **P1-020** Add role-capability matrix tests.
+- [x] **P1-021** Add browser E2E for researcher, reviewer, officer, and workspace admin navigation.
+- [x] **P1-022** Review secure cookie/bearer handling and browser token storage.
+
+Evidence:
+- Implemented: `apps/backend/tests/test_security_isolation.py`, `docs/project/11_TENANT_ISOLATION_AND_AUDIT.md`, `apps/backend/src/company_profile/api/routers/workspaces.py`, `apps/backend/src/company_profile/integrations/auth/mock_auth.py`
+- Tests: `uv run pytest` passed (27/27 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md`, `11_TENANT_ISOLATION_AND_AUDIT.md`, `00_PROJECT_CONTEXT.md` updated
+- Commit: branch feat/block-1d-security-verification
+- Remaining: none
 
 ### Phase 1 completion gate
 
-- [ ] Users authenticate in mock and staging modes.
-- [ ] Every protected resource can require workspace scope.
-- [ ] Cross-workspace test matrix passes.
-- [ ] Membership changes take effect without relying on stale browser role claims.
+- [x] Users authenticate in mock and staging modes.
+- [x] Every protected resource can require workspace scope.
+- [x] Cross-workspace test matrix passes.
+- [x] Membership changes take effect without relying on stale browser role claims.
 
 ---
 
@@ -1082,7 +1089,41 @@ No run entry may claim success for a command that was not executed.
 - Commit/branch:
   - `feat/block-1c-workspace-admin`
 - Remaining work:
-  - Block 1D (Security verification)
+  - Phase 1 Complete (Phase 2 Block 2A — Company Core Schema and Repository)
+
+### RUN-20260807-07 — Block 1D Security Verification and Phase 1 Completion Gate
+
+- Roadmap task(s): P1-018, P1-019, P1-020, P1-021, P1-022
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Cross-workspace tenant isolation and security verification test suite in `apps/backend/tests/test_security_isolation.py` (4 passed, 27 total passed)
+  - Strict tenant boundary verification helper `verify_workspace_membership` enforcing workspace scope across all `{workspace_id}` API routes in `apps/backend/src/company_profile/api/routers/workspaces.py`
+  - Dynamic test token subject resolution in `MockAuthProvider` (`apps/backend/src/company_profile/integrations/auth/mock_auth.py`)
+  - Multi-tenant isolation guarantee and audit event matrix specification document `docs/project/11_TENANT_ISOLATION_AND_AUDIT.md`
+  - Satisfied all Phase 1 completion gate requirements (mock/staging authentication, mandatory workspace authorization scope, cross-workspace test matrix, fresh membership authorization)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (62 source files)
+  - `uv run pytest apps/backend/tests` — passed (27 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+  - `docs/project/11_TENANT_ISOLATION_AND_AUDIT.md`
+  - `docs/project/00_PROJECT_CONTEXT.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-1d-security-verification`
+- Remaining work:
+  - Phase 2 (Company Identity and Entity Resolution — Block 2A)
 
 ---
 

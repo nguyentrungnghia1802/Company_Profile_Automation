@@ -81,4 +81,13 @@ class MockAuthProvider(AuthProvider):
                 preferred_locale="vi",
             )
 
+        if token.startswith("sub_"):
+            return AuthSubjectContext(
+                auth_provider="mock",
+                auth_subject=token,
+                email=f"{token}@example.com",
+                display_name=token,
+                preferred_locale="vi",
+            )
+
         return self.default_subject
