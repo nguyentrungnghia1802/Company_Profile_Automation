@@ -212,6 +212,85 @@ export class ApiClient {
     );
     return res.data;
   }
+
+  async listCompanies(token: string, workspaceId: string, status?: string): Promise<any[]> {
+    const query = status ? `?status=${encodeURIComponent(status)}` : "";
+    const res = await this.request<{ success: boolean; data: any[] }>(`/companies${query}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+    return res.data;
+  }
+
+  async createCompany(
+    token: string,
+    workspaceId: string,
+    payload: {
+      company_name: string;
+      tax_id?: string;
+      legal_name?: string;
+      registration_number?: string;
+      industry?: string;
+      website_url?: string;
+    }
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>("/companies", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  }
+
+  async resolveCompany(
+    token: string,
+    workspaceId: string,
+    payload: { company_name: string; tax_id?: string; registration_number?: string }
+  ): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>("/companies/resolve", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  }
+
+  async getCompany(token: string, workspaceId: string, companyId: string): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(`/companies/${companyId}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+    return res.data;
+  }
+
+  async updateCompany(
+    token: string,
+    workspaceId: string,
+    companyId: string,
+    payload: Record<string, unknown>
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(`/companies/${companyId}`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  }
+
+  async mergeCompany(
+    token: string,
+    workspaceId: string,
+    targetCompanyId: string,
+    sourceCompanyId: string
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(
+      `/companies/${targetCompanyId}/merge`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+        body: JSON.stringify({ source_company_id: sourceCompanyId }),
+      }
+    );
+    return res.data;
+  }
 }
 
 let defaultClientInstance: ApiClient | null = null;
