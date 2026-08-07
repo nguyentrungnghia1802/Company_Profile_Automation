@@ -208,6 +208,7 @@ The architecture documents are authoritative for implementation boundaries. Exac
 | Company identity | Implemented | Phase 2 complete: schema migrations, CompanyProfile/Alias/Relationship ORM models, resolution scoring, /companies endpoints, merge, archive/restore, and UI complete |
 | Research pipeline | Implemented | Phase 3 complete: durable jobs/tasks schema, TaskDispatcher, WorkerRunner, API endpoints, tenant isolation, and progress tracking UI complete |
 | Source acquisition | Implemented | Phase 4 complete: sources, source_snapshots, domain_policies schema, WebFetcher service, authority tiers, entity match scoring, sources & domain policies APIs, and UI complete |
+| Content acquisition & parsing | Implemented | Phase 5 complete: source_fetch_attempts, document_blocks schema, URL safety SSRF validator, DocumentParser HTML & PDF page segmentation, PlaywrightBrowserAdapter, attempt history & parsed block UI complete |
 | AI extraction | Planned | Structured evidence-first extraction specified |
 | Review and publication | Planned | Human review workflow specified |
 | Profile search and history | Planned | API and UI contracts specified |

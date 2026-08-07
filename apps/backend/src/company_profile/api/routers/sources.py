@@ -19,7 +19,14 @@ from company_profile.api.dependencies import (
     require_capability,
 )
 from company_profile.api.errors import ForbiddenError, NotFoundError, ValidationError
-from company_profile.db.models.source import DomainPolicy, Source, normalize_url
+from company_profile.db.models.source import (
+    DocumentBlock,
+    DomainPolicy,
+    Source,
+    SourceFetchAttempt,
+    SourceSnapshot,
+    normalize_url,
+)
 from company_profile.db.session import get_db_session
 from company_profile.db.transaction import transactional
 from company_profile.modules.sources.policy import classify_source_type
@@ -316,3 +323,190 @@ async def delete_domain_policy(
 
         await session.delete(policy)
         return {"success": True}
+
+
+class FetchAttemptResponseData(BaseModel):
+    """Fetch attempt model."""
+
+    id: uuid.UUID
+    workspace_id: uuid.UUID
+    source_id: uuid.UUID
+    research_job_id: uuid.UUID | None = None
+    adapter: str
+    started_at: datetime
+    completed_at: datetime | None = None
+    requested_url: str
+    final_url: str | None = None
+    http_status: int | None = None
+    content_type: str | None = None
+    byte_count: int
+    outcome_code: str
+    error_message: str | None = None
+
+
+class FetchAttemptListResponse(BaseModel):
+    """Fetch attempt list envelope."""
+
+    success: bool = True
+    data: list[FetchAttemptResponseData]
+
+
+class SnapshotResponseData(BaseModel):
+    """Source snapshot model."""
+
+    id: uuid.UUID
+    workspace_id: uuid.UUID
+    source_id: uuid.UUID
+    content_hash: str
+    storage_provider: str
+    object_key: str
+    content_type: str
+    byte_size: int
+    malware_scan_status: str
+    retrieved_at: datetime
+
+
+class SnapshotListResponse(BaseModel):
+    """Source snapshot list envelope."""
+
+    success: bool = True
+    data: list[SnapshotResponseData]
+
+
+class DocumentBlockResponseData(BaseModel):
+    """Document block model."""
+
+    id: uuid.UUID
+    workspace_id: uuid.UUID
+    source_snapshot_id: uuid.UUID
+    block_key: str
+    block_type: str
+    text_content: str
+    block_hash: str
+    created_at: datetime
+
+
+class DocumentBlockListResponse(BaseModel):
+    """Document block list envelope."""
+
+    success: bool = True
+    data: list[DocumentBlockResponseData]
+
+
+@router.get("/sources/{source_id}/attempts", response_model=FetchAttemptListResponse)
+async def list_source_fetch_attempts(
+    source_id: uuid.UUID,
+    actor: RequestActor = Depends(get_current_actor),
+    session: AsyncSession = Depends(get_db_session),
+) -> FetchAttemptListResponse:
+    """List fetch attempts for a source URL."""
+    workspace_id = verify_active_workspace(actor)
+    stmt = (
+        select(SourceFetchAttempt)
+        .where(
+            SourceFetchAttempt.workspace_id == workspace_id,
+            SourceFetchAttempt.source_id == source_id,
+        )
+        .order_by(SourceFetchAttempt.started_at.desc())
+    )
+    res = await session.execute(stmt)
+    attempts: Sequence[SourceFetchAttempt] = res.scalars().all()
+
+    return FetchAttemptListResponse(
+        success=True,
+        data=[
+            FetchAttemptResponseData(
+                id=a.id,
+                workspace_id=a.workspace_id,
+                source_id=a.source_id,
+                research_job_id=a.research_job_id,
+                adapter=a.adapter,
+                started_at=a.started_at,
+                completed_at=a.completed_at,
+                requested_url=a.requested_url,
+                final_url=a.final_url,
+                http_status=a.http_status,
+                content_type=a.content_type,
+                byte_count=a.byte_count,
+                outcome_code=a.outcome_code,
+                error_message=a.error_message,
+            )
+            for a in attempts
+        ],
+    )
+
+
+@router.get("/sources/{source_id}/snapshots", response_model=SnapshotListResponse)
+async def list_source_snapshots(
+    source_id: uuid.UUID,
+    actor: RequestActor = Depends(get_current_actor),
+    session: AsyncSession = Depends(get_db_session),
+) -> SnapshotListResponse:
+    """List snapshots for a source URL."""
+    workspace_id = verify_active_workspace(actor)
+    stmt = (
+        select(SourceSnapshot)
+        .where(
+            SourceSnapshot.workspace_id == workspace_id,
+            SourceSnapshot.source_id == source_id,
+        )
+        .order_by(SourceSnapshot.retrieved_at.desc())
+    )
+    res = await session.execute(stmt)
+    snapshots: Sequence[SourceSnapshot] = res.scalars().all()
+
+    return SnapshotListResponse(
+        success=True,
+        data=[
+            SnapshotResponseData(
+                id=s.id,
+                workspace_id=s.workspace_id,
+                source_id=s.source_id,
+                content_hash=s.content_hash,
+                storage_provider=s.storage_provider,
+                object_key=s.object_key,
+                content_type=s.content_type,
+                byte_size=s.byte_size,
+                malware_scan_status=s.malware_scan_status,
+                retrieved_at=s.retrieved_at,
+            )
+            for s in snapshots
+        ],
+    )
+
+
+@router.get("/snapshots/{snapshot_id}/blocks", response_model=DocumentBlockListResponse)
+async def list_snapshot_document_blocks(
+    snapshot_id: uuid.UUID,
+    actor: RequestActor = Depends(get_current_actor),
+    session: AsyncSession = Depends(get_db_session),
+) -> DocumentBlockListResponse:
+    """List extracted document blocks for a source snapshot."""
+    workspace_id = verify_active_workspace(actor)
+    stmt = (
+        select(DocumentBlock)
+        .where(
+            DocumentBlock.workspace_id == workspace_id,
+            DocumentBlock.source_snapshot_id == snapshot_id,
+        )
+        .order_by(DocumentBlock.created_at.asc())
+    )
+    res = await session.execute(stmt)
+    blocks: Sequence[DocumentBlock] = res.scalars().all()
+
+    return DocumentBlockListResponse(
+        success=True,
+        data=[
+            DocumentBlockResponseData(
+                id=b.id,
+                workspace_id=b.workspace_id,
+                source_snapshot_id=b.source_snapshot_id,
+                block_key=b.block_key,
+                block_type=b.block_type,
+                text_content=b.text_content,
+                block_hash=b.block_hash,
+                created_at=b.created_at,
+            )
+            for b in blocks
+        ],
+    )
