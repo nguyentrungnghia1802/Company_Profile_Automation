@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { getApiClient } from "@vcps/api-client";
 import { useAuth } from "../../stores/authContext";
 import { ResearchProgressTracker } from "../research/ResearchProgressTracker";
+import { SourcesList } from "../sources/SourcesList";
 
 export interface CompanyDetailItem {
   id: string;
@@ -218,6 +219,10 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
 
           <div style={{ marginTop: "24px" }}>
             <ResearchProgressTracker companyId={company.id} />
+          </div>
+
+          <div style={{ marginTop: "24px" }}>
+            <SourcesList companyId={company.id} />
           </div>
         </div>
       )}
