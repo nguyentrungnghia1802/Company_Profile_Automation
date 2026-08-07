@@ -369,13 +369,20 @@ Evidence:
 
 ## Block 4B — Source normalization and ranking
 
-- [ ] **P4-006** Implement URL/domain normalization and canonicalization.
-- [ ] **P4-007** Implement source-type classification baseline.
-- [ ] **P4-008** Implement authority tiers and field-specific source policy model.
-- [ ] **P4-009** Implement entity-match scoring.
-- [ ] **P4-010** Implement duplicate URL and mirror candidate detection.
-- [ ] **P4-011** Implement selected/rejected/blocked decision reasons.
-- [ ] **P4-012** Prevent search snippets from becoming accepted evidence directly.
+- [x] **P4-006** Implement URL/domain normalization and canonicalization.
+- [x] **P4-007** Implement source-type classification baseline.
+- [x] **P4-008** Implement authority tiers and field-specific source policy model.
+- [x] **P4-009** Implement entity-match scoring.
+- [x] **P4-010** Implement duplicate URL and mirror candidate detection.
+- [x] **P4-011** Implement selected/rejected/blocked decision reasons.
+- [x] **P4-012** Prevent search snippets from becoming accepted evidence directly.
+
+Evidence:
+- Implemented: `apps/backend/src/company_profile/modules/sources/policy.py`, `apps/backend/tests/test_source_policy.py`
+- Tests: `uv run pytest` passed (49/49 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-4b-source-normalization-ranking
+- Remaining: none
 
 ## Block 4C — Policy administration
 
@@ -1439,6 +1446,35 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-4a-source-acquisition`
 - Remaining work:
   - Phase 4 Block 4B (Source normalization and ranking)
+
+### RUN-20260807-16 — Block 4B Source Normalization and Ranking
+
+- Roadmap task(s): P4-006, P4-007, P4-008, P4-009, P4-010, P4-011, P4-012
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Source policy engine `apps/backend/src/company_profile/modules/sources/policy.py` implementing `classify_source_type` (authority tiers 1-4), `calculate_entity_match_score` (0.0 to 1.0 confidence score), and `evaluate_source_policy` (returning status and decision reasons)
+  - Unit tests in `apps/backend/tests/test_source_policy.py` (3 passed, 49 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (77 source files)
+  - `uv run pytest apps/backend/tests` — passed (49 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-4b-source-normalization-ranking`
+- Remaining work:
+  - Phase 4 Block 4C (Policy administration)
 
 ---
 
