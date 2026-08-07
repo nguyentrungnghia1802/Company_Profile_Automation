@@ -47,6 +47,7 @@ ROLE_CAPABILITIES: dict[str, list[str]] = {
         "conflict:resolve",
         "profile:publish",
         "company:archive",
+        "company:restore",
         "company:merge",
     ],
     "officer": [
@@ -58,6 +59,9 @@ ROLE_CAPABILITIES: dict[str, list[str]] = {
         "company:read",
         "company:create",
         "company:update",
+        "company:archive",
+        "company:restore",
+        "company:merge",
         "research:start",
         "workspace:admin",
         "member:manage",

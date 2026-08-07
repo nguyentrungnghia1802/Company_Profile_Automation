@@ -131,3 +131,61 @@ class CompanyService:
                 },
             )
             return alias
+
+    async def archive_company(
+        self,
+        workspace_id: uuid.UUID,
+        company_id: uuid.UUID,
+        actor_id: str | None = None,
+    ) -> CompanyProfile:
+        """Archive a company profile with audit logging."""
+        async with transactional(self.session):
+            company = await self.repo.get_by_id(workspace_id, company_id)
+            if not company:
+                raise ValueError("COMPANY_NOT_FOUND")
+
+            if company.status == "archived":
+                return company
+
+            company.status = "archived"
+            company.version += 1
+
+            logger.info(
+                "Audit Event: company.archived",
+                extra={
+                    "audit_event": "company.archived",
+                    "workspace_id": str(workspace_id),
+                    "company_id": str(company.id),
+                    "actor_id": actor_id,
+                },
+            )
+            return company
+
+    async def restore_company(
+        self,
+        workspace_id: uuid.UUID,
+        company_id: uuid.UUID,
+        actor_id: str | None = None,
+    ) -> CompanyProfile:
+        """Restore an archived company profile back to published status."""
+        async with transactional(self.session):
+            company = await self.repo.get_by_id(workspace_id, company_id)
+            if not company:
+                raise ValueError("COMPANY_NOT_FOUND")
+
+            if company.status == "merged":
+                raise ValueError("CANNOT_RESTORE_MERGED_COMPANY")
+
+            company.status = "published"
+            company.version += 1
+
+            logger.info(
+                "Audit Event: company.restored",
+                extra={
+                    "audit_event": "company.restored",
+                    "workspace_id": str(workspace_id),
+                    "company_id": str(company.id),
+                    "actor_id": actor_id,
+                },
+            )
+            return company
