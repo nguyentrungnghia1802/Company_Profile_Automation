@@ -82,6 +82,7 @@ select = [
 ]
 ignore = [
     "ANN401",  # Any type
+    "B008",    # function call in argument default (FastAPI Depends)
     "COM812",  # trailing comma (conflicts with formatter)
     "ISC001",  # implicit string concat (conflicts with formatter)
 ]

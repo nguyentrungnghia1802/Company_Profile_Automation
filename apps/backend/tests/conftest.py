@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import (
 
 from company_profile.api.app import create_app
 from company_profile.db.base import Base
+from company_profile.db.session import get_db_session
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -30,14 +31,20 @@ def app() -> FastAPI:
 
 
 @pytest_asyncio.fixture
-async def async_client(app: FastAPI) -> AsyncIterator[AsyncClient]:
-    """Async HTTP client bound to the FastAPI application."""
+async def async_client(app: FastAPI, db_session: AsyncSession) -> AsyncIterator[AsyncClient]:
+    """Async HTTP client bound to the FastAPI application with in-memory db_session override."""
+
+    async def _get_test_session() -> AsyncIterator[AsyncSession]:
+        yield db_session
+
+    app.dependency_overrides[get_db_session] = _get_test_session
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client
+    app.dependency_overrides.clear()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def test_engine() -> AsyncIterator[AsyncEngine]:
     """Async engine fixture using SQLite in-memory for fast unit/integration isolation."""
     engine = create_async_engine(
