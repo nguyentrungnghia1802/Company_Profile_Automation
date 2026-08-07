@@ -213,11 +213,18 @@ Evidence:
 
 ## Block 2A — Company schema and field registry
 
-- [ ] **P2-001** Add `companies`, `company_aliases`, `company_identifiers`, and `company_relationships` migrations.
-- [ ] **P2-002** Add company states and relationship constraints.
-- [ ] **P2-003** Implement versioned company field registry baseline.
-- [ ] **P2-004** Add name, domain, country, registration identifier, and URL normalization.
-- [ ] **P2-005** Add company repositories with workspace scope and search indexes.
+- [x] **P2-001** Add `companies`, `company_aliases`, `company_identifiers`, and `company_relationships` migrations.
+- [x] **P2-002** Add company states and relationship constraints.
+- [x] **P2-003** Implement versioned company field registry baseline.
+- [x] **P2-004** Add name, domain, country, registration identifier, and URL normalization.
+- [x] **P2-005** Add company repositories with workspace scope and search indexes.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260807_0002_initial_company_schema.py`, `apps/backend/src/company_profile/db/models/company.py`, `apps/backend/src/company_profile/modules/companies/repository.py`, `apps/backend/src/company_profile/modules/companies/service.py`, `db/fixtures/company_fixtures.py`, `apps/backend/tests/test_companies.py`
+- Tests: `uv run pytest` passed (30/30 passed), `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-2a-company-schema
+- Remaining: none
 
 ## Block 2B — Duplicate and identity resolution
 
@@ -1123,7 +1130,39 @@ No run entry may claim success for a command that was not executed.
 - Commit/branch:
   - `feat/block-1d-security-verification`
 - Remaining work:
-  - Phase 2 (Company Identity and Entity Resolution — Block 2A)
+  - Phase 2 Block 2A (Company Core Schema and Repository)
+
+### RUN-20260807-08 — Block 2A Company Core Schema and Repository
+
+- Roadmap task(s): P2-001, P2-002, P2-003, P2-004, P2-005
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Database migration `db/migrations/versions/20260807_0002_initial_company_schema.py` creating `company_profiles`, `company_aliases`, and `company_relationships` with check constraints and workspace-scoped unique/index constraints
+  - SQLAlchemy ORM models `CompanyProfile`, `CompanyAlias`, and `CompanyRelationship` in `apps/backend/src/company_profile/db/models/company.py` with custom `GUID` decorator and `normalize_company_name` normalization helper (accents, legal suffix noise)
+  - Workspace-scoped repository `CompanyRepository` in `apps/backend/src/company_profile/modules/companies/repository.py` supporting creation, tax_id/reg_num lookup, exact normalized name/alias lookup, alias management, and relationship linking
+  - Application service `CompanyService` in `apps/backend/src/company_profile/modules/companies/service.py` with structured audit event logging (`company.created`, `company.updated`, `company.alias_added`)
+  - Development fixtures in `db/fixtures/company_fixtures.py` and unit test suite in `apps/backend/tests/test_companies.py` (3 passed, 30 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (65 source files)
+  - `uv run pytest apps/backend/tests` — passed (30 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-2a-company-schema`
+- Remaining work:
+  - Block 2B (Duplicate and identity resolution)
 
 ---
 

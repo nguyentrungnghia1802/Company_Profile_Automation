@@ -86,6 +86,8 @@ ignore = [
     "B008",    # function call in argument default (FastAPI Depends)
     "COM812",  # trailing comma (conflicts with formatter)
     "ISC001",  # implicit string concat (conflicts with formatter)
+    "TC002",  # type-checking third-party imports
+    "TC003",  # type-checking stdlib imports
 ]
 
 [tool.ruff.lint.isort]
