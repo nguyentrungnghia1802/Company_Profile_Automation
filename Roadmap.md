@@ -476,10 +476,17 @@ Evidence:
 
 ## Block 5D — Browser fallback
 
-- [ ] **P5-019** Implement Playwright browser adapter with resource/time limits.
-- [ ] **P5-020** Apply the same URL/network policy to browser navigation and subresources.
-- [ ] **P5-021** Define when browser fallback is allowed and record reason.
-- [ ] **P5-022** Add browser worker sandbox guidance and metrics.
+- [x] **P5-019** Implement Playwright browser adapter with resource/time limits.
+- [x] **P5-020** Apply the same URL/network policy to browser navigation and subresources.
+- [x] **P5-021** Define when browser fallback is allowed and record reason.
+- [x] **P5-022** Add browser worker sandbox guidance and metrics.
+
+Evidence:
+- Implemented: `apps/backend/src/company_profile/modules/sources/browser_adapter.py`, `apps/backend/src/company_profile/modules/sources/fetcher.py`, `apps/backend/tests/test_browser_fallback.py`
+- Tests: `uv run pytest` passed (63/63 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-5d-browser-fallback
+- Remaining: none
 
 ## Block 5E — UI and verification
 
@@ -1665,6 +1672,36 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-5c-content-parsers`
 - Remaining work:
   - Phase 5 Block 5D (Browser fallback)
+
+### RUN-20260807-22 — Block 5D Playwright Browser Adapter & SSRF Subresource Enforcement
+
+- Roadmap task(s): P5-019, P5-020, P5-021, P5-022
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Added `PlaywrightBrowserAdapter` in `apps/backend/src/company_profile/modules/sources/browser_adapter.py` providing headless dynamic page rendering with route interception enforcing SSRF IP/host safety on all navigation subresources
+  - Integrated browser fallback into `WebFetcher` (`apps/backend/src/company_profile/modules/sources/fetcher.py`) triggered when `fetch_browser_fallback_enabled` is set to True
+  - Unit tests in `apps/backend/tests/test_browser_fallback.py` (3 passed, 63 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (81 source files)
+  - `uv run pytest apps/backend/tests` — passed (63 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-5d-browser-fallback`
+- Remaining work:
+  - Phase 5 Block 5E (UI and verification)
 
 ---
 
