@@ -8,6 +8,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from company_profile.db.session import get_db_session
+from company_profile.modules.research.dispatcher import PostgresTaskDispatcher
 from company_profile.modules.research.queue import ResearchQueueRepository
 
 if TYPE_CHECKING:
@@ -106,7 +107,13 @@ class WorkerRunner:
             output_payload = f'{{"status": "success", "step": "{task.step_type}"}}'
             task.complete(output_payload)
             await session.commit()
+
+            # Advance job pipeline step sequence
+            dispatcher = PostgresTaskDispatcher(session)
+            await dispatcher.advance_job_pipeline(task.research_job_id)
         except Exception as exc:
             logger.error("Task execution failed: %s", exc, exc_info=True)
             task.fail(str(exc))
             await session.commit()
+            dispatcher = PostgresTaskDispatcher(session)
+            await dispatcher.advance_job_pipeline(task.research_job_id)

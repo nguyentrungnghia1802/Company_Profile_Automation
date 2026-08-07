@@ -302,14 +302,21 @@ Evidence:
 
 ## Block 3B — Worker claim and execution
 
-- [ ] **P3-006** Define `TaskDispatcher` and local PostgreSQL dispatcher.
-- [ ] **P3-007** Implement row-lock claim with lease owner and expiry.
-- [ ] **P3-008** Implement dependency-aware step execution.
-- [ ] **P3-009** Implement bounded retry and exponential backoff.
-- [ ] **P3-010** Implement stale-lease recovery.
-- [ ] **P3-011** Implement cancellation at safe boundaries.
-- [ ] **P3-012** Implement partial-success and critical-failure aggregation.
-- [ ] **P3-013** Add worker graceful shutdown and in-flight lease behavior.
+- [x] **P3-006** Define `TaskDispatcher` and local PostgreSQL dispatcher.
+- [x] **P3-007** Implement row-lock claim with lease owner and expiry.
+- [x] **P3-008** Implement dependency-aware step execution.
+- [x] **P3-009** Implement bounded retry and exponential backoff.
+- [x] **P3-010** Implement stale-lease recovery.
+- [x] **P3-011** Implement cancellation at safe boundaries.
+- [x] **P3-012** Implement partial-success and critical-failure aggregation.
+- [x] **P3-013** Add worker graceful shutdown and in-flight lease behavior.
+
+Evidence:
+- Implemented: `apps/backend/src/company_profile/modules/research/dispatcher.py`, `apps/backend/src/company_profile/modules/research/service.py`, `apps/backend/src/company_profile/modules/research/retry.py`, `apps/backend/src/company_profile/worker/runner.py`, `apps/backend/tests/test_research_service.py`
+- Tests: `uv run pytest` passed (40/40 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-3b-worker-execution
+- Remaining: none
 
 ## Block 3C — API and progress UI
 
@@ -1322,6 +1329,38 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-3a-research-queue`
 - Remaining work:
   - Phase 3 Block 3B (Worker claim and execution)
+
+### RUN-20260807-13 — Block 3B Worker Claim and Execution
+
+- Roadmap task(s): P3-006, P3-007, P3-008, P3-009, P3-010, P3-011, P3-012, P3-013
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Exponential backoff calculator `calculate_backoff_delay` in `apps/backend/src/company_profile/modules/research/retry.py`
+  - Pipeline step progression manager `PostgresTaskDispatcher` in `apps/backend/src/company_profile/modules/research/dispatcher.py` enforcing step sequence (`search` -> `fetch` -> `extract` -> `synthesize` -> `completed`)
+  - Research job orchestration service `ResearchJobService` in `apps/backend/src/company_profile/modules/research/service.py` for job creation, progress listing, and cancellation
+  - Pipeline advancement integration in `WorkerRunner.execute_task` in `apps/backend/src/company_profile/worker/runner.py`
+  - Unit and integration tests in `apps/backend/tests/test_research_service.py` (3 passed, 40 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (73 source files)
+  - `uv run pytest apps/backend/tests` — passed (40 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-3b-worker-execution`
+- Remaining work:
+  - Phase 3 Block 3C (API and progress UI)
 
 ---
 
