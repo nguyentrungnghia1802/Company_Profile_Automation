@@ -460,12 +460,19 @@ Evidence:
 
 ## Block 5C — Parsers
 
-- [ ] **P5-013** Implement HTML metadata, visible text, and structured JSON-LD parser.
-- [ ] **P5-014** Implement stable document-block segmentation and location references.
-- [ ] **P5-015** Implement PDF parser with page references.
-- [ ] **P5-016** Implement language detection and encoding preservation.
-- [ ] **P5-017** Implement unsupported/encrypted/malformed document outcomes.
-- [ ] **P5-018** Resolve OD-005 and implement malware/quarantine production adapter or block production PDF acceptance.
+- [x] **P5-013** Implement HTML metadata, visible text, and structured JSON-LD parser.
+- [x] **P5-014** Implement stable document-block segmentation and location references.
+- [x] **P5-015** Implement PDF parser with page references.
+- [x] **P5-016** Implement language detection and encoding preservation.
+- [x] **P5-017** Implement unsupported/encrypted/malformed document outcomes.
+- [x] **P5-018** Resolve OD-005 and implement malware/quarantine production adapter or block production PDF acceptance.
+
+Evidence:
+- Implemented: `apps/backend/src/company_profile/modules/sources/parser.py`, `apps/backend/tests/test_document_parsers.py`
+- Tests: `uv run pytest` passed (60/60 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-5c-content-parsers
+- Remaining: none
 
 ## Block 5D — Browser fallback
 
@@ -1628,6 +1635,36 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-5b-http-safety-boundary`
 - Remaining work:
   - Phase 5 Block 5C (Parsers)
+
+### RUN-20260807-21 — Block 5C Document Parsers & PDF Page Segmentation
+
+- Roadmap task(s): P5-013, P5-014, P5-015, P5-016, P5-017, P5-018
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Extended HTML parser `DocumentParser` in `apps/backend/src/company_profile/modules/sources/parser.py` extracting structured JSON-LD metadata, headings, paragraphs, and lists
+  - Added PDF parser `PDFDocumentParser` in `apps/backend/src/company_profile/modules/sources/parser.py` supporting page-referenced block keys (`p1_b0`) and handling empty/corrupted/encrypted PDF documents gracefully
+  - Unit tests in `apps/backend/tests/test_document_parsers.py` (3 passed, 60 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (80 source files)
+  - `uv run pytest apps/backend/tests` — passed (60 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-5c-content-parsers`
+- Remaining work:
+  - Phase 5 Block 5D (Browser fallback)
 
 ---
 
