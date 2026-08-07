@@ -1,0 +1,27 @@
+{
+  "app": {
+    "title": "Verified Company Profile System",
+    "subtitle": "Evidence-first company intelligence platform"
+  },
+  "nav": {
+    "companies": "Company Library",
+    "research": "Research",
+    "reviews": "Review Inbox",
+    "operations": "Operations",
+    "admin": "Administration"
+  },
+  "status": {
+    "ok": "Healthy",
+    "degraded": "Degraded",
+    "error": "Error",
+    "loading": "Loading...",
+    "empty": "No data available"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "publish": "Publish",
+    "retry": "Retry",
+    "export": "Export"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "app": {
+    "title": "Hệ thống Hồ sơ Doanh nghiệp Xác thực",
+    "subtitle": "Nền tảng trí tuệ doanh nghiệp dựa trên bằng chứng minh bạch"
+  },
+  "nav": {
+    "companies": "Danh sách doanh nghiệp",
+    "research": "Nghiên cứu",
+    "reviews": "Phê duyệt",
+    "operations": "Vận hành tác vụ",
+    "admin": "Quản trị"
+  },
+  "status": {
+    "ok": "Hoạt động",
+    "degraded": "Suy giảm",
+    "error": "Lỗi",
+    "loading": "Đang tải...",
+    "empty": "Không có dữ liệu"
+  },
+  "actions": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "publish": "Xuất bản",
+    "retry": "Thử lại",
+    "export": "Xuất báo cáo"
+  }
+}
