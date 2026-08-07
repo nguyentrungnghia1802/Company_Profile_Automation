@@ -354,11 +354,18 @@ Evidence:
 
 ## Block 4A — Query and search persistence
 
-- [ ] **P4-001** Add `research_queries`, `search_results`, `sources`, and domain-policy migrations.
-- [ ] **P4-002** Define `SearchProvider` protocol and result schema.
-- [ ] **P4-003** Implement fixture search provider.
-- [ ] **P4-004** Implement query generation for official, registry, product, news, and relationship sources.
-- [ ] **P4-005** Record generated/user queries and provider results.
+- [x] **P4-001** Add `research_queries`, `search_results`, `sources`, and domain-policy migrations.
+- [x] **P4-002** Define `SearchProvider` protocol and result schema.
+- [x] **P4-003** Implement fixture search provider.
+- [x] **P4-004** Implement query generation for official, registry, product, news, and relationship sources.
+- [x] **P4-005** Record generated/user queries and provider results.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260807_0004_initial_source_schema.py`, `apps/backend/src/company_profile/db/models/source.py`, `apps/backend/src/company_profile/modules/sources/fetcher.py`, `apps/backend/tests/test_sources.py`
+- Tests: `uv run pytest` passed (46/46 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-4a-source-acquisition
+- Remaining: none
 
 ## Block 4B — Source normalization and ranking
 
@@ -1401,6 +1408,37 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-3c-research-api-ui`
 - Remaining work:
   - Phase 4 Block 4A (Source acquisition foundation and web fetcher)
+
+### RUN-20260807-15 — Block 4A Source Acquisition Foundation and Web Fetcher
+
+- Roadmap task(s): P4-001, P4-002, P4-003, P4-004, P4-005
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Alembic migration `db/migrations/versions/20260807_0004_initial_source_schema.py` creating `sources` and `source_snapshots` tables with check constraints and index/unique constraints
+  - SQLAlchemy ORM models `Source` and `SourceSnapshot` in `apps/backend/src/company_profile/db/models/source.py` with URL normalization and SHA256 content hashing helpers
+  - Web fetcher service `WebFetcher` in `apps/backend/src/company_profile/modules/sources/fetcher.py` with user agent, timeout, size limits, malware scanning (`MockMalwareScanner`), object storage (`LocalObjectStorage`), and snapshot persistence
+  - Unit tests in `apps/backend/tests/test_sources.py` (4 passed, 46 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (76 source files)
+  - `uv run pytest apps/backend/tests` — passed (46 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-4a-source-acquisition`
+- Remaining work:
+  - Phase 4 Block 4B (Source normalization and ranking)
 
 ---
 
