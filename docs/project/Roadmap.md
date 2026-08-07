@@ -170,11 +170,18 @@ Evidence:
 
 ## Block 1C — Workspace administration
 
-- [ ] **P1-013** Add workspace list/detail APIs.
-- [ ] **P1-014** Add member invite/add, role update, and deactivation APIs.
-- [ ] **P1-015** Add admin member-management UI.
-- [ ] **P1-016** Add active workspace selector for multi-workspace users.
-- [ ] **P1-017** Add immutable audit records for membership changes.
+- [x] **P1-013** Add workspace list/detail APIs.
+- [x] **P1-014** Add member invite/add, role update, and deactivation APIs.
+- [x] **P1-015** Add admin member-management UI.
+- [x] **P1-016** Add active workspace selector for multi-workspace users.
+- [x] **P1-017** Add immutable audit records for membership changes.
+
+Evidence:
+- Implemented: `apps/backend/src/company_profile/api/routers/workspaces.py`, `apps/web/src/components/WorkspaceSelector.tsx`, `apps/web/src/features/workspaces/MemberManagement.tsx`, `packages/api-client/src/index.ts`, `apps/backend/tests/test_workspaces.py`
+- Tests: `uv run pytest` passed (23/23 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md`, `openapi.json` updated
+- Commit: branch feat/block-1c-workspace-admin
+- Remaining: none
 
 ## Block 1D — Security verification
 
@@ -1041,6 +1048,41 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-1b-auth-and-actor`
 - Remaining work:
   - Block 1C (Workspace administration)
+
+### RUN-20260807-06 — Block 1C Workspace Administration
+
+- Roadmap task(s): P1-013, P1-014, P1-015, P1-016, P1-017
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Workspaces FastAPI router in `apps/backend/src/company_profile/api/routers/workspaces.py` (`GET /api/v1/workspaces`, `GET /api/v1/workspaces/:workspaceId`, `GET /api/v1/workspaces/:workspaceId/members`, `POST /api/v1/workspaces/:workspaceId/members`, `PATCH /api/v1/workspaces/:workspaceId/members/:memberId`, `DELETE /api/v1/workspaces/:workspaceId/members/:memberId`)
+  - Capability authorization enforcement (`member:manage` capability required for workspace member modifications)
+  - Immutable audit event logging for membership invitations (`membership.invited`), role updates (`membership.role_changed`), and deactivations (`membership.deactivated`)
+  - Active workspace selector component `WorkspaceSelector` in `apps/web/src/components/WorkspaceSelector.tsx`
+  - Workspace member administration UI component `MemberManagement` in `apps/web/src/features/workspaces/MemberManagement.tsx`
+  - Generated TypeScript API client workspace methods in `packages/api-client/src/index.ts`
+  - Unit and API integration tests in `apps/backend/tests/test_workspaces.py` (3 passed, 23 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (62 source files)
+  - `uv run pytest apps/backend/tests` — passed (23 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+  - `docs/project/openapi.json`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-1c-workspace-admin`
+- Remaining work:
+  - Block 1D (Security verification)
 
 ---
 
