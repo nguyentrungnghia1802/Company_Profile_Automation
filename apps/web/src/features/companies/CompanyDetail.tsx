@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getApiClient } from "@vcps/api-client";
 import { useAuth } from "../../stores/authContext";
+import { ResearchProgressTracker } from "../research/ResearchProgressTracker";
 
 export interface CompanyDetailItem {
   id: string;
@@ -213,6 +214,10 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
             <div>
               <strong>Confidence Score:</strong> {(company.confidence_score * 100).toFixed(0)}%
             </div>
+          </div>
+
+          <div style={{ marginTop: "24px" }}>
+            <ResearchProgressTracker companyId={company.id} />
           </div>
         </div>
       )}
