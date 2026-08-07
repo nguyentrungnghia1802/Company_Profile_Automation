@@ -1,0 +1,1 @@
+"""Fetch integration adapter."""
