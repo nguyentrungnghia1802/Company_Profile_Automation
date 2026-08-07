@@ -153,13 +153,20 @@ Evidence:
 
 ## Block 1B — Auth adapters and current actor
 
-- [ ] **P1-006** Define `AuthProvider` protocol.
-- [ ] **P1-007** Implement mock auth adapter for local/CI.
-- [ ] **P1-008** Implement production Firebase/Identity Platform token verification after resolving OD-001.
-- [ ] **P1-009** Add current-user synchronization and active-status checks.
-- [ ] **P1-010** Add request actor context containing user, workspace membership, role, and capabilities.
-- [ ] **P1-011** Add `/auth/exchange`, `/auth/logout`, and `/me` routes.
-- [ ] **P1-012** Add frontend auth bootstrap, protected routes, and session-ending behavior.
+- [x] **P1-006** Define `AuthProvider` protocol.
+- [x] **P1-007** Implement mock auth adapter for local/CI.
+- [x] **P1-008** Implement production Firebase/Identity Platform token verification after resolving OD-001.
+- [x] **P1-009** Add current-user synchronization and active-status checks.
+- [x] **P1-010** Add request actor context containing user, workspace membership, role, and capabilities.
+- [x] **P1-011** Add `/auth/exchange`, `/auth/logout`, and `/me` routes.
+- [x] **P1-012** Add frontend auth bootstrap, protected routes, and session-ending behavior.
+
+Evidence:
+- Implemented: `apps/backend/src/company_profile/integrations/auth/protocol.py`, `apps/backend/src/company_profile/integrations/auth/mock_auth.py`, `apps/backend/src/company_profile/integrations/auth/firebase_auth.py`, `apps/backend/src/company_profile/api/dependencies.py`, `apps/backend/src/company_profile/api/routers/auth.py`, `apps/web/src/stores/authContext.tsx`, `packages/api-client/src/index.ts`, `apps/backend/tests/test_auth.py`
+- Tests: `uv run pytest` passed (20/20 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md`, `openapi.json` updated
+- Commit: branch feat/block-1b-auth-and-actor
+- Remaining: none
 
 ## Block 1C — Workspace administration
 
@@ -997,6 +1004,43 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-1a-identity-schema`
 - Remaining work:
   - Block 1B (Auth adapters and current actor)
+
+### RUN-20260807-05 — Block 1B Auth Adapters and Current Actor
+
+- Roadmap task(s): P1-006, P1-007, P1-008, P1-009, P1-010, P1-011, P1-012
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - External authentication interface `AuthProvider` protocol in `apps/backend/src/company_profile/integrations/auth/protocol.py`
+  - Deterministic mock auth adapter `MockAuthProvider` in `apps/backend/src/company_profile/integrations/auth/mock_auth.py` supporting dev tokens (`mock-token-researcher`, `mock-token-admin`, `mock-token-reviewer`)
+  - Production Firebase Auth adapter placeholder `FirebaseAuthAdapter` in `apps/backend/src/company_profile/integrations/auth/firebase_auth.py`
+  - Current-user database synchronization & active status verification dependency `get_current_user` in `apps/backend/src/company_profile/api/dependencies.py`
+  - Full request actor context `RequestActor` & capability authorization dependency `require_capability` mapping role-based permissions (`researcher`, `reviewer`, `officer`, `workspace_admin`)
+  - Auth FastAPI router in `apps/backend/src/company_profile/api/routers/auth.py` (`POST /api/v1/auth/exchange`, `POST /api/v1/auth/logout`, `GET /api/v1/me`, `PATCH /api/v1/me`)
+  - Frontend auth bootstrap provider `AuthProvider` context and `useAuth` hook in `apps/web/src/stores/authContext.tsx`
+  - Generated TypeScript API client auth methods in `packages/api-client/src/index.ts`
+  - Unit and API integration tests in `apps/backend/tests/test_auth.py` (5 passed, 20 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (61 source files)
+  - `uv run pytest apps/backend/tests` — passed (20 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+  - `docs/project/openapi.json`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-1b-auth-and-actor`
+- Remaining work:
+  - Block 1C (Workspace administration)
 
 ---
 

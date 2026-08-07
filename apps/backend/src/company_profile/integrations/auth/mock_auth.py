@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from company_profile.integrations.auth.protocol import AuthProvider, AuthSubjectContext
+
 
 class MockActor:
     """Mock authenticated actor context."""
@@ -21,14 +23,62 @@ class MockActor:
         self.capabilities = capabilities or ["read_company", "create_research_job"]
 
 
-class MockAuthProvider:
-    """Mock auth adapter that accepts dev tokens or returns a fixed actor."""
+class MockAuthProvider(AuthProvider):
+    """Mock auth adapter supporting deterministic development tokens."""
 
-    def __init__(self, default_actor: MockActor | None = None) -> None:
+    def __init__(
+        self,
+        default_actor: MockActor | None = None,
+        default_subject: AuthSubjectContext | None = None,
+    ) -> None:
         self.default_actor = default_actor or MockActor()
+        if default_actor:
+            self.default_subject = AuthSubjectContext(
+                auth_provider="mock",
+                auth_subject=default_actor.user_id,
+                email=default_actor.email,
+                display_name="Mock User",
+                preferred_locale="vi",
+            )
+        else:
+            self.default_subject = default_subject or AuthSubjectContext(
+                auth_provider="mock",
+                auth_subject="sub_dev_researcher_001",
+                email="researcher@example.com",
+                display_name="Dev Researcher",
+                preferred_locale="vi",
+            )
 
-    async def verify_token(self, token: str) -> MockActor:
-        """Verify bearer token or return mock actor."""
-        if token == "invalid":
+    async def verify_token(self, token: str) -> AuthSubjectContext:
+        """Verify dev token and return subject identity context."""
+        if token == "invalid" or token == "mock-token-invalid":
             raise ValueError("AUTH_INVALID_TOKEN")
-        return self.default_actor
+
+        if token == "mock-token-admin":
+            return AuthSubjectContext(
+                auth_provider="mock",
+                auth_subject="sub_dev_admin_001",
+                email="admin@example.com",
+                display_name="Dev Admin",
+                preferred_locale="vi",
+            )
+
+        if token == "mock-token-reviewer":
+            return AuthSubjectContext(
+                auth_provider="mock",
+                auth_subject="sub_dev_reviewer_001",
+                email="reviewer@example.com",
+                display_name="Dev Reviewer",
+                preferred_locale="vi",
+            )
+
+        if token == "mock-token-researcher":
+            return AuthSubjectContext(
+                auth_provider="mock",
+                auth_subject="sub_dev_researcher_001",
+                email="researcher@example.com",
+                display_name="Dev Researcher",
+                preferred_locale="vi",
+            )
+
+        return self.default_subject

@@ -66,7 +66,7 @@ export const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
   },
 };
 
-export function getErrorMessage(code: str, locale: "vi" | "en" = "vi"): string {
+export function getErrorMessage(code: string, locale: "vi" | "en" = "vi"): string {
   const mapping = ERROR_MAPPINGS[code];
   if (mapping) {
     return mapping[locale];
