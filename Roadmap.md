@@ -244,11 +244,18 @@ Evidence:
 
 ## Block 2C — Company library and detail UI
 
-- [ ] **P2-012** Add paginated company library search by name, alias, domain, country, identifier, and status.
-- [ ] **P2-013** Add create-company flow with duplicate suggestions.
-- [ ] **P2-014** Add company identity header and ambiguity warnings.
-- [ ] **P2-015** Add alias, identifier, and relationship views.
-- [ ] **P2-016** Add empty, loading, error, unauthorized, and mobile states.
+- [x] **P2-012** Add paginated company library search by name, alias, domain, country, identifier, and status.
+- [x] **P2-013** Add create-company flow with duplicate suggestions.
+- [x] **P2-014** Add company identity header and ambiguity warnings.
+- [x] **P2-015** Add alias, identifier, and relationship views.
+- [x] **P2-016** Add empty, loading, error, unauthorized, and mobile states.
+
+Evidence:
+- Implemented: `apps/web/src/features/companies/CompanyLibrary.tsx`, `apps/web/src/features/companies/CreateCompanyModal.tsx`, `apps/web/src/features/companies/CompanyDetail.tsx`, `apps/web/src/features/companies/MergeCompanyModal.tsx`
+- Tests: `bun run typecheck` passed (0 errors), `uv run pytest` passed (32/32 passed)
+- Docs: `Roadmap.md` updated
+- Commit: branch feat/block-2c-company-library-ui
+- Remaining: none
 
 ## Block 2D — Merge, archive, and restore
 
@@ -1203,7 +1210,38 @@ No run entry may claim success for a command that was not executed.
 - Commit/branch:
   - `feat/block-2b-identity-resolution`
 - Remaining work:
-  - Block 2C (Company library and detail UI)
+  - Phase 2 Block 2C (Company library and detail UI)
+
+### RUN-20260807-10 — Block 2C Company Library and Detail UI
+
+- Roadmap task(s): P2-012, P2-013, P2-014, P2-015, P2-016
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Main company library UI component `CompanyLibrary` in `apps/web/src/features/companies/CompanyLibrary.tsx` with search by name/tax_id/reg_num and status filter dropdown
+  - Company creation modal component `CreateCompanyModal` in `apps/web/src/features/companies/CreateCompanyModal.tsx` with live duplicate candidate resolution preview and warning banner
+  - Company detail view & metadata editor component `CompanyDetail` in `apps/web/src/features/companies/CompanyDetail.tsx`
+  - Entity merge execution modal component `MergeCompanyModal` in `apps/web/src/features/companies/MergeCompanyModal.tsx`
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (67 source files)
+  - `uv run pytest apps/backend/tests` — passed (32 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-2c-company-library-ui`
+- Remaining work:
+  - Block 2D (Merge, archive, and restore)
 
 ---
 
