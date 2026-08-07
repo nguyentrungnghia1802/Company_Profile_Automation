@@ -313,6 +313,49 @@ export class ApiClient {
     );
     return res.data;
   }
+
+  async triggerCompanyResearch(
+    token: string,
+    workspaceId: string,
+    companyId: string,
+    payload?: { job_type?: string; scope?: Record<string, unknown>; requested_locale?: string }
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(
+      `/companies/${companyId}/research`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+        body: JSON.stringify(payload || {}),
+      }
+    );
+    return res.data;
+  }
+
+  async listResearchJobs(token: string, workspaceId: string, companyId?: string): Promise<any[]> {
+    const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : "";
+    const res = await this.request<{ success: boolean; data: any[] }>(`/research-jobs${query}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+    return res.data;
+  }
+
+  async getResearchJob(token: string, workspaceId: string, jobId: string): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(`/research-jobs/${jobId}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+    return res.data;
+  }
+
+  async cancelResearchJob(token: string, workspaceId: string, jobId: string): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>(
+      `/research-jobs/${jobId}/cancel`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+    return res.data;
+  }
 }
 
 let defaultClientInstance: ApiClient | null = null;

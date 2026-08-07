@@ -206,7 +206,7 @@ The architecture documents are authoritative for implementation boundaries. Exac
 | Repository foundation | Implemented | Phase 0 repository foundation, tooling, CI, database migration framework, and mock adapters complete |
 | Authentication and roles | Implemented | Phase 1 complete: AuthProvider protocol, mock/firebase adapters, /me, workspace member administration, capability authorization, and security isolation verified |
 | Company identity | Implemented | Phase 2 complete: schema migrations, CompanyProfile/Alias/Relationship ORM models, resolution scoring, /companies endpoints, merge, archive/restore, and UI complete |
-| Research pipeline | Planned | Job and provider boundaries defined |
+| Research pipeline | Implemented | Phase 3 complete: durable jobs/tasks schema, TaskDispatcher, WorkerRunner, API endpoints, tenant isolation, and progress tracking UI complete |
 | Source acquisition | Planned | Compliance rules and adapters defined |
 | AI extraction | Planned | Structured evidence-first extraction specified |
 | Review and publication | Planned | Human review workflow specified |
