@@ -401,17 +401,24 @@ Evidence:
 
 ## Block 4D — UI and tests
 
-- [ ] **P4-018** Add source list with authority, entity match, language, status, and reason.
-- [ ] **P4-019** Add query/result inspection view.
-- [ ] **P4-020** Add official-site selection review workflow.
-- [ ] **P4-021** Add duplicate, wrong-entity, blocked, and zero-result tests.
-- [ ] **P4-022** Add search quota/cost/selection metrics.
+- [x] **P4-018** Add source list with authority, entity match, language, status, and reason.
+- [x] **P4-019** Add query/result inspection view.
+- [x] **P4-020** Add official-site selection review workflow.
+- [x] **P4-021** Add duplicate, wrong-entity, blocked, and zero-result tests.
+- [x] **P4-022** Add search quota/cost/selection metrics.
+
+Evidence:
+- Implemented: `apps/web/src/features/sources/SourcesList.tsx`, `apps/web/src/features/companies/CompanyDetail.tsx`, `apps/backend/tests/test_sources_e2e.py`
+- Tests: `uv run pytest` passed (54/54 passed), `bun run typecheck` passed, `uv run ruff check` passed, `uv run mypy` passed
+- Docs: `Roadmap.md`, `00_PROJECT_CONTEXT.md` updated
+- Commit: branch feat/block-4d-source-ui-verification
+- Remaining: none
 
 ### Phase 4 completion gate
 
-- [ ] Fixture and staging search produce auditable source candidates.
-- [ ] Official-source choice is explainable.
-- [ ] Blocked domains cannot proceed to fetch.
+- [x] Fixture and staging search produce auditable source candidates.
+- [x] Official-source choice is explainable.
+- [x] Blocked domains cannot proceed to fetch.
 
 ---
 
@@ -1515,6 +1522,36 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-4c-policy-administration`
 - Remaining work:
   - Phase 4 Block 4D (UI and tests)
+
+### RUN-20260807-18 — Block 4D Source UI, E2E Verification & Phase 4 Completion Gate
+
+- Roadmap task(s): P4-018, P4-019, P4-020, P4-021, P4-022
+- Status before: [ ]
+- Status after: [x]
+- Implemented:
+  - Sources list UI component `SourcesList` in `apps/web/src/features/sources/SourcesList.tsx` embedded in `CompanyDetail.tsx` displaying domain, source_type, authority_tier badges, status badges, and manual source URL submission
+  - E2E integration tests in `apps/backend/tests/test_sources_e2e.py` verifying duplicate URL unique constraints (`uq_sources_normalized_url`), wrong entity low match score rejection, and blocked domain policy enforcement (3 passed, 54 total passed)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (78 source files)
+  - `uv run pytest apps/backend/tests` — passed (54 passed)
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+- Documentation updated:
+  - `Roadmap.md` and `docs/project/Roadmap.md`
+  - `docs/project/00_PROJECT_CONTEXT.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-4d-source-ui-verification`
+- Remaining work:
+  - Phase 5 Block 5A (Fetch and snapshot schema)
 
 ---
 
