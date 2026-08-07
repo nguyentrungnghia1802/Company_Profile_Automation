@@ -105,6 +105,51 @@ export class ApiClient {
   async getReadiness(): Promise<ReadinessResponse> {
     return this.request<ReadinessResponse>("/ready");
   }
+
+  async exchangeToken(token: string): Promise<Record<string, unknown>> {
+    return this.request<Record<string, unknown>>("/auth/exchange", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  async logout(token: string): Promise<Record<string, unknown>> {
+    return this.request<Record<string, unknown>>("/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  async getMe(token: string, workspaceId?: string): Promise<any> {
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    if (workspaceId) {
+      headers["X-Workspace-ID"] = workspaceId;
+    }
+    const res = await this.request<{ success: boolean; data: any }>("/me", { headers });
+    return res.data;
+  }
+
+  async updateMe(
+    token: string,
+    payload: { display_name?: string; preferred_locale?: string }
+  ): Promise<any> {
+    const res = await this.request<{ success: boolean; data: any }>("/me", {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+    return res.data;
+  }
+}
+
+let defaultClientInstance: ApiClient | null = null;
+
+export function getApiClient(baseUrl?: string): ApiClient {
+  const url = baseUrl || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  if (!defaultClientInstance) {
+    defaultClientInstance = new ApiClient({ baseUrl: url });
+  }
+  return defaultClientInstance;
 }
 """
 
