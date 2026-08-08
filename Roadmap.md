@@ -2116,6 +2116,29 @@ No run entry may claim success for a command that was not executed.
 
 ---
 
+## RUN-20260808-13 — TASK-CRAWL-003 official website discovery and URL ranking
+
+- Roadmap task(s): TASK-CRAWL-003 only; TASK-CRAWL-004 was not started.
+- Status before: `[ ]`.
+- Status after: `[x]` under `docs/agent/AGENT.md`.
+- Implemented:
+  - bounded robots-aware official website discovery with SSRF-safe direct HTTP redirects;
+  - sitemap, homepage, same-domain internal-link extraction, canonicalization, deduplication, and depth/domain/job/sitemap budgets;
+  - English/Vietnamese token-based URL page-group classification and relevance ranking;
+  - deterministic provider-neutral query templates from name, aliases, country, domain, registration identifiers, and requested sections;
+  - durable `ResearchQuery`/`SearchResult` metadata migration `20260808_0019`, with same-name search results retained for review rather than auto-selected.
+- Verification:
+  - clean task-only backend suite — passed (133 tests, 1 warning);
+  - targeted source/search/pipeline regression suite — passed (12 tests);
+  - task-scoped Ruff, format, and mypy — passed;
+  - docs, docs-sync, requirement-ID, secrets, and OpenAPI checks — passed;
+  - isolated SQLite migration `20260808_0019` upgrade/downgrade/re-upgrade — passed;
+  - migration head/history — `20260808_0019`.
+- Documentation: affected canonical project documents and both Roadmap copies were updated; no API/OpenAPI contract changed.
+- Known independent debt: DEF-CRAWL-002 remains open for repository-wide baseline validation. The mixed worktree still has the pre-existing dirty `CompanyService` test failure and OpenAPI drift from user-owned API edits; clean task-only validation is green.
+- Commit/branch: `task/crawl-003-official-discovery` (final commit recorded in the Git handoff).
+- Remaining: TASK-CRAWL-004 and later tasks remain untouched.
+
 ## RUN-20260808-10 — TASK-CRAWL-001 blocker remediation audit
 
 - Roadmap task(s): TASK-CRAWL-001 only; TASK-CRAWL-002 was not started.

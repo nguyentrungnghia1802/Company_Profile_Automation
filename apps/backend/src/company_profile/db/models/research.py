@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     CheckConstraint,
@@ -19,6 +20,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from company_profile.db.base import GUID, Base
+
+if TYPE_CHECKING:
+    from company_profile.db.models.search import ResearchQuery
 
 
 class ResearchJob(Base):
@@ -58,6 +62,9 @@ class ResearchJob(Base):
 
     tasks: Mapped[list[ResearchTask]] = relationship(
         "ResearchTask", back_populates="job", cascade="all, delete-orphan"
+    )
+    queries: Mapped[list[ResearchQuery]] = relationship(
+        "ResearchQuery", back_populates="job", cascade="all, delete-orphan"
     )
 
     __table_args__ = (

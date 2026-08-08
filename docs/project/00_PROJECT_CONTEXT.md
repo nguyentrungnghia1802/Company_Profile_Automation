@@ -291,3 +291,9 @@ TASK-CRAWL-001 is complete under `docs/agent/AGENT.md`: a clean task-only worktr
 `SourceDiscoveryService` now performs deterministic, AI-independent source aggregation and selection. It canonicalizes and deduplicates official, verified-domain, manual, SearchProvider, trusted-provider, sitemap, internal-link, and prior-source-history inputs, while persisting provenance, provider, source type, entity match, field-specific authority, and selection/rejection reasons on `Source`.
 
 The Vietnam registry is configuration-driven with five trusted-source adapters: the two government registries, Wikipedia, Vietstock, and CafeF. The default configured adapter consumes explicit structured results and returns typed `success`, `not_found`, `blocked`, `manual_required`, or `unavailable` outcomes; it does not fabricate URLs or bypass access controls. Government authority is stronger for legal/tax fields than reference or financial media authority, while those secondary sources remain available for their configured fields. TASK-CRAWL-003 remains unstarted.
+
+## Verified implementation addendum — TASK-CRAWL-003 (2026-08-08)
+
+Official website discovery is now a bounded, AI-independent step. The worker normalizes the supplied domain, validates SSRF safety before discovery fetches, reads `robots.txt`, follows only permitted sitemap documents, fetches bounded homepage/link pages, extracts same-domain links, removes fragments/tracking parameters, deduplicates canonical URLs, and ranks multilingual page groups. Search remains optional: deterministic Vietnamese/English query templates and provider metadata work without Gemini, while same-name search results below the strong-identity threshold remain review-only rather than being selected automatically.
+
+The implementation intentionally stops at discovery metadata. Full document parsing, browser fallback policy, and deterministic fact extraction remain TASK-CRAWL-004 scope.

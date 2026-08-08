@@ -396,3 +396,15 @@ Source-discovery ownership is:
 New country providers register through `CountrySourceRegistry` and do not require edits to the discovery core. Provider adapters may return explicit public structured results only; no adapter is allowed to turn a blocked/unavailable response into guessed data.
 
 The worker does not place source-of-truth or publication decisions in AI/provider adapters. Every AI fact is validated and linked to an allowed document block; deterministic facts are created before optional AI processing.
+
+## Verified implementation addendum — TASK-CRAWL-003 (2026-08-08)
+
+Relevant source-discovery boundaries are:
+
+- `modules/sources/official_discovery.py`: robots-aware bounded website discovery, HTML link extraction, sitemap location parsing, canonicalization, and discovery budgets;
+- `modules/sources/ranking.py`: multilingual page-group classification and deterministic URL relevance scores;
+- `modules/sources/query_builder.py`: provider-neutral deterministic query templates;
+- `integrations/fetch/website_discovery.py`: direct HTTP adapter with SSRF-safe redirect validation and response limits;
+- `db/models/search.py` and migration `20260808_0019_search_discovery_metadata.py`: durable query/result metadata.
+
+These components return discovery metadata only. They do not publish facts, treat snippets as evidence, bypass robots/access controls, or import Gemini.

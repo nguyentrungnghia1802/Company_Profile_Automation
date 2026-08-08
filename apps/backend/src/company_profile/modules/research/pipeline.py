@@ -21,6 +21,7 @@ from company_profile.db.models.review import ReviewTask
 from company_profile.db.models.source import DocumentBlock, Source, SourceSnapshot
 from company_profile.integrations.ai.mock_ai import MockAiProvider
 from company_profile.integrations.ai.protocol import AiInputBlock
+from company_profile.integrations.fetch.website_discovery import HttpxWebsiteFetchProvider
 from company_profile.integrations.search.fixture_search import FixtureSearchProvider
 from company_profile.modules.ai.service import AiExtractionService
 from company_profile.modules.conflicts.engine import ConflictEngine
@@ -30,6 +31,7 @@ from company_profile.modules.facts.repository import FactCandidateRepository
 from company_profile.modules.review.service import ReviewTaskService
 from company_profile.modules.sources.discovery import SourceDiscoveryService
 from company_profile.modules.sources.fetcher import WebFetcher
+from company_profile.modules.sources.official_discovery import OfficialWebsiteDiscovery
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -121,20 +123,38 @@ class ResearchPipelineExecutor:
         }
         return state
 
-    async def _source_discovery(self, _job: ResearchJob, state: dict[str, Any]) -> dict[str, Any]:
+    async def _source_discovery(self, job: ResearchJob, state: dict[str, Any]) -> dict[str, Any]:
         """Discover source candidates without invoking AI or semantic processors."""
         company = await self._get_company(state)
         scope = state["scope"]
         provider = self.search_provider
         if provider is None and self.settings.search_provider == "fixture":
             provider = FixtureSearchProvider()
+        website_discoverer = OfficialWebsiteDiscovery(
+            HttpxWebsiteFetchProvider(
+                user_agent=self.settings.fetch_user_agent,
+                timeout=self.settings.fetch_timeout,
+                max_response_bytes=self.settings.fetch_max_response_bytes,
+                max_redirects=self.settings.fetch_max_redirects,
+            ),
+            user_agent=self.settings.fetch_user_agent,
+            max_response_bytes=self.settings.fetch_max_response_bytes,
+            max_depth=self.settings.crawl_max_depth,
+            max_pages_per_domain=self.settings.crawl_max_pages_per_domain,
+            max_pages_per_job=self.settings.crawl_max_pages_per_job,
+            max_sitemaps=self.settings.crawl_max_sitemaps,
+            max_sitemap_urls=self.settings.crawl_max_sitemap_urls,
+        )
         discovery = SourceDiscoveryService(
             self.session,
             search_provider=provider,
             trusted_registry=self.source_registry,
             locale=self.settings.default_locale,
+            website_discoverer=website_discoverer,
         )
-        discovery_state = (await discovery.discover(company, scope)).to_dict()
+        discovery_state = (
+            await discovery.discover(company, scope, research_job_id=job.id)
+        ).to_dict()
         state.update(discovery_state)
         for warning in discovery_state.get("source_discovery_warnings", []):
             self._warn(state, warning)

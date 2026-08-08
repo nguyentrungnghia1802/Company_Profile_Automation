@@ -187,3 +187,7 @@ The affected current-state, architecture, domain-flow, database, codebase, devel
 ## Verified synchronization record — TASK-CRAWL-002 (2026-08-08)
 
 The affected current-state, requirements, architecture, domain-flow, database, codebase, development/testing, operations, decisions/risks, and Roadmap documents now describe the provider-neutral discovery service, Vietnam source registry, typed outcomes, source metadata migration `20260808_0018`, field-specific authority, and the verified validation scope. No API route or OpenAPI contract changed. TASK-CRAWL-003 remains unstarted.
+
+## Verified synchronization record — TASK-CRAWL-003 (2026-08-08)
+
+The affected canonical documents now describe bounded robots-aware official website discovery, multilingual URL ranking, deterministic provider-neutral query generation, `ResearchQuery`/`SearchResult` persistence migration `20260808_0019`, discovery budgets, fail-closed policy behavior, and the explicit boundary before TASK-CRAWL-004. No API/OpenAPI route changed.

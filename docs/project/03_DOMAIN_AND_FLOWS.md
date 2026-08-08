@@ -527,3 +527,9 @@ The discovery portion of the research flow is deterministic and AI-independent:
 7. persist selected or rejected `Source` metadata with the reason.
 
 The current task intentionally consumes supplied sitemap/internal links; network link expansion remains outside this task. Secondary providers cannot replace government/official authority for legal or tax fields because authority is stored and consumed per field.
+
+### 15.1 Verified bounded discovery behavior — TASK-CRAWL-003
+
+When a website is supplied, the worker first normalizes its comparison domain and checks `robots.txt`. A missing robots file is recorded as `ROBOTS_NOT_PUBLISHED`; a disallow or unavailable policy prevents automated page/sitemap fetching. Allowed discovery fetches the homepage, follows only same-domain HTTP/HTTPS links within configured depth/page budgets, reads a bounded number of sitemap documents, and records canonical URL/page-group/relevance metadata. Login, privacy, cart, account, and administrative paths are rejected by deterministic policy.
+
+Search queries are generated from canonical name, aliases, country, domain, registration identifiers, and requested section in both Vietnamese and English where applicable. Each provider result is an auditable discovery record; a same-name result without strong identity evidence is review-only and cannot be automatically selected.

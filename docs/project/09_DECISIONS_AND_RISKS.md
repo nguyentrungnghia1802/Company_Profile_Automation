@@ -272,3 +272,13 @@ The implementation confirms ADR-003, ADR-004, ADR-006, ADR-008, ADR-009, ADR-010
 **Decision:** Keep discovery contracts in `SourceDiscoveryService`, keep country/provider definitions in `CountrySourceRegistry`, and persist `authority_by_field` alongside a compatibility tier. Providers return typed outcomes and explicit candidates only. Default adapters do not fabricate URLs or bypass robots, terms, authentication, CAPTCHA, or anti-bot controls.
 
 **Consequences:** Adding a country/provider is configuration plus an adapter contract, not a core-service rewrite. Live adapters require separate operational approval and may return `manual_required` or `unavailable`; legal/tax fields remain governed by government/official authority maps. Sitemap/internal-link expansion is intentionally left to a later crawl task.
+
+## ADR-020: Bounded robots-aware official website discovery
+
+**Status:** Accepted for TASK-CRAWL-003.
+
+**Context:** An official domain is a high-value discovery signal, but unrestricted sitemap or internal-link traversal can create legal, egress, and resource risk. Search APIs may be unavailable, and same-name results may identify the wrong entity.
+
+**Decision:** Use a provider-neutral website discovery service with direct HTTP as the discovery adapter, explicit robots decisions, SSRF checks before every request/redirect, canonical URL deduplication, multilingual token-based URL ranking, and depth/domain/job/sitemap budgets. Persist deterministic queries and search metadata separately from evidence. Name-only search results remain review-only unless strong identity signals are present.
+
+**Consequences:** A public website can be discovered without AI or SearchProvider, while robots failures and large sitemaps reduce coverage safely. Full parsing, browser fallback, and fact extraction remain a later task; discovery metadata cannot be used as published evidence.
