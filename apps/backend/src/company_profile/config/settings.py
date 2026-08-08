@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     fetch_max_response_bytes: int = 10_000_000  # 10 MB
     fetch_max_redirects: int = 5
     fetch_browser_fallback_enabled: bool = False
+    crawl_max_depth: int = 1
+    crawl_max_pages_per_domain: int = 25
+    crawl_max_pages_per_job: int = 50
+    crawl_max_sitemaps: int = 3
+    crawl_max_sitemap_urls: int = 100
 
     # --- Object Storage ---
     object_storage_provider: str = "local"  # local | gcs

@@ -2169,3 +2169,15 @@ A task linked to an open defect that violates its acceptance criteria remains `[
 - Documentation: affected canonical project documents and both Roadmap copies were updated; no API/OpenAPI contract changed.
 - Known independent debt: DEF-CRAWL-002 remains open for repository-wide baseline validation and does not reproduce as an acceptance defect in this task-scoped verification.
 - Remaining: TASK-CRAWL-003 and later tasks remain untouched.
+
+## RUN-20260808-13 — TASK-CRAWL-003 official website discovery and URL ranking
+
+- Roadmap task(s): TASK-CRAWL-003 only; TASK-CRAWL-004 was not started.
+- Status before: `[ ]`.
+- Status after: `[x]` under `docs/agent/AGENT.md`.
+- Implemented: bounded robots-aware official website discovery, SSRF-safe direct HTTP adapter, sitemap/homepage/internal-link extraction, canonical URL deduplication, multilingual page-group ranking, deterministic bilingual provider-neutral query templates, same-name review policy, and durable `ResearchQuery`/`SearchResult` metadata migration `20260808_0019`.
+- Verification: clean task-only backend suite passed (133 tests, 1 warning); targeted source/search/pipeline regression suite passed (12 tests); task-scoped Ruff, format, and mypy passed; docs, docs-sync, requirement-ID, secrets, and OpenAPI checks passed; migration `20260808_0019` passed isolated SQLite upgrade/downgrade/re-upgrade; migration head/history resolved to `20260808_0019`.
+- Documentation: affected canonical project documents and both Roadmap copies were updated; no API/OpenAPI contract changed.
+- Known independent debt: DEF-CRAWL-002 remains open for repository-wide baseline validation. The mixed worktree still has the pre-existing dirty `CompanyService` test failure and OpenAPI drift from user-owned API edits; clean task-only validation is green.
+- Commit/branch: `task/crawl-003-official-discovery` (final commit recorded in the Git handoff).
+- Remaining: TASK-CRAWL-004 and later tasks remain untouched.

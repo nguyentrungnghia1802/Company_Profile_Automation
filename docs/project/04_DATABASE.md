@@ -741,3 +741,7 @@ Forward migration `20260808_0018_source_discovery_metadata.py` adds the followin
 - `selection_reason` and `rejection_reason`.
 
 The ORM `Source.authority_for_field()` method uses the field map first and retains `authority_tier` only as a compatibility fallback for older/directly-created rows. The migration was verified by SQLite upgrade, downgrade, and re-upgrade from `20260808_0017`; the repository head is now `20260808_0018`. The pre-existing full-chain PostgreSQL/SQLite limitations remain recorded in the Roadmap defect ledger.
+
+## Verified schema addendum — TASK-CRAWL-003 (2026-08-08)
+
+Migration `20260808_0019_search_discovery_metadata` now materializes the planned query/result tables. `research_queries` is workspace- and job-scoped and stores deterministic/user query text, language, purpose, requested section, provider, generator, and creation time. `search_results` is workspace- and query-scoped and stores provider, normalized/final URL, title, snippet, rank, provider metadata, selection status/reason, entity-match score, source-type estimate, result timestamp, and creation time. The selection status check permits `candidate`, `review`, `selected`, or `rejected`; search snippets remain discovery metadata and never become evidence rows.

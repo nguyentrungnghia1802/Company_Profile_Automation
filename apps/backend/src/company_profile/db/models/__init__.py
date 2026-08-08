@@ -11,8 +11,8 @@ from company_profile.db.models.conflict import Conflict, ConflictCandidate
 from company_profile.db.models.draft import DraftFieldSelection, ProfileDraft
 from company_profile.db.models.export import ExportJob
 from company_profile.db.models.fact import Evidence, FactCandidate
-from company_profile.db.models.identity import User, Workspace, WorkspaceMember
 from company_profile.db.models.fit_assessment import ProgramFitAssessment
+from company_profile.db.models.identity import User, Workspace, WorkspaceMember
 from company_profile.db.models.policy import PolicySet
 from company_profile.db.models.publication import (
     ProfileFieldEvidence,
@@ -21,6 +21,7 @@ from company_profile.db.models.publication import (
 )
 from company_profile.db.models.research import ResearchJob, ResearchTask
 from company_profile.db.models.review import ReviewDecision, ReviewTask
+from company_profile.db.models.search import ResearchQuery, SearchResult
 from company_profile.db.models.source import (
     DocumentBlock,
     DomainPolicy,
@@ -50,9 +51,11 @@ __all__ = [
     "ProfileVersion",
     "ProgramFitAssessment",
     "ResearchJob",
+    "ResearchQuery",
     "ResearchTask",
     "ReviewDecision",
     "ReviewTask",
+    "SearchResult",
     "Source",
     "SourceFetchAttempt",
     "SourceSnapshot",
