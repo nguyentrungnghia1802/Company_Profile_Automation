@@ -475,4 +475,22 @@ ResearchPipelineExecutor
        -> ResearchQuery / SearchResult audit rows
 ```
 
-`OfficialWebsiteDiscovery` is deliberately bounded by crawl depth, per-domain pages, per-job pages, sitemap-document count, and sitemap-URL count. It fails closed when robots policy is unavailable or disallows the homepage, revalidates SSRF safety before provider calls and redirects, and never treats sitemap or search text as evidence. The browser/parser/fact-extraction coordinator remains TASK-CRAWL-004 scope.
+`OfficialWebsiteDiscovery` is deliberately bounded by crawl depth, per-domain pages, per-job pages, sitemap-document count, and sitemap-URL count. It fails closed when robots policy is unavailable or disallows the homepage, revalidates SSRF safety before provider calls and redirects, and never treats sitemap or search text as evidence. The acquisition output is handed to the verified TASK-CRAWL-004 crawl/parser/fact-extraction boundary below.
+
+## Verified implementation addendum — TASK-CRAWL-004 (2026-08-09)
+
+The runtime fetch/parser boundary is now:
+
+```text
+ResearchPipelineExecutor
+  -> CrawlCoordinator
+       -> WebFetcher (direct HTTP, manual redirect/DNS/IP validation)
+       -> bounded same-domain link queue
+       -> PlaywrightBrowserAdapter (policy and budget controlled fallback)
+       -> immutable SourceSnapshot / SourceFetchAttempt
+       -> DocumentParser | StructuredParser | PDFDocumentParser
+       -> stable DocumentBlock evidence locations
+       -> DeterministicFactExtractor
+```
+
+The coordinator never crosses a seed domain, exceeds depth/domain/job budgets, or uses browser mode as an authentication, CAPTCHA, anti-bot, or SSRF bypass. The parser records source language, parser version, block-local offsets, section paths, JSON field paths, and provenance. AI remains downstream and optional; deterministic identity/registry facts are created first.

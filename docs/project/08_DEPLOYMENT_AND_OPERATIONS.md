@@ -448,3 +448,9 @@ Worker operations treat AI outage/unavailability as a limited-result condition w
 ## Verified implementation addendum — TASK-CRAWL-003 (2026-08-08)
 
 Bounded website discovery is configured by `CRAWL_MAX_DEPTH`, `CRAWL_MAX_PAGES_PER_DOMAIN`, `CRAWL_MAX_PAGES_PER_JOB`, `CRAWL_MAX_SITEMAPS`, and `CRAWL_MAX_SITEMAP_URLS` in addition to the existing fetch timeout/byte/redirect settings. The default values are depth `1`, `25` pages/domain, `50` pages/job, `3` sitemap documents, and `100` sitemap URLs per document. Operators must review robots/terms and domain policy before enabling live egress; a robots error is fail-closed and produces a typed warning rather than an implicit bypass. Search snippets and sitemap links are discovery signals only.
+
+## Verified implementation addendum — TASK-CRAWL-004 (2026-08-09)
+
+Fetch configuration now also includes `FETCH_MAX_DECOMPRESSED_BYTES`, `FETCH_MAX_RETRIES`, `FETCH_RATE_LIMIT_SECONDS`, `FETCH_MAX_CONCURRENCY_PER_DOMAIN`, and `FETCH_BROWSER_FALLBACK_MAX_PAGES`. The default browser fallback remains disabled. Direct HTTP responses are manually redirect-followed so each destination receives URL/DNS/IP validation; unsupported MIME, oversized/decompressed, retry-exhausted, policy, and parser outcomes are safe audit records rather than raw response bodies.
+
+Operators must treat `pypdf` parsing and Playwright rendering as untrusted-worker workloads. Valid public PDFs are stored as immutable snapshots with page evidence; malformed/encrypted/oversized PDFs produce no evidence blocks and do not fail the whole job. Browser fallback is permitted only after direct HTTP is insufficient, policy allows it, the page is not an access-control response, and the per-fetcher budget remains. Live provider enablement still requires terms, robots, egress, rate, and legal review.

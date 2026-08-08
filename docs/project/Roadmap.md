@@ -2181,3 +2181,15 @@ A task linked to an open defect that violates its acceptance criteria remains `[
 - Known independent debt: DEF-CRAWL-002 remains open for repository-wide baseline validation. The mixed worktree still has the pre-existing dirty `CompanyService` test failure and OpenAPI drift from user-owned API edits; clean task-only validation is green.
 - Commit/branch: `task/crawl-003-official-discovery` (final commit recorded in the Git handoff).
 - Remaining: TASK-CRAWL-004 and later tasks remain untouched.
+
+## RUN-20260809-14 — TASK-CRAWL-004 crawl, parse, and deterministic extraction
+
+- Roadmap task(s): TASK-CRAWL-004 only; TASK-CRAWL-005 was not started.
+- Status before: `[ ]`.
+- Status after: `[x]` under `docs/agent/AGENT.md`.
+- Implemented: bounded `CrawlCoordinator`; direct HTTP-first fetching with redirect/DNS/IP/size/decompression/MIME/rate/concurrency/retry controls; policy- and budget-gated browser fallback; deterministic HTML, structured JSON, and safe PDF parsing; stable `DocumentBlock` evidence metadata; migration `20260809_0020`; and labelled/structured deterministic facts.
+- Verification: task-scoped crawl/parse/extraction and related source/pipeline/service suite passed (25 tests); clean task-only backend suite passed (140 tests, 1 warning); task-scoped Ruff check/format and source mypy passed; docs, docs-sync, requirement-ID, secrets, and clean OpenAPI drift checks passed; isolated SQLite migration `20260809_0020` upgrade/downgrade/re-upgrade passed; migration head/history resolved to `20260809_0020`.
+- Documentation: affected canonical project documents, both Roadmap copies, and local `docs/agent/task.md` status/evidence were updated; no API/OpenAPI contract changed.
+- Known independent debt: DEF-CRAWL-002 remains open. The mixed primary worktree still has the unrelated dirty `CompanyService` test failure and OpenAPI drift from user-owned API edits; neither reproduces in the clean task-only validation worktree.
+- Commit/branch: `task/crawl-004-crawl-parse-extraction`, commit recorded in the Git handoff.
+- Remaining: TASK-CRAWL-005 and later tasks remain untouched.
