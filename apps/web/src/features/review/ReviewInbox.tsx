@@ -16,6 +16,9 @@ interface ReviewTask {
   id: string;
   workspace_id: string;
   company_id: string;
+  research_job_id?: string;
+  conflict_id?: string;
+  fact_candidate_id?: string;
   task_type: string;
   status: string;
   priority: string;
@@ -113,15 +116,30 @@ export const ReviewInbox: React.FC<ReviewInboxProps> = ({
     }
   };
 
+  const handleReopen = async (taskId: string) => {
+    const reason = window.prompt("Reason for reopening this review task:", "New evidence requires review.");
+    if (!reason?.trim()) return;
+    try {
+      const client = getApiClient();
+      await client.reopenReviewTask(token, workspaceId, taskId, { reason: reason.trim() });
+      await fetchTasks();
+    } catch (err: any) {
+      alert(`Reopen failed: ${err.message}`);
+    }
+  };
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-100 flex items-[#38bdf8] items-center gap-2">
+          <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
             <span>📋</span> Human Review Inbox
           </h2>
           <p className="text-sm text-slate-400">
             Tasks requiring human reviewer evaluation, verification, and publication approval.
+          </p>
+          <p className="text-xs text-emerald-400 mt-1">
+            AI-independent: every task points to acquisition, deterministic facts, conflicts, or evidence.
           </p>
         </div>
 
@@ -134,6 +152,7 @@ export const ReviewInbox: React.FC<ReviewInboxProps> = ({
             <option value="">All Statuses</option>
             <option value="open">Open</option>
             <option value="in_review">In Review</option>
+            <option value="changes_requested">Changes Requested</option>
             <option value="completed">Completed</option>
             <option value="reopened">Reopened</option>
           </select>
@@ -200,7 +219,7 @@ export const ReviewInbox: React.FC<ReviewInboxProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
-                {task.status === "open" && (
+                {(task.status === "open" || task.status === "reopened" || task.status === "changes_requested") && (
                   <button
                     onClick={() => handleClaim(task.id)}
                     className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold py-2 px-3 rounded-lg"
@@ -223,6 +242,14 @@ export const ReviewInbox: React.FC<ReviewInboxProps> = ({
                       Release
                     </button>
                   </>
+                )}
+                {task.status === "completed" && (
+                  <button
+                    onClick={() => handleReopen(task.id)}
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium py-2 px-3 rounded-lg border border-slate-700"
+                  >
+                    Reopen
+                  </button>
                 )}
               </div>
             </div>

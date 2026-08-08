@@ -15,6 +15,16 @@ export interface SourceItem {
   authority_tier: number;
   status: string;
   entity_match_score?: number | null;
+  discovered_via?: string;
+  provider?: string | null;
+  selection_reason?: string | null;
+  rejection_reason?: string | null;
+  latest_fetch_status?: string | null;
+  latest_fetch_outcome?: string | null;
+  latest_fetch_policy_result?: string | null;
+  latest_parser_status?: string | null;
+  latest_parser_version?: string | null;
+  latest_fetched_at?: string | null;
   first_discovered_at: string;
 }
 
@@ -27,6 +37,10 @@ export interface FetchAttempt {
   http_status?: number;
   byte_count: number;
   outcome_code: string;
+  redirect_count?: number;
+  retry_count?: number;
+  policy_result?: string;
+  retryable?: boolean;
   error_message?: string;
 }
 
@@ -36,6 +50,12 @@ export interface DocumentBlockItem {
   block_type: string;
   text_content: string;
   block_hash: string;
+  language?: string;
+  parser_version?: string;
+  page_number?: number | null;
+  section_path?: string[];
+  location?: Record<string, unknown>;
+  block_metadata?: Record<string, unknown>;
 }
 
 interface SourcesListProps {
@@ -186,7 +206,10 @@ export const SourcesList: React.FC<SourcesListProps> = ({ companyId }) => {
                     {s.domain}
                   </a>
                   <div style={{ fontSize: "12px", color: "#57606a", marginTop: "2px" }}>
-                    Type: {s.source_type} | URL: {s.normalized_url}
+                    Type: {s.source_type} | Domain: {s.domain} | Discovered via: {s.discovered_via || "manual_url"}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#57606a", marginTop: "2px" }}>
+                    Provider: {s.provider || "—"} | Authority: Tier {s.authority_tier} | Entity match: {s.entity_match_score == null ? "—" : `${(s.entity_match_score * 100).toFixed(0)}%`} | Selection: {s.selection_reason || "—"}
                   </div>
                 </div>
 
@@ -202,6 +225,19 @@ export const SourcesList: React.FC<SourcesListProps> = ({ companyId }) => {
                     }}
                   >
                     Tier {s.authority_tier}
+                  </span>
+
+                  <span
+                    style={{
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      backgroundColor: s.latest_parser_status === "success" ? "#dafbe1" : "#fff8c5",
+                      color: s.latest_parser_status === "success" ? "#1a7f37" : "#9a6700",
+                    }}
+                  >
+                    Parse: {s.latest_parser_status || "pending"}
                   </span>
 
                   <span
@@ -240,6 +276,9 @@ export const SourcesList: React.FC<SourcesListProps> = ({ companyId }) => {
                   ) : (
                     <>
                       <div style={{ fontWeight: 600, marginBottom: "6px" }}>Fetch Attempt History:</div>
+                      <div style={{ color: "#57606a", marginBottom: "8px" }}>
+                        Fetch: {s.latest_fetch_status || s.status} | Outcome: {s.latest_fetch_outcome || "—"} | Policy: {s.latest_fetch_policy_result || "—"} | Last fetched: {s.latest_fetched_at ? new Date(s.latest_fetched_at).toLocaleString() : "—"}
+                      </div>
                       {attempts.length === 0 ? (
                         <div style={{ color: "#666", marginBottom: "12px" }}>No fetch attempts logged yet.</div>
                       ) : (
@@ -250,6 +289,7 @@ export const SourcesList: React.FC<SourcesListProps> = ({ companyId }) => {
                               <th style={{ padding: "4px" }}>Outcome</th>
                               <th style={{ padding: "4px" }}>HTTP Status</th>
                               <th style={{ padding: "4px" }}>Bytes</th>
+                              <th style={{ padding: "4px" }}>Policy</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -259,6 +299,7 @@ export const SourcesList: React.FC<SourcesListProps> = ({ companyId }) => {
                                 <td style={{ padding: "4px" }}>{att.outcome_code}</td>
                                 <td style={{ padding: "4px" }}>{att.http_status ?? "N/A"}</td>
                                 <td style={{ padding: "4px" }}>{att.byte_count}</td>
+                                <td style={{ padding: "4px" }}>{att.policy_result || "—"}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -272,7 +313,7 @@ export const SourcesList: React.FC<SourcesListProps> = ({ companyId }) => {
                         <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxHeight: "200px", overflowY: "auto" }}>
                           {blocks.map((blk) => (
                             <div key={blk.id} style={{ padding: "6px", backgroundColor: "#f6f8fa", borderRadius: "4px" }}>
-                              <span style={{ fontWeight: 600, color: "#0969da" }}>[{blk.block_key}] ({blk.block_type}): </span>
+                              <span style={{ fontWeight: 600, color: "#0969da" }}>[{blk.block_key}] ({blk.block_type}, {blk.language || "und"}): </span>
                               <span>{blk.text_content}</span>
                             </div>
                           ))}

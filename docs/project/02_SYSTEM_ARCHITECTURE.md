@@ -494,3 +494,9 @@ ResearchPipelineExecutor
 ```
 
 The coordinator never crosses a seed domain, exceeds depth/domain/job budgets, or uses browser mode as an authentication, CAPTCHA, anti-bot, or SSRF bypass. The parser records source language, parser version, block-local offsets, section paths, JSON field paths, and provenance. AI remains downstream and optional; deterministic identity/registry facts are created first.
+
+## Verified implementation addendum — TASK-CRAWL-005 (2026-08-09)
+
+The durable worker state now carries an explicit `ai` outcome (`completed`, `partial`, `skipped`, or `unavailable`) with stable reason/failure codes and independent statuses for semantic extraction, translation, comparison, and summary. The state also carries provider outcomes, acquisition counts, warnings, deterministic fact counts, conflict IDs, and idempotent review-task IDs so the frontend can render progress from persisted task output rather than infer success from a generic job error.
+
+The review boundary is deliberately downstream of deterministic acquisition and does not depend on an AI provider. `ReviewTaskService` is reused with deterministic deduplication by workspace/company/job/reason title. A missing source or provider produces a typed warning/review task and a partial result; it never creates a guessed URL, fact, or summary. No new table or migration was needed because the existing review, source-attempt, snapshot, block, and fact schemas already provide the required audit boundary.

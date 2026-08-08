@@ -486,3 +486,14 @@ uv run --extra dev mypy <TASK-CRAWL-004 source files>             # passed
 ```
 
 Coverage includes HTML metadata/JSON-LD/links/sections, structured JSON field paths and provenance, real page-aware PDF parsing, malformed/oversized PDF safety, bounded same-domain crawl, redirect SSRF revalidation, retry/MIME audit, browser safety, and deterministic candidates with exact block evidence. The isolated migration check covers `20260809_0020` upgrade/downgrade/re-upgrade. The clean task-only full backend suite is the completion gate; mixed-worktree failures from unrelated user changes remain reported separately.
+
+## Verified validation addendum — TASK-CRAWL-005 (2026-08-09)
+
+The deterministic task-scoped suite uses mocked HTTP/provider adapters only and covers AI-disabled official-site JSON-LD/Vietnamese acquisition, missing Gemini key, successful mock-AI flow, AI timeout after crawl, no usable source, configured/unconfigured SearchProvider, official/trusted provider outages, idempotent ambiguity/provider/high-impact review tasks, urgent deterministic conflict review, source API metadata, and the inherited crawl/parser/browser/PDF/robots/SSRF/sitemap/duplicate/same-name/partial-success cases.
+
+```text
+uv run --extra dev pytest apps/backend/tests/test_task005_ai_disabled_e2e.py apps/backend/tests/test_research_pipeline.py apps/backend/tests/test_research_service.py apps/backend/tests/test_source_discovery.py apps/backend/tests/test_official_discovery.py apps/backend/tests/test_sources.py apps/backend/tests/test_sources_e2e.py apps/backend/tests/test_sources_api.py apps/backend/tests/test_crawl_parse_extraction.py apps/backend/tests/test_document_parsers.py apps/backend/tests/test_http_safety.py apps/backend/tests/test_browser_fallback.py apps/backend/tests/test_review.py apps/backend/tests/test_research_api.py -q  # 51 passed
+bun run typecheck --cwd apps/web                                                     # passed
+```
+
+Task-scoped Ruff, format, mypy, docs, secret, requirement-ID, OpenAPI drift, and clean task-only full-suite results are recorded in the TASK-CRAWL-005 Roadmap entry. No automated test uses live Internet, provider credentials, or live Gemini.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import tempfile
 from typing import TYPE_CHECKING, Any
 
@@ -39,11 +40,12 @@ class TimeoutAiProvider:
 
     async def run_extraction(
         self,
-        _operation: str,
-        _blocks: list[AiInputBlock],
-        _company_name: str,
+        operation: str,
+        blocks: list[AiInputBlock],
+        company_name: str,
         **_kwargs: Any,
     ) -> AiRunResult:
+        del operation, blocks, company_name
         raise TimeoutError("simulated Gemini timeout")
 
     async def run_translation(
@@ -126,6 +128,11 @@ async def test_gemini_timeout_preserves_acquisition_artifacts(
     assert refreshed_job is not None
     assert refreshed_job.status == "partial_success"
     assert "AI_EXTRACTION_FAILED" in (refreshed_job.error_message or "")
+    final_task = next(task for task in refreshed_job.tasks if task.step_type == "finalize")
+    final_state = json.loads(final_task.output_payload or "{}")
+    assert final_state["ai"]["reason"] == "AI_TIMEOUT"
+    assert final_state["ai"]["semantic_extraction"] == "skipped"
+    assert final_state["ai"]["translation"] == "skipped"
 
     snapshots = (await session.execute(select(SourceSnapshot))).scalars().all()
     blocks = (await session.execute(select(DocumentBlock))).scalars().all()
