@@ -471,6 +471,133 @@ export class ApiClient {
     );
     return res.data || [];
   }
+
+  async listReviewTasks(
+    token: string,
+    workspaceId: string,
+    params?: { companyId?: string; status?: string; taskType?: string }
+  ): Promise<any[]> {
+    const q = new URLSearchParams();
+    if (params?.companyId) q.append("company_id", params.companyId);
+    if (params?.status) q.append("status", params.status);
+    if (params?.taskType) q.append("task_type", params.taskType);
+    const queryStr = q.toString() ? `?${q.toString()}` : "";
+    return this.request<any[]>(`/review-tasks${queryStr}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async claimReviewTask(token: string, workspaceId: string, taskId: string): Promise<any> {
+    return this.request<any>(`/review-tasks/${encodeURIComponent(taskId)}/claim`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async releaseReviewTask(token: string, workspaceId: string, taskId: string): Promise<any> {
+    return this.request<any>(`/review-tasks/${encodeURIComponent(taskId)}/release`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async completeReviewTask(
+    token: string,
+    workspaceId: string,
+    taskId: string,
+    payload: { decision_code: string; reason: string; expected_row_version?: number }
+  ): Promise<any> {
+    return this.request<any>(`/review-tasks/${encodeURIComponent(taskId)}/complete`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async reopenReviewTask(
+    token: string,
+    workspaceId: string,
+    taskId: string,
+    payload: { reason: string }
+  ): Promise<any> {
+    return this.request<any>(`/review-tasks/${encodeURIComponent(taskId)}/reopen`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async listCompanyProfileDrafts(token: string, workspaceId: string, companyId: string): Promise<any[]> {
+    return this.request<any[]>(`/companies/${encodeURIComponent(companyId)}/profile-drafts`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async assembleCompanyProfileDraft(
+    token: string,
+    workspaceId: string,
+    companyId: string,
+    title: string = "Draft Profile"
+  ): Promise<any> {
+    return this.request<any>(
+      `/companies/${encodeURIComponent(companyId)}/profile-drafts?title=${encodeURIComponent(title)}`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+  }
+
+  async requestProfileDraftReview(token: string, workspaceId: string, draftId: string): Promise<any> {
+    return this.request<any>(`/profile-drafts/${encodeURIComponent(draftId)}/request-review`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async publishProfileDraft(
+    token: string,
+    workspaceId: string,
+    draftId: string,
+    payload: { publication_note?: string }
+  ): Promise<any> {
+    return this.request<any>(`/profile-drafts/${encodeURIComponent(draftId)}/publish`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getCurrentCompanyProfile(token: string, workspaceId: string, companyId: string): Promise<any> {
+    return this.request<any>(`/companies/${encodeURIComponent(companyId)}/profile`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async listCompanyProfileVersions(token: string, workspaceId: string, companyId: string): Promise<any[]> {
+    return this.request<any[]>(`/companies/${encodeURIComponent(companyId)}/profiles`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async getProfileVersionDetail(token: string, workspaceId: string, versionId: string): Promise<any> {
+    return this.request<any>(`/profiles/${encodeURIComponent(versionId)}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async withdrawPublishedProfile(
+    token: string,
+    workspaceId: string,
+    versionId: string,
+    payload: { reason: string }
+  ): Promise<any> {
+    return this.request<any>(`/profiles/${encodeURIComponent(versionId)}/withdraw`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+  }
 }
 
 let defaultClientInstance: ApiClient | null = null;

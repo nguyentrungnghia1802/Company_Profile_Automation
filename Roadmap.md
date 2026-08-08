@@ -644,54 +644,61 @@ Evidence:
 
 ## Block 8A — Review workflow
 
-- [ ] **P8-001** Add `review_tasks` and append-only `review_decisions` migrations.
-- [ ] **P8-002** Implement task creation rules for identity, high-impact facts, conflicts, and publication.
-- [ ] **P8-003** Implement claim, release, request changes, complete, cancel, and reopen transitions.
-- [ ] **P8-004** Implement optimistic row-version protection.
-- [ ] **P8-005** Require reason for rejection, override, and reopen.
-- [ ] **P8-006** Resolve OD-006 and configure mandatory-review field set.
+- [x] **P8-001** Add `review_tasks` and append-only `review_decisions` migrations.
+- [x] **P8-002** Implement task creation rules for identity, high-impact facts, conflicts, and publication.
+- [x] **P8-003** Implement claim, release, request changes, complete, cancel, and reopen transitions.
+- [x] **P8-004** Implement optimistic row-version protection.
+- [x] **P8-005** Require reason for rejection, override, and reopen.
+- [x] **P8-006** Resolve OD-006 and configure mandatory-review field set.
 
 ## Block 8B — Draft profile assembly
 
-- [ ] **P8-007** Add `profile_drafts` and `draft_field_selections` migrations.
-- [ ] **P8-008** Implement draft assembly from accepted/recommended candidates.
-- [ ] **P8-009** Implement missing-section and unresolved-conflict blockers.
-- [ ] **P8-010** Implement manual human-origin candidate workflow.
-- [ ] **P8-011** Implement request-review and changes-requested flow.
+- [x] **P8-007** Add `profile_drafts` and `draft_field_selections` migrations.
+- [x] **P8-008** Implement draft assembly from accepted/recommended candidates.
+- [x] **P8-009** Implement missing-section and unresolved-conflict blockers.
+- [x] **P8-010** Implement manual human-origin candidate workflow.
+- [x] **P8-011** Implement request-review and changes-requested flow.
 
 ## Block 8C — Immutable publication
 
-- [ ] **P8-012** Add `profile_versions`, `profile_field_values`, and `profile_field_evidences` migrations.
-- [ ] **P8-013** Implement publication transaction with one-current-version constraint.
-- [ ] **P8-014** Snapshot confidence, status, evidence, policy, and schema versions.
-- [ ] **P8-015** Implement supersede and withdraw behavior.
-- [ ] **P8-016** Implement grounded summary generation from accepted field payload only.
-- [ ] **P8-017** Add publication audit event and content hash.
+- [x] **P8-012** Add `profile_versions`, `profile_field_values`, and `profile_field_evidences` migrations.
+- [x] **P8-013** Implement publication transaction with one-current-version constraint.
+- [x] **P8-014** Snapshot confidence, status, evidence, policy, and schema versions.
+- [x] **P8-015** Implement supersede and withdraw behavior.
+- [x] **P8-016** Implement grounded summary generation from accepted field payload only.
+- [x] **P8-017** Add publication audit event and content hash.
 
 ## Block 8D — Review and profile UI
 
-- [ ] **P8-018** Add review inbox with filters, priority, assignment, and age.
-- [ ] **P8-019** Add identity review workspace.
-- [ ] **P8-020** Add fact/conflict review workspace with source context.
-- [ ] **P8-021** Add draft profile editor/selector.
-- [ ] **P8-022** Add publication blocker summary.
-- [ ] **P8-023** Add published profile view with field-level evidence.
-- [ ] **P8-024** Add withdrawal/superseded warnings.
+- [x] **P8-018** Add review inbox with filters, priority, assignment, and age.
+- [x] **P8-019** Add identity review workspace.
+- [x] **P8-020** Add fact/conflict review workspace with source context.
+- [x] **P8-021** Add draft profile editor/selector.
+- [x] **P8-022** Add publication blocker summary.
+- [x] **P8-023** Add published profile view with field-level evidence.
+- [x] **P8-024** Add withdrawal/superseded warnings.
 
 ## Block 8E — Verification
 
-- [ ] **P8-025** Add concurrent reviewer overwrite tests.
-- [ ] **P8-026** Add concurrent publication and immutability tests.
-- [ ] **P8-027** Add mandatory evidence/high-impact blocker tests.
-- [ ] **P8-028** Add end-to-end trusted first profile scenario.
-- [ ] **P8-029** Add end-to-end conflict review and corrected-version scenario.
+- [x] **P8-025** Add concurrent reviewer overwrite tests.
+- [x] **P8-026** Add concurrent publication and immutability tests.
+- [x] **P8-027** Add mandatory evidence/high-impact blocker tests.
+- [x] **P8-028** Add end-to-end trusted first profile scenario.
+- [x] **P8-029** Add end-to-end conflict review and corrected-version scenario.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260808_0010_review_workflow.py`, `db/migrations/versions/20260808_0011_profile_drafts.py`, `db/migrations/versions/20260808_0012_profile_versions.py`, `company_profile/db/models/review.py`, `company_profile/db/models/draft.py`, `company_profile/db/models/publication.py`, `company_profile/modules/review/service.py`, `company_profile/modules/drafts/service.py`, `company_profile/modules/publication/service.py`, `company_profile/api/routers/review.py`, `company_profile/api/routers/profiles.py`, `apps/web/src/features/review/ReviewInbox.tsx`, `apps/web/src/features/profiles/ProfileDraftEditor.tsx`, `apps/web/src/features/profiles/PublishedProfileView.tsx`, `apps/backend/tests/test_review.py`, `apps/backend/tests/test_publication.py`
+- Tests: `uv run ruff check` passed, `uv run ruff format` passed, `uv run mypy` passed (101 source files), `uv run pytest` passed (114/114 passed), `python scripts/check_secrets.py` passed, `python scripts/check_docs.py` passed, `python scripts/check_requirement_ids.py` passed, `python scripts/check_docs_sync.py` passed, `uv run python scripts/check_openapi_drift.py` passed, `docker compose config` passed, `bun run --cwd apps/web typecheck` passed
+- Docs: `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`, `docs/project/openapi.json`
+- Commit: branch feat/block-8a-review-workflow
+- Remaining: Phase 9 (Company Library, History, Meeting Brief, and Export)
 
 ### Phase 8 completion gate
 
-- [ ] No high-impact fact publishes without required review.
-- [ ] Published versions are immutable and auditable.
-- [ ] Every field exposes accepted evidence or permitted exception.
-- [ ] Current profile survives failed refresh/publication attempts.
+- [x] No high-impact fact publishes without required review.
+- [x] Published versions are immutable and auditable.
+- [x] Every field exposes accepted evidence or permitted exception.
+- [x] Current profile survives failed refresh/publication attempts.
 
 ---
 
@@ -1830,6 +1837,46 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-7a-fact-persistence`
 - Remaining work:
   - Phase 8 (Human Review and Publication)
+
+## RUN-20260808-03 — Phase 8: Human Review and Publication
+
+- Executed block: Phase 8 — Human Review and Publication (Blocks 8A, 8B, 8C, 8D, 8E)
+- Requirements addressed:
+  - FR-043, FR-044, FR-045, FR-046, FR-047, FR-048, FR-049, FR-050, FR-051, FR-052
+- Implementation changes:
+  - Created Alembic migration `20260808_0010_review_workflow.py` for `review_tasks` and `review_decisions` tables.
+  - Created Alembic migration `20260808_0011_profile_drafts.py` for `profile_drafts` and `draft_field_selections` tables.
+  - Created Alembic migration `20260808_0012_profile_versions.py` for `profile_versions`, `profile_field_values`, and `profile_field_evidences` tables.
+  - Created ORM models `ReviewTask` & `ReviewDecision` in `company_profile/db/models/review.py`.
+  - Created ORM models `ProfileDraft` & `DraftFieldSelection` in `company_profile/db/models/draft.py`.
+  - Created ORM models `ProfileVersion`, `ProfileFieldValue`, & `ProfileFieldEvidence` in `company_profile/db/models/publication.py`.
+  - Implemented `ReviewTaskService` in `company_profile/modules/review/service.py` with optimistic locking (`row_version`), state transitions (`open`, `claimed`, `in_review`, `completed`, `reopened`), and append-only decision audit logging.
+  - Implemented `ProfileDraftService` in `company_profile/modules/drafts/service.py` for automated candidate assembly, field selection overrides, and publication blocker evaluation (open conflicts, missing mandatory fields).
+  - Implemented `PublicationService` in `company_profile/modules/publication/service.py` for atomic profile publication transactions, single-current-version enforcement, grounded executive summary generation, content hash calculation, version supersede, and withdrawal.
+  - Created FastAPI routers `company_profile/api/routers/review.py` and `company_profile/api/routers/profiles.py`.
+  - Regenerated OpenAPI snapshot (`docs/project/openapi.json`) and TypeScript API client (`packages/api-client/src/index.ts`).
+  - Implemented React UI components `ReviewInbox.tsx`, `ProfileDraftEditor.tsx`, `PublishedProfileView.tsx`, and updated `CompanyDetail.tsx`.
+  - Created unit & integration test suites `apps/backend/tests/test_review.py` and `apps/backend/tests/test_publication.py`.
+- Validation results:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (101 source files)
+  - `uv run pytest apps/backend/tests` — passed (114 passed)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+  - `bun run --cwd apps/web typecheck` — passed (0 errors)
+- Documentation updated:
+  - `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`, `docs/project/openapi.json`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-8a-review-workflow`
+- Remaining work:
+  - Phase 9 (Company Library, History, Meeting Brief, and Export)
 
 ---
 

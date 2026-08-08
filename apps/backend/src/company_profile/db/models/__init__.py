@@ -7,9 +7,16 @@ from company_profile.db.models.company import (
     CompanyRelationship,
 )
 from company_profile.db.models.conflict import Conflict, ConflictCandidate
+from company_profile.db.models.draft import DraftFieldSelection, ProfileDraft
 from company_profile.db.models.fact import Evidence, FactCandidate
 from company_profile.db.models.identity import User, Workspace, WorkspaceMember
+from company_profile.db.models.publication import (
+    ProfileFieldEvidence,
+    ProfileFieldValue,
+    ProfileVersion,
+)
 from company_profile.db.models.research import ResearchJob, ResearchTask
+from company_profile.db.models.review import ReviewDecision, ReviewTask
 from company_profile.db.models.source import (
     DocumentBlock,
     DomainPolicy,
@@ -27,10 +34,17 @@ __all__ = [
     "ConflictCandidate",
     "DocumentBlock",
     "DomainPolicy",
+    "DraftFieldSelection",
     "Evidence",
     "FactCandidate",
+    "ProfileDraft",
+    "ProfileFieldEvidence",
+    "ProfileFieldValue",
+    "ProfileVersion",
     "ResearchJob",
     "ResearchTask",
+    "ReviewDecision",
+    "ReviewTask",
     "Source",
     "SourceFetchAttempt",
     "SourceSnapshot",

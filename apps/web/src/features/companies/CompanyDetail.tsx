@@ -7,6 +7,9 @@ import { ResearchProgressTracker } from "../research/ResearchProgressTracker";
 import { SourcesList } from "../sources/SourcesList";
 import { FactCandidatesList } from "../facts/FactCandidatesList";
 import { ConflictsList } from "../conflicts/ConflictsList";
+import { PublishedProfileView } from "../profiles/PublishedProfileView";
+import { ProfileDraftEditor } from "../profiles/ProfileDraftEditor";
+import { ReviewInbox } from "../review/ReviewInbox";
 
 export interface CompanyDetailItem {
   id: string;
@@ -34,7 +37,10 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"sources" | "facts" | "conflicts">("facts");
+  const [activeTab, setActiveTab] = useState<"published" | "drafts" | "facts" | "conflicts" | "sources" | "inbox">("published");
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("vcps_access_token") || "" : "";
+  const workspaceId = activeWorkspace?.id || "";
 
   // Edit form state
   const [editName, setEditName] = useState("");
@@ -225,7 +231,37 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
           </div>
 
           <div style={{ marginTop: "24px" }}>
-            <div style={{ display: "flex", borderBottom: "1px solid #d0d7de", gap: "16px", marginBottom: "16px" }}>
+            <div style={{ display: "flex", borderBottom: "1px solid #d0d7de", gap: "16px", marginBottom: "16px", overflowX: "auto" }}>
+              <button
+                onClick={() => setActiveTab("published")}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  border: "none",
+                  borderBottom: activeTab === "published" ? "2px solid #0969da" : "2px solid transparent",
+                  color: activeTab === "published" ? "#0969da" : "#57606a",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Published Profile
+              </button>
+              <button
+                onClick={() => setActiveTab("drafts")}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  border: "none",
+                  borderBottom: activeTab === "drafts" ? "2px solid #0969da" : "2px solid transparent",
+                  color: activeTab === "drafts" ? "#0969da" : "#57606a",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Profile Drafts
+              </button>
               <button
                 onClick={() => setActiveTab("facts")}
                 style={{
@@ -271,11 +307,48 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
               >
                 Sources & Snapshots
               </button>
+              <button
+                onClick={() => setActiveTab("inbox")}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  border: "none",
+                  borderBottom: activeTab === "inbox" ? "2px solid #0969da" : "2px solid transparent",
+                  color: activeTab === "inbox" ? "#0969da" : "#57606a",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Review Inbox
+              </button>
             </div>
 
+            {activeTab === "published" && (
+              <PublishedProfileView
+                token={token}
+                workspaceId={workspaceId}
+                companyId={company.id}
+              />
+            )}
+            {activeTab === "drafts" && (
+              <ProfileDraftEditor
+                token={token}
+                workspaceId={workspaceId}
+                companyId={company.id}
+                onPublished={() => setActiveTab("published")}
+              />
+            )}
             {activeTab === "facts" && <FactCandidatesList companyId={company.id} />}
             {activeTab === "conflicts" && <ConflictsList companyId={company.id} />}
             {activeTab === "sources" && <SourcesList companyId={company.id} />}
+            {activeTab === "inbox" && (
+              <ReviewInbox
+                token={token}
+                workspaceId={workspaceId}
+                companyId={company.id}
+              />
+            )}
           </div>
         </div>
       )}

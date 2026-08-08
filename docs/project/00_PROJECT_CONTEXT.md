@@ -211,7 +211,7 @@ The architecture documents are authoritative for implementation boundaries. Exac
 | Content acquisition & parsing | Implemented | Phase 5 complete: source_fetch_attempts, document_blocks schema, URL safety SSRF validator, DocumentParser HTML & PDF page segmentation, PlaywrightBrowserAdapter, attempt history & parsed block UI complete |
 | AI extraction | Implemented | Phase 6 complete: ai_runs schema, AiProvider protocol, MockAiProvider, GeminiAiProvider, 7 extraction schemas, validation & injection defense, TranslationService, budget/kill switch, and test suite complete |
 | Facts & Conflicts engine | Implemented | Phase 7 complete: fact_candidates, evidences, conflicts, conflict_candidates migrations, ORM models, ConfidenceCalculator, FreshnessEvaluator, ConflictEngine, facts/conflicts API router, React UI components, and test suite complete |
-| Review and publication | Planned | Human review workflow specified |
+| Review and publication | Implemented | Phase 8 complete: review_tasks, review_decisions, profile_drafts, draft_field_selections, profile_versions, profile_field_values, profile_field_evidences migrations, ReviewTaskService, ProfileDraftService, PublicationService, review & profile API routers, React UI components, and test suite complete |
 | Profile search and history | Planned | API and UI contracts specified |
 | Production operations | Planned | Deployment and readiness gates specified |
 
