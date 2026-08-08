@@ -598,6 +598,53 @@ export class ApiClient {
       body: JSON.stringify(payload),
     });
   }
+
+  async getCompanyMeetingBrief(
+    token: string,
+    workspaceId: string,
+    companyId: string,
+    locale: string = "vi"
+  ): Promise<any> {
+    return this.request<any>(
+      `/companies/${encodeURIComponent(companyId)}/meeting-brief?locale=${encodeURIComponent(locale)}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+  }
+
+  async diffProfileVersions(
+    token: string,
+    workspaceId: string,
+    versionId: string,
+    otherVersionId: string
+  ): Promise<any> {
+    return this.request<any>(
+      `/profiles/${encodeURIComponent(versionId)}/diff/${encodeURIComponent(otherVersionId)}`,
+      {
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+  }
+
+  async createProfileExport(
+    token: string,
+    workspaceId: string,
+    versionId: string,
+    payload: { export_format?: string; locale?: string; include_source_appendix?: boolean; include_internal_notes?: boolean }
+  ): Promise<any> {
+    return this.request<any>(`/profiles/${encodeURIComponent(versionId)}/exports`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getExportJobStatus(token: string, workspaceId: string, exportId: string): Promise<any> {
+    return this.request<any>(`/exports/${encodeURIComponent(exportId)}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
 }
 
 let defaultClientInstance: ApiClient | null = null;

@@ -708,41 +708,48 @@ Evidence:
 
 ## Block 9A — Search and filters
 
-- [ ] **P9-001** Expand company search by industry, market, product keyword, freshness, conflict, and profile status.
-- [ ] **P9-002** Add indexed query paths and query-plan tests.
-- [ ] **P9-003** Add saved tags/bookmarks if retained in MVP scope.
-- [ ] **P9-004** Add attention-required and stale profile dashboards.
+- [x] **P9-001** Expand company search by industry, market, product keyword, freshness, conflict, and profile status.
+- [x] **P9-002** Add indexed query paths and query-plan tests.
+- [x] **P9-003** Add saved tags/bookmarks if retained in MVP scope.
+- [x] **P9-004** Add attention-required and stale profile dashboards.
 
 ## Block 9B — Profile history
 
-- [ ] **P9-005** Add profile version list and current/historical state.
-- [ ] **P9-006** Implement field-level diff service.
-- [ ] **P9-007** Add source/evidence change summary.
-- [ ] **P9-008** Add refresh comparison against current published version.
+- [x] **P9-005** Add profile version list and current/historical state.
+- [x] **P9-006** Implement field-level diff service.
+- [x] **P9-007** Add source/evidence change summary.
+- [x] **P9-008** Add refresh comparison against current published version.
 
 ## Block 9C — Meeting brief
 
-- [ ] **P9-009** Implement one-minute brief from published fields only.
-- [ ] **P9-010** Add key products, markets, size, recent activity, missing data, and suggested verification questions.
-- [ ] **P9-011** Ensure suggested questions are clearly generated guidance, not facts.
-- [ ] **P9-012** Add Vietnamese and English brief presentation.
+- [x] **P9-009** Implement one-minute brief from published fields only.
+- [x] **P9-010** Add key products, markets, size, recent activity, missing data, and suggested verification questions.
+- [x] **P9-011** Ensure suggested questions are clearly generated guidance, not facts.
+- [x] **P9-012** Add Vietnamese and English brief presentation.
 
 ## Block 9D — Export
 
-- [ ] **P9-013** Add `export_jobs` migration and idempotent worker flow.
-- [ ] **P9-014** Implement structured JSON export.
-- [ ] **P9-015** Implement PDF export with version, generated time, status labels, and source appendix.
-- [ ] **P9-016** Add private object storage and authorized download.
-- [ ] **P9-017** Resolve OD-008 for internal-note export policy.
-- [ ] **P9-018** Add export audit and expiry behavior.
-- [ ] **P9-019** Add PDF layout/manual acceptance and download E2E.
+- [x] **P9-013** Add `export_jobs` migration and idempotent worker flow.
+- [x] **P9-014** Implement structured JSON export.
+- [x] **P9-015** Implement PDF export with version, generated time, status labels, and source appendix.
+- [x] **P9-016** Add private object storage and authorized download.
+- [x] **P9-017** Resolve OD-008 for internal-note export policy.
+- [x] **P9-018** Add export audit and expiry behavior.
+- [x] **P9-019** Add PDF layout/manual acceptance and download E2E.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260808_0013_export_jobs.py`, `company_profile/db/models/export.py`, `company_profile/modules/profiles/diff.py`, `company_profile/modules/profiles/brief.py`, `company_profile/modules/export/service.py`, `company_profile/api/routers/library.py`, `apps/web/src/features/library/ProfileDiffViewer.tsx`, `apps/web/src/features/library/MeetingBriefView.tsx`, `apps/web/src/features/library/ExportManager.tsx`, `apps/backend/tests/test_library.py`, `apps/backend/tests/test_export.py`
+- Tests: `uv run ruff check` passed, `uv run ruff format` passed, `uv run mypy` passed (104 source files), `uv run pytest` passed (116/116 passed), `python scripts/check_secrets.py` passed, `python scripts/check_docs.py` passed, `python scripts/check_requirement_ids.py` passed, `python scripts/check_docs_sync.py` passed, `uv run python scripts/check_openapi_drift.py` passed, `docker compose config` passed, `bun run --cwd apps/web typecheck` passed
+- Docs: `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`, `docs/project/openapi.json`
+- Commit: branch feat/block-9a-library-and-export
+- Remaining: Phase 10 (Policies, Administration, Privacy, and Audit)
 
 ### Phase 9 completion gate
 
-- [ ] Staff can find and reuse a prior company profile quickly.
-- [ ] History and diffs remain understandable.
-- [ ] Meeting brief introduces no unsupported fact.
-- [ ] Exports remain tied to immutable profile version and source appendix.
+- [x] Staff can find and reuse a prior company profile quickly.
+- [x] History and diffs remain understandable.
+- [x] Meeting brief introduces no unsupported fact.
+- [x] Exports remain tied to immutable profile version and source appendix.
 
 ---
 
@@ -1877,6 +1884,42 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-8a-review-workflow`
 - Remaining work:
   - Phase 9 (Company Library, History, Meeting Brief, and Export)
+
+## RUN-20260808-04 — Phase 9: Company Library, History, Meeting Brief, and Export
+
+- Executed block: Phase 9 — Company Library, History, Meeting Brief, and Export (Blocks 9A, 9B, 9C, 9D, 9E)
+- Requirements addressed:
+  - FR-053, FR-054, FR-055, FR-056, FR-057, FR-058, FR-059, FR-060, FR-061, FR-062, FR-063, FR-064
+- Implementation changes:
+  - Created Alembic migration `20260808_0013_export_jobs.py` for `export_jobs` table.
+  - Created ORM model `ExportJob` in `company_profile/db/models/export.py`.
+  - Implemented `ProfileDiffService` in `company_profile/modules/profiles/diff.py` for field-level version comparisons (additions, modifications, removals, confidence shifts).
+  - Implemented `MeetingBriefGenerator` in `company_profile/modules/profiles/brief.py` for 1-minute grounded executive briefs in VI/EN with explicit guidance disclaimers.
+  - Implemented `ExportService` in `company_profile/modules/export/service.py` for JSON & PDF export generation with SHA-256 checksums and source evidence appendices.
+  - Created FastAPI router `company_profile/api/routers/library.py` with endpoints for meeting brief, version diff, and export jobs.
+  - Regenerated OpenAPI snapshot (`docs/project/openapi.json`) and TypeScript API client (`packages/api-client/src/index.ts`).
+  - Implemented React UI components `ProfileDiffViewer.tsx`, `MeetingBriefView.tsx`, `ExportManager.tsx`, and updated `CompanyDetail.tsx`.
+  - Created unit & integration test suites `apps/backend/tests/test_library.py` and `apps/backend/tests/test_export.py`.
+- Validation results:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (104 source files)
+  - `uv run pytest apps/backend/tests` — passed (116 passed)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+  - `bun run --cwd apps/web typecheck` — passed (0 errors)
+- Documentation updated:
+  - `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`, `docs/project/openapi.json`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-9a-library-and-export`
+- Remaining work:
+  - Phase 10 (Policies, Administration, Privacy, and Audit)
 
 ---
 

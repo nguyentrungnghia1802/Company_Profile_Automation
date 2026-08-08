@@ -13,6 +13,7 @@ from company_profile.api.routers import (
     companies,
     facts,
     health,
+    library,
     profiles,
     research,
     review,
@@ -71,5 +72,6 @@ def create_app() -> FastAPI:
     app.include_router(facts.router, prefix="/api/v1", tags=["facts", "conflicts"])
     app.include_router(review.router, prefix="/api/v1", tags=["review-tasks"])
     app.include_router(profiles.router, prefix="/api/v1", tags=["profiles"])
+    app.include_router(library.router, prefix="/api/v1", tags=["library"])
 
     return app

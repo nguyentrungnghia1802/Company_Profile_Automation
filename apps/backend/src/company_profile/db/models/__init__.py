@@ -8,6 +8,7 @@ from company_profile.db.models.company import (
 )
 from company_profile.db.models.conflict import Conflict, ConflictCandidate
 from company_profile.db.models.draft import DraftFieldSelection, ProfileDraft
+from company_profile.db.models.export import ExportJob
 from company_profile.db.models.fact import Evidence, FactCandidate
 from company_profile.db.models.identity import User, Workspace, WorkspaceMember
 from company_profile.db.models.publication import (
@@ -36,6 +37,7 @@ __all__ = [
     "DomainPolicy",
     "DraftFieldSelection",
     "Evidence",
+    "ExportJob",
     "FactCandidate",
     "ProfileDraft",
     "ProfileFieldEvidence",

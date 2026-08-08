@@ -10,6 +10,8 @@ import { ConflictsList } from "../conflicts/ConflictsList";
 import { PublishedProfileView } from "../profiles/PublishedProfileView";
 import { ProfileDraftEditor } from "../profiles/ProfileDraftEditor";
 import { ReviewInbox } from "../review/ReviewInbox";
+import { MeetingBriefView } from "../library/MeetingBriefView";
+import { ExportManager } from "../library/ExportManager";
 
 export interface CompanyDetailItem {
   id: string;
@@ -37,7 +39,7 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"published" | "drafts" | "facts" | "conflicts" | "sources" | "inbox">("published");
+  const [activeTab, setActiveTab] = useState<"published" | "drafts" | "brief" | "export" | "facts" | "conflicts" | "sources" | "inbox">("published");
 
   const token = typeof window !== "undefined" ? localStorage.getItem("vcps_access_token") || "" : "";
   const workspaceId = activeWorkspace?.id || "";
@@ -308,6 +310,36 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
                 Sources & Snapshots
               </button>
               <button
+                onClick={() => setActiveTab("brief")}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  border: "none",
+                  borderBottom: activeTab === "brief" ? "2px solid #0969da" : "2px solid transparent",
+                  color: activeTab === "brief" ? "#0969da" : "#57606a",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Meeting Brief
+              </button>
+              <button
+                onClick={() => setActiveTab("export")}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  border: "none",
+                  borderBottom: activeTab === "export" ? "2px solid #0969da" : "2px solid transparent",
+                  color: activeTab === "export" ? "#0969da" : "#57606a",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Export
+              </button>
+              <button
                 onClick={() => setActiveTab("inbox")}
                 style={{
                   padding: "8px 12px",
@@ -337,6 +369,20 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
                 workspaceId={workspaceId}
                 companyId={company.id}
                 onPublished={() => setActiveTab("published")}
+              />
+            )}
+            {activeTab === "brief" && (
+              <MeetingBriefView
+                token={token}
+                workspaceId={workspaceId}
+                companyId={company.id}
+              />
+            )}
+            {activeTab === "export" && (
+              <ExportManager
+                token={token}
+                workspaceId={workspaceId}
+                profileVersionId={company.id}
               />
             )}
             {activeTab === "facts" && <FactCandidatesList companyId={company.id} />}
