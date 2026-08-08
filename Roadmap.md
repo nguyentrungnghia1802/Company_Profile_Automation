@@ -2235,4 +2235,15 @@ A task linked to an open defect that violates its acceptance criteria remains `[
 
 The initial specification baseline had no known defects before this run.
 
+## RUN-20260808-12 — TASK-CRAWL-002 trusted-source discovery
+
+- Roadmap task(s): TASK-CRAWL-002 only; TASK-CRAWL-003 was not started.
+- Status before: `[ ]`.
+- Status after: `[x]` under `docs/agent/AGENT.md`.
+- Implemented: provider-neutral `SourceDiscoveryService`, canonical URL deduplication, official/manual/search/trusted/sitemap/internal/history inputs, persisted discovery metadata, typed trusted-provider outcomes, Vietnam `CountrySourceRegistry` with five configured providers, and field-specific authority enforcement.
+- Verification: discovery/pipeline/source regression suite passed (19 tests); task-scoped Ruff, format, and mypy passed; migration `20260808_0018` passed SQLite upgrade/downgrade/re-upgrade from `20260808_0017`; migration head/history resolved to `20260808_0018`.
+- Documentation: affected canonical project documents and both Roadmap copies were updated; no API/OpenAPI contract changed.
+- Known independent debt: DEF-CRAWL-002 remains open for repository-wide baseline validation and does not reproduce as an acceptance defect in this task-scoped verification.
+- Remaining: TASK-CRAWL-003 and later tasks remain untouched.
+
 ---

@@ -283,6 +283,9 @@ Columns:
 - `language_code`;
 - `status`;
 - `entity_match_score`;
+- `discovered_via`, `discovery_provenance`, and `provider`;
+- `authority_by_field`;
+- `selection_reason`, `rejection_reason`;
 - `first_discovered_at`, `last_checked_at`;
 - selected/rejected reason;
 - policy metadata.
@@ -726,4 +729,15 @@ Development fixtures:
 - Source retries reuse the workspace/company/normalized-URL `Source` and immutable `SourceSnapshot`; identical content hashes are deduplicated.
 - `DocumentBlock` parsing is a separate durable step and is idempotent for an existing snapshot.
 - Deterministic fact candidates are evidence-linked to the exact document block and use the existing candidate/evidence duplicate guards.
-- PostgreSQL migration heads resolve to `20260808_0017`. Isolated PostgreSQL upgrade/downgrade/re-upgrade of `20260808_0017` passes, but full PostgreSQL upgrade is blocked by the pre-existing `CHAR(36)`/UUID foreign-key mismatch in migration `20260807_0002`; local SQLite full-upgrade validation is additionally blocked by PostgreSQL `JSONB` in migration `20260808_0014`. See the root Roadmap defect ledger.
+- Migration `20260808_0017` was verified independently before the source metadata migration. Full PostgreSQL upgrade is blocked by the pre-existing `CHAR(36)`/UUID foreign-key mismatch in migration `20260807_0002`; local SQLite full-upgrade validation is additionally blocked by PostgreSQL `JSONB` in migration `20260808_0014`. See the root Roadmap defect ledger.
+
+## Verified implementation addendum — TASK-CRAWL-002 (2026-08-08)
+
+Forward migration `20260808_0018_source_discovery_metadata.py` adds the following default-safe source metadata without rewriting applied history:
+
+- `discovered_via` and `discovery_provenance`;
+- `provider`;
+- `authority_by_field` JSON;
+- `selection_reason` and `rejection_reason`.
+
+The ORM `Source.authority_for_field()` method uses the field map first and retains `authority_tier` only as a compatibility fallback for older/directly-created rows. The migration was verified by SQLite upgrade, downgrade, and re-upgrade from `20260808_0017`; the repository head is now `20260808_0018`. The pre-existing full-chain PostgreSQL/SQLite limitations remain recorded in the Roadmap defect ledger.

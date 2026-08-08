@@ -8,6 +8,7 @@ from datetime import datetime
 from urllib.parse import urlparse, urlunparse
 
 from sqlalchemy import (
+    JSON,
     CheckConstraint,
     DateTime,
     Float,
@@ -66,6 +67,18 @@ class Source(Base):
     authority_tier: Mapped[int] = mapped_column(Integer(), nullable=False, default=3)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="discovered")
     entity_match_score: Mapped[float | None] = mapped_column(Float(), nullable=True)
+    discovered_via: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="manual_url", server_default="manual_url"
+    )
+    provider: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    authority_by_field: Mapped[dict[str, int]] = mapped_column(
+        JSON(), nullable=False, default=dict, server_default="{}"
+    )
+    discovery_provenance: Mapped[list[str]] = mapped_column(
+        JSON(), nullable=False, default=list, server_default="[]"
+    )
+    selection_reason: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(Text(), nullable=True)
     first_discovered_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -97,6 +110,14 @@ class Source(Base):
         Index("ix_sources_workspace_company", "workspace_id", "company_id"),
         Index("ix_sources_domain", "workspace_id", "domain"),
     )
+
+    def authority_for_field(self, field_key: str) -> int:
+        """Return the source authority tier applicable to one fact field."""
+        field_authority = self.authority_by_field or {}
+        value = field_authority.get(field_key, field_authority.get("*"))
+        if isinstance(value, int) and 1 <= value <= 4:
+            return value
+        return self.authority_tier
 
 
 class SourceSnapshot(Base):

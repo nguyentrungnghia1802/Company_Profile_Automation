@@ -14,7 +14,7 @@ from company_profile.config.settings import Settings
 from company_profile.db.models.company import CompanyProfile
 from company_profile.db.models.identity import Workspace
 from company_profile.db.models.research import ResearchTask
-from company_profile.db.models.source import DocumentBlock, SourceSnapshot
+from company_profile.db.models.source import DocumentBlock, Source, SourceSnapshot
 from company_profile.integrations.storage.local_storage import LocalObjectStorage
 from company_profile.modules.companies.repository import CompanyRepository
 from company_profile.modules.research.dispatcher import PostgresTaskDispatcher
@@ -113,6 +113,12 @@ async def test_full_research_pipeline_execution(db_session: AsyncSession) -> Non
         assert len(snapshot_result.scalars().all()) == 1
         block_result = await db_session.execute(select(DocumentBlock))
         assert len(block_result.scalars().all()) >= 2
+        source_result = await db_session.execute(select(Source))
+        sources = source_result.scalars().all()
+        assert len(sources) == 1
+        assert sources[0].discovered_via == "official_website"
+        assert sources[0].selection_reason == "provided_url"
+        assert sources[0].authority_for_field("identity.legal_name") == 3
 
         task_result = await db_session.execute(
             select(ResearchTask).where(ResearchTask.research_job_id == job.id)

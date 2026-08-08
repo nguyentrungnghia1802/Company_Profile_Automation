@@ -262,3 +262,13 @@ Open decisions must not be silently guessed in code. Use safe defaults and mark 
 ## Verified implementation addendum — TASK-CRAWL-001 (2026-08-08)
 
 The implementation confirms ADR-003, ADR-004, ADR-006, ADR-008, ADR-009, ADR-010, and ADR-011 in the AI-independent pipeline: PostgreSQL-backed durable steps, evidence-first facts, entity resolution before extraction, provider-neutral validated AI, lawful source acquisition, and direct HTTP/browser fallback boundaries. The remaining operational risk is recorded as `partial_success` rather than silently treating provider outage as total crawl failure. Independent repository baseline defects remain in the Roadmap defect ledger without blocking this task's verified acceptance behavior.
+
+## ADR-019: Country-configured discovery providers and field authority
+
+**Status:** Accepted for TASK-CRAWL-002.
+
+**Context:** Vietnamese legal registries, tax lookup, reference encyclopedias, financial databases, and financial media are useful for different fields and have different access contracts. A single domain score would allow a secondary source to appear authoritative for legal identity.
+
+**Decision:** Keep discovery contracts in `SourceDiscoveryService`, keep country/provider definitions in `CountrySourceRegistry`, and persist `authority_by_field` alongside a compatibility tier. Providers return typed outcomes and explicit candidates only. Default adapters do not fabricate URLs or bypass robots, terms, authentication, CAPTCHA, or anti-bot controls.
+
+**Consequences:** Adding a country/provider is configuration plus an adapter contract, not a core-service rewrite. Live adapters require separate operational approval and may return `manual_required` or `unavailable`; legal/tax fields remain governed by government/official authority maps. Sitemap/internal-link expansion is intentionally left to a later crawl task.

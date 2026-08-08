@@ -288,6 +288,12 @@ Monitor:
 
 Respect terms and robots policy. Operations staff must be able to block a domain quickly.
 
+## Verified implementation addendum — TASK-CRAWL-002 (2026-08-08)
+
+The default Vietnam trusted-source registry is configuration, not a permission to scrape blindly. Its adapter accepts explicit public structured results and reports `manual_required` when a real structured integration is not configured. `success`, `not_found`, `blocked`, and `unavailable` outcomes remain visible to the research step; blocked or unavailable providers do not create guessed URLs or facts.
+
+Before enabling a live provider adapter in staging or production, operators must document its public API/structured endpoint, terms, robots behavior, rate limits, credentials (if any), and fallback/manual path. Search and trusted-provider metadata are discovery signals; source fetching still passes the existing SSRF, egress, size, MIME, malware, and snapshot controls.
+
 ## 14. Backup and recovery
 
 ### 14.1 Backup scope

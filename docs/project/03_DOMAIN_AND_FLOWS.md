@@ -513,3 +513,17 @@ ResearchJob(running)
 ```
 
 `partial_success` is used when acquisition succeeds but AI is disabled, times out, or otherwise cannot complete. Source fetch failures and parser failures are retained as warnings while successful artifacts continue through later steps. A critical entity/workspace integrity failure remains a failed task and does not proceed to dependent steps.
+
+## Verified implementation addendum — TASK-CRAWL-002 (2026-08-08)
+
+The discovery portion of the research flow is deterministic and AI-independent:
+
+1. accept official/verified/manual URLs and already-provided sitemap/internal links;
+2. query configured SearchProvider metadata when requested;
+3. call each configured trusted-source adapter and retain its typed outcome;
+4. reuse non-rejected source history within the same workspace/company;
+5. canonicalize URLs and merge all discovery provenance;
+6. apply SSRF and entity-match policy;
+7. persist selected or rejected `Source` metadata with the reason.
+
+The current task intentionally consumes supplied sitemap/internal links; network link expansion remains outside this task. Secondary providers cannot replace government/official authority for legal or tax fields because authority is stored and consumed per field.

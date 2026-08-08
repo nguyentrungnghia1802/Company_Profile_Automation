@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import uuid
 from typing import TYPE_CHECKING, Any
-from urllib.parse import urlparse
 
 from sqlalchemy import select
 
@@ -29,17 +28,14 @@ from company_profile.modules.facts.confidence import ConfidenceCalculator
 from company_profile.modules.facts.deterministic import DeterministicFactExtractor
 from company_profile.modules.facts.repository import FactCandidateRepository
 from company_profile.modules.review.service import ReviewTaskService
+from company_profile.modules.sources.discovery import SourceDiscoveryService
 from company_profile.modules.sources.fetcher import WebFetcher
-from company_profile.modules.sources.policy import (
-    calculate_entity_match_score,
-    classify_source_type,
-)
-from company_profile.modules.sources.validator import validate_url_safety
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from company_profile.integrations.ai.protocol import AiProvider
+    from company_profile.modules.sources.trusted_sources import CountrySourceRegistry
 
 
 class ResearchPipelineError(RuntimeError):
@@ -56,11 +52,13 @@ class ResearchPipelineExecutor:
         search_provider: Any | None = None,
         fetcher: WebFetcher | None = None,
         ai_provider: AiProvider | None = None,
+        source_registry: CountrySourceRegistry | None = None,
     ) -> None:
         self.session = session
         self.settings = settings or get_settings()
         self.search_provider = search_provider
         self.fetcher = fetcher or WebFetcher(session)
+        self.source_registry = source_registry
         self.ai_provider = (
             ai_provider if ai_provider is not None else self._build_ai_provider(self.settings)
         )
@@ -124,148 +122,38 @@ class ResearchPipelineExecutor:
         return state
 
     async def _source_discovery(self, _job: ResearchJob, state: dict[str, Any]) -> dict[str, Any]:
-        """Discover user-supplied URLs and optional provider result metadata."""
+        """Discover source candidates without invoking AI or semantic processors."""
         company = await self._get_company(state)
         scope = state["scope"]
-        candidates: list[dict[str, Any]] = []
-        seen: set[str] = set()
-
-        supplied_urls = self._scope_urls(scope)
-        if company.website_url:
-            supplied_urls.append(company.website_url)
-
-        for url in supplied_urls:
-            normalized = self._normalise_candidate_url(url)
-            if normalized and normalized not in seen:
-                seen.add(normalized)
-                candidates.append(
-                    {
-                        "url": url,
-                        "normalized_url": normalized,
-                        "discovered_via": "user_or_company_profile",
-                        "title": "",
-                        "snippet": "",
-                        "provided": True,
-                    }
-                )
-
         provider = self.search_provider
-        if provider is None and self.settings.search_provider == "fixture" and not candidates:
+        if provider is None and self.settings.search_provider == "fixture":
             provider = FixtureSearchProvider()
-        if provider is not None and (not candidates or scope.get("include_search_results", False)):
-            query = str(scope.get("search_query") or company.company_name).strip()
-            try:
-                results = await provider.search(query, locale=self.settings.default_locale)
-            except Exception as exc:  # provider outage is non-critical
-                self._warn(state, f"SEARCH_PROVIDER_UNAVAILABLE:{type(exc).__name__}")
-            else:
-                for item in results:
-                    url = str(getattr(item, "url", "") or "").strip()
-                    normalized = self._normalise_candidate_url(url)
-                    if not normalized or normalized in seen:
-                        continue
-                    seen.add(normalized)
-                    candidates.append(
-                        {
-                            "url": url,
-                            "normalized_url": normalized,
-                            "discovered_via": "search_provider",
-                            "title": str(getattr(item, "title", "") or ""),
-                            "snippet": str(getattr(item, "snippet", "") or ""),
-                            "provided": False,
-                        }
-                    )
-
-        state["source_candidates"] = candidates
-        if not candidates:
-            self._warn(state, "NO_SOURCE_CANDIDATES")
+        discovery = SourceDiscoveryService(
+            self.session,
+            search_provider=provider,
+            trusted_registry=self.source_registry,
+            locale=self.settings.default_locale,
+        )
+        discovery_state = (await discovery.discover(company, scope)).to_dict()
+        state.update(discovery_state)
+        for warning in discovery_state.get("source_discovery_warnings", []):
+            self._warn(state, warning)
         return state
 
     async def _source_selection(self, _job: ResearchJob, state: dict[str, Any]) -> dict[str, Any]:
-        """Apply deterministic URL safety/entity checks and persist source records."""
+        """Apply deterministic URL/entity checks and persist source provenance."""
         company = await self._get_company(state)
-        workspace_id = uuid.UUID(state["workspace_id"])
-        company_id = uuid.UUID(state["company_id"])
-        selected: list[dict[str, Any]] = []
-        rejected: list[dict[str, str]] = []
-        seen: set[str] = set()
-
-        for candidate in state.get("source_candidates", []):
-            url = str(candidate.get("url", "")).strip()
-            normalized = self._normalise_candidate_url(url)
-            if not normalized or normalized in seen:
-                continue
-            seen.add(normalized)
-
-            safe, safety_reason = validate_url_safety(url)
-            domain = urlparse(normalized).netloc.lower()
-            source_type, authority_tier = classify_source_type(domain, normalized)
-            match_score = (
-                1.0
-                if candidate.get("provided")
-                else calculate_entity_match_score(
-                    company.company_name,
-                    company.tax_id,
-                    " ".join(
-                        [
-                            str(candidate.get("title", "")),
-                            str(candidate.get("snippet", "")),
-                        ]
-                    ),
-                )
-            )
-            if not safe:
-                rejected.append({"url": url, "reason": f"UNSAFE_URL:{safety_reason}"})
-                continue
-            if match_score < 0.3:
-                rejected.append({"url": url, "reason": f"LOW_ENTITY_MATCH:{match_score}"})
-                continue
-
-            source_stmt = select(Source).where(
-                Source.workspace_id == workspace_id,
-                Source.company_id == company_id,
-                Source.normalized_url == normalized,
-            )
-            source_result = await self.session.execute(source_stmt)
-            source = source_result.scalar_one_or_none()
-            if source is None:
-                source = Source(
-                    workspace_id=workspace_id,
-                    company_id=company_id,
-                    canonical_url=url,
-                    normalized_url=normalized,
-                    domain=domain,
-                    source_type=source_type,
-                    authority_tier=authority_tier,
-                    status="discovered",
-                    entity_match_score=match_score,
-                )
-                self.session.add(source)
-            else:
-                source.entity_match_score = match_score
-                source.authority_tier = authority_tier
-                if source.status == "rejected":
-                    source.status = "discovered"
-            await self.session.flush()
-            selected.append(
-                {
-                    "source_id": str(source.id),
-                    "url": url,
-                    "normalized_url": normalized,
-                    "source_type": source_type,
-                    "authority_tier": authority_tier,
-                    "entity_match_score": match_score,
-                    "selection_reason": (
-                        "provided_url" if candidate.get("provided") else "entity_match"
-                    ),
-                }
-            )
-
-        state["selected_sources"] = selected
-        state["rejected_sources"] = rejected
-        if rejected:
-            self._warn(state, f"SOURCES_REJECTED:{len(rejected)}")
-        if not selected:
+        discovery = SourceDiscoveryService(
+            self.session,
+            trusted_registry=self.source_registry,
+            locale=self.settings.default_locale,
+        )
+        selection = await discovery.select_sources(company, state.get("source_candidates", []))
+        state["selected_sources"] = selection.selected
+        state["rejected_sources"] = selection.rejected
+        if selection.rejected:
+            self._warn(state, f"SOURCES_REJECTED:{len(selection.rejected)}")
+        if not selection.selected:
             self._warn(state, "NO_SELECTED_SOURCES")
         return state
 
@@ -460,7 +348,7 @@ class ResearchPipelineExecutor:
                 continue
             confidence = confidence_calculator.calculate(
                 field_key=fact.field_key,
-                authority_tier=source.authority_tier,
+                authority_tier=source.authority_for_field(fact.field_key),
                 origin_type="ai",
                 ai_confidence_hint=fact.confidence_hint,
             )
@@ -594,28 +482,6 @@ class ResearchPipelineExecutor:
         except json.JSONDecodeError:
             return {}
         return decoded if isinstance(decoded, dict) else {}
-
-    @staticmethod
-    def _scope_urls(scope: dict[str, Any]) -> list[str]:
-        urls: list[str] = []
-        for key in ("website_url", "website", "source_url"):
-            value = scope.get(key)
-            if isinstance(value, str) and value.strip():
-                urls.append(value.strip())
-        values = scope.get("source_urls", [])
-        if isinstance(values, str):
-            values = [values]
-        if isinstance(values, list):
-            urls.extend(str(value).strip() for value in values if str(value).strip())
-        return urls
-
-    @staticmethod
-    def _normalise_candidate_url(url: str) -> str:
-        if not url:
-            return ""
-        from company_profile.db.models.source import normalize_url
-
-        return normalize_url(url)
 
     @staticmethod
     def _warn(state: dict[str, Any], warning: str) -> None:
