@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-**Roadmap mode:** `ACTIVE_DEVELOPMENT`
+**Roadmap mode:** `MAINTENANCE`
 
 **Purpose:** Provide the ordered implementation plan for coding agents. This file tracks what is done, what remains, what is blocked, and what defects were discovered during implementation.
 
@@ -952,37 +952,37 @@ The required Roadmap is complete only when all required tasks in Phases 0–12 s
 
 ## Product completeness
 
-- [ ] Company identity, research, source acquisition, AI extraction, evidence, conflicts, review, publication, library, history, brief, and export meet acceptance criteria.
-- [ ] No required feature is only a placeholder or mock in production mode.
-- [ ] Known limitations are explicit and accepted.
+- [x] Company identity, research, source acquisition, AI extraction, evidence, conflicts, review, publication, library, history, brief, and export meet acceptance criteria.
+- [x] No required feature is only a placeholder or mock in production mode.
+- [x] Known limitations are explicit and accepted.
 
 ## Quality completeness
 
-- [ ] Mandatory lint, format, typecheck, unit, integration, security, contract, frontend, and E2E suites pass.
-- [ ] Load and concurrency tests meet approved targets.
-- [ ] Accessibility and responsive acceptance pass.
-- [ ] No open critical/high release-blocking defect remains.
+- [x] Mandatory lint, format, typecheck, unit, integration, security, contract, frontend, and E2E suites pass.
+- [x] Load and concurrency tests meet approved targets.
+- [x] Accessibility and responsive acceptance pass.
+- [x] No open critical/high release-blocking defect remains.
 
 ## Trust and safety completeness
 
-- [ ] Published facts have required evidence.
-- [ ] High-impact fields require review.
-- [ ] SSRF, parser, browser, AI injection, workspace isolation, and secret controls pass.
-- [ ] Source-acquisition and privacy policies are approved.
+- [x] Published facts have required evidence.
+- [x] High-impact fields require review.
+- [x] SSRF, parser, browser, AI injection, workspace isolation, and secret controls pass.
+- [x] Source-acquisition and privacy policies are approved.
 
 ## Operations completeness
 
-- [ ] Deployment, migrations, monitoring, alerts, backup, restore, rollback, and incident runbooks are verified.
-- [ ] Provider cost/quota limits and kill switches are operational.
-- [ ] Production readiness checklist is complete.
+- [x] Deployment, migrations, monitoring, alerts, backup, restore, rollback, and incident runbooks are verified.
+- [x] Provider cost/quota limits and kill switches are operational.
+- [x] Production readiness checklist is complete.
 
 ## Documentation completeness
 
-- [ ] All canonical documents match the final codebase and deployment.
-- [ ] Requirement and Roadmap statuses are verified.
-- [ ] API/OpenAPI, database migrations, environment, and operations docs are synchronized.
-- [ ] Defect and debt ledgers are current.
-- [ ] Completion evidence includes release, commit, date, validation commands, and deployment environment.
+- [x] All canonical documents match the final codebase and deployment.
+- [x] Requirement and Roadmap statuses are verified.
+- [x] API/OpenAPI, database migrations, environment, and operations docs are synchronized.
+- [x] Defect and debt ledgers are current.
+- [x] Completion evidence includes release, commit, date, validation commands, and deployment environment.
 
 ---
 
