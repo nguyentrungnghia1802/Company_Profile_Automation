@@ -745,3 +745,9 @@ The ORM `Source.authority_for_field()` method uses the field map first and retai
 ## Verified schema addendum — TASK-CRAWL-003 (2026-08-08)
 
 Migration `20260808_0019_search_discovery_metadata` now materializes the planned query/result tables. `research_queries` is workspace- and job-scoped and stores deterministic/user query text, language, purpose, requested section, provider, generator, and creation time. `search_results` is workspace- and query-scoped and stores provider, normalized/final URL, title, snippet, rank, provider metadata, selection status/reason, entity-match score, source-type estimate, result timestamp, and creation time. The selection status check permits `candidate`, `review`, `selected`, or `rejected`; search snippets remain discovery metadata and never become evidence rows.
+
+## Verified schema addendum — TASK-CRAWL-004 (2026-08-09)
+
+Forward migration `20260809_0020_crawl_parse_metadata.py` adds parser/language/status/error metadata to `source_snapshots`, redirect/retry/policy/retryability audit fields and bounded outcome codes to `source_fetch_attempts`, and stable `language`, `parser_version`, `page_number`, `section_path`, `location`, JSON `metadata`, and block-local offsets to `document_blocks`. The expanded block check allows `title`, `metadata`, `link`, and `structured` blocks in addition to headings, paragraphs, lists, and tables. The migration was verified in isolated SQLite upgrade/downgrade/re-upgrade execution from the prior schema; applied migrations remain unchanged.
+
+`DocumentBlock.block_metadata` is the ORM attribute for the SQL column `metadata` (reserved by SQLAlchemy). Structured provenance and JSON field paths remain attached to the block, while `Evidence.document_block_id` and offsets provide the stable fact reference.

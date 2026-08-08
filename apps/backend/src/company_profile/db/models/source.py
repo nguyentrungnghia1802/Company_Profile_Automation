@@ -9,6 +9,7 @@ from urllib.parse import urlparse, urlunparse
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     CheckConstraint,
     DateTime,
     Float,
@@ -137,6 +138,16 @@ class SourceSnapshot(Base):
     object_key: Mapped[str] = mapped_column(String(512), nullable=False)
     content_type: Mapped[str] = mapped_column(String(128), nullable=False, default="text/html")
     byte_size: Mapped[int] = mapped_column(Integer(), nullable=False, default=0)
+    language: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="und", server_default="und"
+    )
+    parser_version: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="unknown", server_default="unknown"
+    )
+    parser_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="pending", server_default="pending"
+    )
+    parser_error: Mapped[str | None] = mapped_column(Text(), nullable=True)
     malware_scan_status: Mapped[str] = mapped_column(String(32), nullable=False, default="clean")
     retrieved_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -155,6 +166,10 @@ class SourceSnapshot(Base):
         CheckConstraint(
             "malware_scan_status IN ('clean', 'infected', 'pending')",
             name="ck_source_snapshots_malware_status",
+        ),
+        CheckConstraint(
+            "parser_status IN ('pending', 'success', 'failed', 'skipped')",
+            name="ck_source_snapshots_parser_status",
         ),
         UniqueConstraint("source_id", "content_hash", name="uq_source_snapshots_hash"),
         Index("ix_source_snapshots_source_id", "source_id"),
@@ -218,6 +233,12 @@ class SourceFetchAttempt(Base):
     http_status: Mapped[int | None] = mapped_column(Integer(), nullable=True)
     content_type: Mapped[str | None] = mapped_column(String(128), nullable=True)
     byte_count: Mapped[int] = mapped_column(Integer(), nullable=False, default=0)
+    redirect_count: Mapped[int] = mapped_column(Integer(), nullable=False, default=0)
+    retry_count: Mapped[int] = mapped_column(Integer(), nullable=False, default=0)
+    policy_result: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="not_evaluated", server_default="not_evaluated"
+    )
+    retryable: Mapped[bool] = mapped_column(Boolean(), nullable=False, default=False)
     outcome_code: Mapped[str] = mapped_column(String(32), nullable=False, default="success")
     error_message: Mapped[str | None] = mapped_column(Text(), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -230,7 +251,9 @@ class SourceFetchAttempt(Base):
     __table_args__ = (
         CheckConstraint(
             "outcome_code IN ('success', 'http_error', 'timeout', "
-            "'malware_detected', 'size_exceeded')",
+            "'malware_detected', 'size_exceeded', 'decompression_exceeded', "
+            "'mime_rejected', 'redirect_blocked', 'max_redirects', "
+            "'policy_blocked', 'retry_exhausted', 'parse_error')",
             name="ck_fetch_attempts_outcome",
         ),
         Index("ix_source_fetch_attempts_source", "workspace_id", "source_id"),
@@ -253,6 +276,24 @@ class DocumentBlock(Base):
     block_type: Mapped[str] = mapped_column(String(32), nullable=False, default="paragraph")
     text_content: Mapped[str] = mapped_column(Text(), nullable=False)
     block_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    language: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="und", server_default="und"
+    )
+    parser_version: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="unknown", server_default="unknown"
+    )
+    page_number: Mapped[int | None] = mapped_column(Integer(), nullable=True)
+    section_path: Mapped[list[str]] = mapped_column(
+        JSON(), nullable=False, default=list, server_default="[]"
+    )
+    location: Mapped[dict[str, object]] = mapped_column(
+        JSON(), nullable=False, default=dict, server_default="{}"
+    )
+    block_metadata: Mapped[dict[str, object]] = mapped_column(
+        "metadata", JSON(), nullable=False, default=dict, server_default="{}"
+    )
+    start_offset: Mapped[int | None] = mapped_column(Integer(), nullable=True)
+    end_offset: Mapped[int | None] = mapped_column(Integer(), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -264,7 +305,8 @@ class DocumentBlock(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "block_type IN ('heading', 'paragraph', 'table', 'list')",
+            "block_type IN ('title', 'heading', 'paragraph', 'list', 'table', "
+            "'link', 'metadata', 'structured')",
             name="ck_document_blocks_type",
         ),
         UniqueConstraint("source_snapshot_id", "block_key", name="uq_document_blocks_key"),

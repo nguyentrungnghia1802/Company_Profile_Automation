@@ -281,4 +281,14 @@ The implementation confirms ADR-003, ADR-004, ADR-006, ADR-008, ADR-009, ADR-010
 
 **Decision:** Use a provider-neutral website discovery service with direct HTTP as the discovery adapter, explicit robots decisions, SSRF checks before every request/redirect, canonical URL deduplication, multilingual token-based URL ranking, and depth/domain/job/sitemap budgets. Persist deterministic queries and search metadata separately from evidence. Name-only search results remain review-only unless strong identity signals are present.
 
-**Consequences:** A public website can be discovered without AI or SearchProvider, while robots failures and large sitemaps reduce coverage safely. Full parsing, browser fallback, and fact extraction remain a later task; discovery metadata cannot be used as published evidence.
+**Consequences:** A public website can be discovered without AI or SearchProvider, while robots failures and large sitemaps reduce coverage safely. The later crawl/parser layer follows the same boundary; discovery metadata cannot be used as published evidence.
+
+## ADR-021: Stable parser blocks and deterministic fact boundary
+
+**Status:** Accepted for TASK-CRAWL-004.
+
+**Context:** Source HTML, JSON, and PDF formats change independently and may contain malformed markup or instructions that must never become application policy. Evidence must remain reproducible after retries and optional AI processing.
+
+**Decision:** Parse untrusted documents into deterministic, versioned `DocumentBlock` rows with stable keys, hashes, offsets, language, section/location metadata, page numbers, JSON field paths, and provider provenance. Run direct structured and strongly labelled identity extraction before optional AI. Do not use broad regex to infer semantic fields; preserve unknown values when direct evidence is insufficient.
+
+**Consequences:** Evidence lookup is stable and auditable across parser retries, while coverage for ambiguous semantic claims remains intentionally limited. Parser versions and bounded failure statuses must be monitored and migrated forward without rewriting prior snapshots.
