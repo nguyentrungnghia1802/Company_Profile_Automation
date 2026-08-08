@@ -518,54 +518,61 @@ Evidence:
 
 ## Block 6A — AI run infrastructure
 
-- [ ] **P6-001** Add `ai_runs` migration and provider usage metadata.
-- [ ] **P6-002** Define provider-neutral AI operation schemas.
-- [ ] **P6-003** Implement deterministic mock AI adapter.
-- [ ] **P6-004** Implement Gemini adapter behind `AiProvider`.
-- [ ] **P6-005** Add per-operation model, timeout, retry, and budget configuration.
-- [ ] **P6-006** Add safe prompt/result retention policy and request hashes.
+- [x] **P6-001** Add `ai_runs` migration and provider usage metadata.
+- [x] **P6-002** Define provider-neutral AI operation schemas.
+- [x] **P6-003** Implement deterministic mock AI adapter.
+- [x] **P6-004** Implement Gemini adapter behind `AiProvider`.
+- [x] **P6-005** Add per-operation model, timeout, retry, and budget configuration.
+- [x] **P6-006** Add safe prompt/result retention policy and request hashes.
 
 ## Block 6B — Extraction schemas
 
-- [ ] **P6-007** Implement identity and legal-information extraction schema.
-- [ ] **P6-008** Implement overview, industry, and business-model schema.
-- [ ] **P6-009** Implement products/services schema.
-- [ ] **P6-010** Implement size and footprint schema.
-- [ ] **P6-011** Implement markets, customers, and partners schema.
-- [ ] **P6-012** Implement leadership/ownership schema.
-- [ ] **P6-013** Implement innovation, awards, certifications, funding, and recent-activity schema.
-- [ ] **P6-014** Require evidence block IDs and explicit unknown behavior in every schema.
+- [x] **P6-007** Implement identity and legal-information extraction schema.
+- [x] **P6-008** Implement overview, industry, and business-model schema.
+- [x] **P6-009** Implement products/services schema.
+- [x] **P6-010** Implement size and footprint schema.
+- [x] **P6-011** Implement markets, customers, and partners schema.
+- [x] **P6-012** Implement leadership/ownership schema.
+- [x] **P6-013** Implement innovation, awards, certifications, funding, and recent-activity schema.
+- [x] **P6-014** Require evidence block IDs and explicit unknown behavior in every schema.
 
 ## Block 6C — Validation and injection defense
 
-- [ ] **P6-015** Validate structured output and reject malformed responses.
-- [ ] **P6-016** Validate every evidence block reference.
-- [ ] **P6-017** Validate entity match and field type/unit.
-- [ ] **P6-018** Add deterministic support check between claim and evidence.
-- [ ] **P6-019** Add fetched-content prompt-injection defenses.
-- [ ] **P6-020** Ensure AI cannot select tools, publish profiles, or change policy directly.
-- [ ] **P6-021** Add unknown, unsupported, and wrong-entity regression cases.
+- [x] **P6-015** Validate structured output and reject malformed responses.
+- [x] **P6-016** Validate every evidence block reference.
+- [x] **P6-017** Validate entity match and field type/unit.
+- [x] **P6-018** Add deterministic support check between claim and evidence.
+- [x] **P6-019** Add fetched-content prompt-injection defenses.
+- [x] **P6-020** Ensure AI cannot select tools, publish profiles, or change policy directly.
+- [x] **P6-021** Add unknown, unsupported, and wrong-entity regression cases.
 
 ## Block 6D — Translation
 
-- [ ] **P6-022** Implement original-language preservation.
-- [ ] **P6-023** Implement derived evidence translation with provider/version metadata.
-- [ ] **P6-024** Show original and translated evidence together.
-- [ ] **P6-025** Add translation-quality and missing-translation fallback tests.
+- [x] **P6-022** Implement original-language preservation.
+- [x] **P6-023** Implement derived evidence translation with provider/version metadata.
+- [x] **P6-024** Show original and translated evidence together.
+- [x] **P6-025** Add translation-quality and missing-translation fallback tests.
 
 ## Block 6E — Operational verification
 
-- [ ] **P6-026** Add token/cost/latency/validation metrics.
-- [ ] **P6-027** Add per-job/workspace budget enforcement and kill switch.
-- [ ] **P6-028** Add staging real-Gemini acceptance cases and record model/prompt version.
-- [ ] **P6-029** Add model-change regression procedure.
+- [x] **P6-026** Add token/cost/latency/validation metrics.
+- [x] **P6-027** Add per-job/workspace budget enforcement and kill switch.
+- [~] **P6-028** Add staging real-Gemini acceptance cases and record model/prompt version (deferred to Phase 12 cloud deployment).
+- [x] **P6-029** Add model-change regression procedure.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260808_0007_ai_runs.py`, `company_profile/db/models/ai.py`, `company_profile/integrations/ai/protocol.py`, `company_profile/integrations/ai/mock_ai.py`, `company_profile/integrations/ai/gemini_adapter.py`, `company_profile/modules/ai/schemas.py`, `company_profile/modules/ai/validation.py`, `company_profile/modules/ai/translation.py`, `company_profile/modules/ai/service.py`, `apps/backend/tests/test_ai_extraction.py`
+- Tests: `uv run ruff check` passed, `uv run ruff format` passed, `uv run mypy` passed (88 source files), `uv run pytest` passed (97/97 passed), `python scripts/check_secrets.py` passed, `python scripts/check_docs.py` passed, `python scripts/check_requirement_ids.py` passed, `python scripts/check_docs_sync.py` passed, `uv run python scripts/check_openapi_drift.py` passed, `docker compose config` passed, `bun run typecheck` passed
+- Docs: `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`
+- Commit: branch feat/block-6a-ai-infrastructure
+- Remaining: Phase 7 (Facts, Confidence, Freshness, and Conflicts)
 
 ### Phase 6 completion gate
 
-- [ ] AI candidate output always references valid evidence or is rejected.
-- [ ] Unknown fields remain unknown rather than fabricated.
-- [ ] Prompt-injection fixtures cannot change system behavior.
-- [ ] Provider cost and version are observable.
+- [x] AI candidate output always references valid evidence or is rejected.
+- [x] Unknown fields remain unknown rather than fabricated.
+- [x] Prompt-injection fixtures cannot change system behavior.
+- [x] Provider cost and version are observable.
 
 ---
 
@@ -1740,6 +1747,43 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-5e-ui-and-verification`
 - Remaining work:
   - Phase 6 (AI Fact Extraction and Normalization)
+
+### RUN-20260808-01 — Phase 6 Gemini Structured Extraction and Translation
+
+- Roadmap task(s): P6-001, P6-002, P6-003, P6-004, P6-005, P6-006, P6-007, P6-008, P6-009, P6-010, P6-011, P6-012, P6-013, P6-014, P6-015, P6-016, P6-017, P6-018, P6-019, P6-020, P6-021, P6-022, P6-023, P6-024, P6-025, P6-026, P6-027, P6-028, P6-029
+- Status before: [ ]
+- Status after: [x] (P6-028 [~] deferred to Phase 12)
+- Implemented:
+  - Migration `20260808_0007_ai_runs.py` creating `ai_runs` table with check constraints, foreign keys, and indexes
+  - SQLAlchemy ORM model `AiRun` in `company_profile/db/models/ai.py`
+  - `AiProvider` protocol interface and typed schemas (`AiInputBlock`, `AiRunResult`, `AiRunMetadata`, `AiTranslationResult`) in `company_profile/integrations/ai/protocol.py`
+  - Deterministic `MockAiProvider` adapter with evidence-grounded structured extraction for all operations and translation in `company_profile/integrations/ai/mock_ai.py`
+  - Production `GeminiAiProvider` adapter with prompt injection role separation, retry, budget tracking, and lazy import in `company_profile/integrations/ai/gemini_adapter.py`
+  - All 7 typed Pydantic extraction schemas (`IdentityExtractionResult`, `OverviewExtractionResult`, `ProductsExtractionResult`, `SizeExtractionResult`, `MarketsExtractionResult`, `LeadershipExtractionResult`, `InnovationExtractionResult`) with evidence block ID enforcement and field-type validation in `company_profile/modules/ai/schemas.py`
+  - Validation pipeline `validate_extraction_result`, entity match check, prompt injection pattern detection, and control character sanitization in `company_profile/modules/ai/validation.py`
+  - `TranslationService` preserving original text and storing translation separately in `company_profile/modules/ai/translation.py`
+  - `AiExtractionService` orchestrating provider calls, enforcing kill switch (`ai_kill_switch_enabled`), per-job budget limits (`ai_budget_usd_per_job`), validation, and `AiRun` audit logging in `company_profile/modules/ai/service.py`
+  - Comprehensive unit and integration test suite `apps/backend/tests/test_ai_extraction.py` (31 tests passed, total 97/97 passed across backend)
+- Tests and checks:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (88 source files)
+  - `uv run pytest apps/backend/tests` — passed (97 passed)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+  - `bun run typecheck` (apps/web) — passed (0 errors)
+- Documentation updated:
+  - `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-6a-ai-infrastructure`
+- Remaining work:
+  - Phase 7 (Facts, Confidence, Freshness, and Conflicts — Block 7A)
 
 ---
 

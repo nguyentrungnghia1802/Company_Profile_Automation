@@ -1,5 +1,6 @@
 """Database models package."""
 
+from company_profile.db.models.ai import AiRun
 from company_profile.db.models.company import (
     CompanyAlias,
     CompanyProfile,
@@ -16,6 +17,7 @@ from company_profile.db.models.source import (
 )
 
 __all__ = [
+    "AiRun",
     "CompanyAlias",
     "CompanyProfile",
     "CompanyRelationship",

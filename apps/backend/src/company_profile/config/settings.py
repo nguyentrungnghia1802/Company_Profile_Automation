@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.0-flash"
     ai_timeout: int = 60
     ai_max_retries: int = 3
+    ai_budget_usd_per_job: float = 1.0  # Maximum AI spend per research job in USD
+    ai_kill_switch_enabled: bool = False  # Emergency kill switch to disable all AI calls
 
     # --- Search Provider ---
     search_provider: str = "fixture"  # fixture | google

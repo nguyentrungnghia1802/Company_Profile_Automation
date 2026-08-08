@@ -60,13 +60,20 @@ async def test_fixture_search_provider() -> None:
 @pytest.mark.asyncio
 async def test_mock_ai_provider() -> None:
     """Verify mock AI provider extraction and translation."""
-    ai = MockAiProvider()
-    res = await ai.extract_facts([{"block_id": "blk_123"}])
-    assert "facts" in res
-    assert res["facts"][0]["evidence_block_id"] == "blk_123"
+    from company_profile.integrations.ai.protocol import AiInputBlock
 
-    tr = await ai.translate_text("Xin chào", "en")
-    assert "en" in tr
+    ai = MockAiProvider()
+    res = await ai.run_extraction(
+        operation="extract_identity",
+        blocks=[AiInputBlock(block_id="blk_123", text_content="Acme Corp")],
+        company_name="Acme Corp",
+    )
+    assert "facts" in res.raw_output
+    assert res.raw_output["facts"][0]["evidence_block_ids"] == ["blk_123"]
+
+    tr = await ai.run_translation("Xin chào", "en")
+    assert tr.target_language == "en"
+    assert "EN" in tr.translated_text
 
 
 @pytest.mark.asyncio
