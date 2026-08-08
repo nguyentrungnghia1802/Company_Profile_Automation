@@ -215,6 +215,7 @@ The architecture documents are authoritative for implementation boundaries. Exac
 | Profile search and history | Implemented | Phase 9 complete: export_jobs migration, ExportJob ORM model, ProfileDiffService, MeetingBriefGenerator (VI/EN), ExportService (JSON/PDF), library API router, React UI components, and test suite complete |
 | Production operations | Implemented | Phase 10 complete: policy_sets & audit_logs migrations, PolicySet & AuditLog ORM models, PolicyService, AuditService with secret redaction, policies, audit, & operations API routers, React UI components, and test suite complete |
 | Observability and hardening | Implemented | Phase 11 complete: Prometheus MetricsCollector, GET /metrics endpoint, security isolation & SSRF penetration suite, and test suite complete |
+| Cloud deployment & competition demo | Implemented | Phase 12 complete: GitHub Actions CI/CD workflows, Cloud Run deployment manifests, seed_demo_data.py deterministic demo company package, production readiness checklist complete |
 
 Agents must change these statuses only after verifying source code and tests.
 

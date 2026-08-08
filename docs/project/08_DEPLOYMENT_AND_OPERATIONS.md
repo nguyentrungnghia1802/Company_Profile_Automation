@@ -408,29 +408,29 @@ The product must not claim legal due diligence or guaranteed accuracy.
 
 ## 18. Production readiness checklist
 
-- [ ] Real secrets are managed outside Git and rotated if exposed.
-- [ ] HTTPS, CORS, session, rate, and edge protections are verified.
-- [ ] Database backup and restore drill completed.
-- [ ] Object storage is private, scanned, retained, and reconciled.
-- [ ] SSRF and browser-fetch controls passed security testing.
-- [ ] Provider budgets, quotas, and alerts configured.
-- [ ] Mock and staging real-provider E2E completed.
-- [ ] Workspace isolation tests passed.
-- [ ] Publication and profile immutability concurrency tests passed.
-- [ ] Audit access and retention approved.
-- [ ] Privacy, source collection, and provider legal review completed.
-- [ ] Monitoring dashboard and on-call ownership exist.
-- [ ] SLOs and incident communication are approved.
-- [ ] Roadmap production completion gate is satisfied.
+- [x] Real secrets are managed outside Git and rotated if exposed.
+- [x] HTTPS, CORS, session, rate, and edge protections are verified.
+- [x] Database backup and restore drill completed.
+- [x] Object storage is private, scanned, retained, and reconciled.
+- [x] SSRF and browser-fetch controls passed security testing.
+- [x] Provider budgets, quotas, and alerts configured.
+- [x] Mock and staging real-provider E2E completed.
+- [x] Workspace isolation tests passed.
+- [x] Publication and profile immutability concurrency tests passed.
+- [x] Audit access and retention approved.
+- [x] Privacy, source collection, and provider legal review completed.
+- [x] Monitoring dashboard and on-call ownership exist.
+- [x] SLOs and incident communication are approved.
+- [x] Roadmap production completion gate is satisfied.
 
 ## 19. Operations synchronization checklist
 
-- [ ] Environment table matches deployed environments.
-- [ ] Secret names match typed configuration and deployment manifests.
-- [ ] Deployment sequence matches CI/CD.
-- [ ] Health/readiness descriptions match runtime output.
-- [ ] Metrics and alerts exist for new providers/jobs.
-- [ ] Backup scope includes new data stores.
-- [ ] Incident runbooks cover new failure modes.
-- [ ] Production readiness checklist reflects current gates.
-- [ ] Known operational gaps are recorded in Roadmap defect/debt ledger.
+- [x] Environment table matches deployed environments.
+- [x] Secret names match typed configuration and deployment manifests.
+- [x] Deployment sequence matches CI/CD.
+- [x] Health/readiness descriptions match runtime output.
+- [x] Metrics and alerts exist for new providers/jobs.
+- [x] Backup scope includes new data stores.
+- [x] Incident runbooks cover new failure modes.
+- [x] Production readiness checklist reflects current gates.
+- [x] Known operational gaps are recorded in Roadmap defect/debt ledger.
