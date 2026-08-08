@@ -12,6 +12,7 @@ build/
 venv/
 .uv/
 uv.lock
+.ruff_cache/
 
 # === Node.js ===
 node_modules/
@@ -34,6 +35,10 @@ out/
 *~
 .DS_Store
 Thumbs.db
+
+# === Documentation & Agent ===
+docs/
+AGENT.md
 
 # === Docker ===
 *.log
