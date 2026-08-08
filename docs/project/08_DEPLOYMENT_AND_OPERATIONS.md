@@ -444,3 +444,7 @@ The product must not claim legal due diligence or guaranteed accuracy.
 ## Verified implementation addendum — TASK-CRAWL-001 (2026-08-08)
 
 Worker operations treat AI outage/unavailability as a limited-result condition when acquisition artifacts are durable. A worker retry can safely reclaim the current task because source identity, immutable snapshots, parsed blocks, deterministic candidates, evidence, and review-task creation use existing duplicate boundaries. Operational monitoring must distinguish `partial_success` from a failed acquisition and must retain the warning/error message for follow-up.
+
+## Verified implementation addendum — TASK-CRAWL-003 (2026-08-08)
+
+Bounded website discovery is configured by `CRAWL_MAX_DEPTH`, `CRAWL_MAX_PAGES_PER_DOMAIN`, `CRAWL_MAX_PAGES_PER_JOB`, `CRAWL_MAX_SITEMAPS`, and `CRAWL_MAX_SITEMAP_URLS` in addition to the existing fetch timeout/byte/redirect settings. The default values are depth `1`, `25` pages/domain, `50` pages/job, `3` sitemap documents, and `100` sitemap URLs per document. Operators must review robots/terms and domain policy before enabling live egress; a robots error is fail-closed and produces a typed warning rather than an implicit bypass. Search snippets and sitemap links are discovery signals only.

@@ -459,3 +459,20 @@ ResearchPipelineExecutor
 ```
 
 `modules/sources/discovery.py` contains provider-neutral contracts and policy orchestration. `modules/sources/trusted_sources.py` contains country configuration and the default no-fabrication adapter. The core service does not import AI or call websites directly. A production adapter must prefer public structured/API access, enforce robots/terms/access controls, and return a typed outcome before any permitted fetch adapter is used. `Source.authority_for_field()` is the boundary used by deterministic and AI fact confidence calculations; no single domain score is treated as authoritative for every field.
+
+## Verified implementation addendum — TASK-CRAWL-003 (2026-08-08)
+
+The source-discovery boundary now has two additional provider-neutral components:
+
+```text
+ResearchPipelineExecutor
+  -> SourceDiscoveryService
+       -> OfficialWebsiteDiscovery
+            -> WebsiteFetchProvider
+                 -> HttpxWebsiteFetchProvider | fixture provider
+       -> DiscoveryQueryBuilder -> SearchProvider metadata
+       -> deterministic URL ranking and entity policy
+       -> ResearchQuery / SearchResult audit rows
+```
+
+`OfficialWebsiteDiscovery` is deliberately bounded by crawl depth, per-domain pages, per-job pages, sitemap-document count, and sitemap-URL count. It fails closed when robots policy is unavailable or disallows the homepage, revalidates SSRF safety before provider calls and redirects, and never treats sitemap or search text as evidence. The browser/parser/fact-extraction coordinator remains TASK-CRAWL-004 scope.

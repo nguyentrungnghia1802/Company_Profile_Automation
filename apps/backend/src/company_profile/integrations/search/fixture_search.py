@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -14,6 +15,13 @@ class SearchResultItem:
     url: str
     snippet: str
     domain: str
+    rank: int = 0
+    provider: str = "fixture"
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+    source_type: str = "web_page"
+    entity_match_score: float | None = None
+    selection_reason: str | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class FixtureSearchProvider:

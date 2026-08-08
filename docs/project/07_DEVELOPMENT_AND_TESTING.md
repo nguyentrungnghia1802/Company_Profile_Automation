@@ -467,3 +467,9 @@ uv run alembic heads; uv run alembic history            # head/history passed; h
 ```
 
 The new tests use deterministic providers and monkeypatched URL-safety decisions; they do not call live websites. The isolated migration check covered upgrade/downgrade/re-upgrade of `20260808_0018`. Full repository validation remains subject to the independent defects recorded in the root Roadmap and is not silently claimed as green.
+
+## Verified validation addendum — TASK-CRAWL-003 (2026-08-08)
+
+The fixture suite uses an in-memory website provider containing robots rules, a homepage with English/Vietnamese links, canonical metadata, irrelevant paths, and a bounded large sitemap. A provider-neutral recording search double verifies deterministic bilingual query generation, persisted result metadata, and same-name review behavior. No live website or search API is required.
+
+Additional discovery checks cover robots disallow/unavailable decisions, sitemap and page budgets, fragment/tracking canonicalization, duplicate-link merging, multilingual page-group ranking, sensitive-path rejection, and migration `20260808_0019` upgrade/downgrade/re-upgrade.
