@@ -66,7 +66,9 @@ class ResearchJob(Base):
             name="ck_research_jobs_type",
         ),
         CheckConstraint(
-            "status IN ('pending', 'running', 'completed', 'failed', 'cancelled')",
+            "status IN ("
+            "'pending', 'running', 'partial_success', 'completed', 'failed', 'cancelled'"
+            ")",
             name="ck_research_jobs_status",
         ),
         UniqueConstraint("workspace_id", "idempotency_key", name="uq_research_jobs_idempotency"),
@@ -87,6 +89,15 @@ class ResearchJob(Base):
         if self.status != "running":
             raise ValueError(f"Cannot complete job in state '{self.status}'.")
         self.status = "completed"
+        self.completed_at = datetime.now(UTC)
+        self.version = (self.version or 1) + 1
+
+    def mark_partial_success(self, message: str | None = None) -> None:
+        """Complete the automated scope while retaining a limited-result warning."""
+        if self.status != "running":
+            raise ValueError(f"Cannot mark job partial in state '{self.status}'.")
+        self.status = "partial_success"
+        self.error_message = message
         self.completed_at = datetime.now(UTC)
         self.version = (self.version or 1) + 1
 

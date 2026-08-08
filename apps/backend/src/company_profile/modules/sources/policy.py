@@ -17,7 +17,11 @@ def classify_source_type(domain: str, url: str) -> tuple[str, int]:
     domain_lower = domain.lower()
     url_lower = url.lower()
 
-    if "gov.vn" in domain_lower or "dangkykinhdoanh" in url_lower:
+    if (
+        "gov.vn" in domain_lower
+        or "dangkykinhdoanh" in url_lower
+        or "tracuunnt.gdt.gov.vn" in domain_lower
+    ):
         return "registry", 1
 
     if any(d in domain_lower for d in ["masothue.com", "thongtindoanhnghiep.co", "hosocongty.vn"]):
@@ -25,6 +29,12 @@ def classify_source_type(domain: str, url: str) -> tuple[str, int]:
 
     if any(d in domain_lower for d in ["yellowpages.vnn.vn", "trangvangvietnam.com"]):
         return "directory", 3
+
+    if "wikipedia.org" in domain_lower:
+        return "web_page", 3
+
+    if any(d in domain_lower for d in ["finance.vietstock.vn", "cafef.vn"]):
+        return "news", 3
 
     if any(
         d in domain_lower

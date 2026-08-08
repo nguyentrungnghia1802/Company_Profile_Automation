@@ -12,7 +12,14 @@ from sqlalchemy import select
 
 from company_profile.db.models.company import CompanyProfile
 from company_profile.db.models.identity import Workspace
-from company_profile.db.models.source import DocumentBlock, calculate_content_hash, normalize_url
+from company_profile.db.models.source import (
+    DocumentBlock,
+    Source,
+    SourceFetchAttempt,
+    SourceSnapshot,
+    calculate_content_hash,
+    normalize_url,
+)
 from company_profile.integrations.search.fixture_search import FixtureSearchProvider
 from company_profile.integrations.storage.local_storage import LocalObjectStorage
 from company_profile.modules.companies.repository import CompanyRepository
@@ -108,3 +115,54 @@ async def test_web_fetcher_fetch_and_store(
         assert len(blocks) == 1
         assert blocks[0].block_type == "heading"
         assert "Source Test Corp" in blocks[0].text_content
+
+
+@pytest.mark.asyncio
+async def test_web_fetcher_retry_reuses_source_snapshot(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Duplicate delivery records an attempt without duplicating immutable artifacts."""
+    ws_repo = WorkspaceRepository(db_session)
+    comp_repo = CompanyRepository(db_session)
+    ws = await ws_repo.create(Workspace(id=DEV_WORKSPACE_ID, name="Retry WS", slug="retry-ws"))
+    company = await comp_repo.create(
+        CompanyProfile(
+            workspace_id=ws.id,
+            company_name="Retry Test Corp",
+            normalized_name="retry test corp",
+            status="published",
+        )
+    )
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        storage = LocalObjectStorage(temp_dir)
+        fetcher = WebFetcher(db_session, storage=storage)
+        mock_html = b"<html><body><h1>Retry Test Corp</h1></body></html>"
+
+        async def mock_get(_self: object, url: str, **_kwargs: object) -> Response:
+            return Response(
+                status_code=200,
+                content=mock_html,
+                headers={"content-type": "text/html; charset=utf-8"},
+                request=Request("GET", url),
+            )
+
+        monkeypatch.setattr("httpx.AsyncClient.get", mock_get)
+        first = await fetcher.fetch_and_store_source(
+            workspace_id=ws.id,
+            company_id=company.id,
+            url="https://retry.example.com/about",
+        )
+        second = await fetcher.fetch_and_store_source(
+            workspace_id=ws.id,
+            company_id=company.id,
+            url="https://RETRY.example.com/about/",
+        )
+
+        assert first.snapshot is not None
+        assert second.snapshot is not None
+        assert second.snapshot.id == first.snapshot.id
+        assert len((await db_session.execute(select(Source))).scalars().all()) == 1
+        assert len((await db_session.execute(select(SourceSnapshot))).scalars().all()) == 1
+        assert len((await db_session.execute(select(DocumentBlock))).scalars().all()) == 1
+        assert len((await db_session.execute(select(SourceFetchAttempt))).scalars().all()) == 2

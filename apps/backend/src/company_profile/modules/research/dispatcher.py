@@ -39,7 +39,17 @@ class TaskDispatcher(Protocol):
 class PostgresTaskDispatcher:
     """PostgreSQL-backed task dispatcher managing step dependencies and job state transitions."""
 
-    STEP_SEQUENCE: ClassVar[list[str]] = ["search", "fetch", "extract", "synthesize"]
+    STEP_SEQUENCE: ClassVar[list[str]] = [
+        "entity_resolution",
+        "source_discovery",
+        "source_selection",
+        "source_fetch",
+        "document_parse",
+        "deterministic_extraction",
+        "ai_extraction",
+        "fact_processing",
+        "finalize",
+    ]
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -53,7 +63,7 @@ class PostgresTaskDispatcher:
         requested_by: uuid.UUID | None = None,
         idempotency_key: str | None = None,
     ) -> ResearchJob:
-        """Create a research job and enqueue the initial 'search' step task."""
+        """Create a research job and enqueue the initial entity-resolution step."""
         scope_json = json.dumps(scope or {})
 
         async with transactional(self.session):
@@ -69,11 +79,12 @@ class PostgresTaskDispatcher:
             self.session.add(job)
             await self.session.flush()
 
-            # Enqueue initial task step ('search')
+            # Enqueue the first task. Every later step is created only after its
+            # predecessor is durably completed.
             initial_task = ResearchTask(
                 workspace_id=workspace_id,
                 research_job_id=job.id,
-                step_type="search",
+                step_type=self.STEP_SEQUENCE[0],
                 status="pending",
                 input_payload=scope_json,
             )
@@ -85,7 +96,7 @@ class PostgresTaskDispatcher:
                 extra={
                     "job_id": str(job.id),
                     "company_id": str(company_id),
-                    "step_type": "search",
+                    "step_type": self.STEP_SEQUENCE[0],
                 },
             )
             return job
@@ -147,9 +158,31 @@ class PostgresTaskDispatcher:
                         )
                     return job
 
-            # All steps in sequence completed -> complete job
-            job.complete()
-            logger.info(
-                "All pipeline steps completed. Job marked complete", extra={"job_id": str(job.id)}
-            )
+            # All steps in sequence completed. Optional provider failures are
+            # represented in the step payload and must not erase acquisition
+            # artifacts, but the job must expose the limited result.
+            partial_reasons: list[str] = []
+            for task in tasks:
+                if task.output_payload:
+                    try:
+                        output = json.loads(task.output_payload)
+                    except json.JSONDecodeError:
+                        output = {}
+                    if output.get("partial"):
+                        partial_reasons.extend(
+                            str(reason) for reason in output.get("warnings", []) if reason
+                        )
+
+            if partial_reasons:
+                job.mark_partial_success("; ".join(dict.fromkeys(partial_reasons)))
+                logger.info(
+                    "Research pipeline completed with partial result",
+                    extra={"job_id": str(job.id), "warnings": partial_reasons},
+                )
+            else:
+                job.complete()
+                logger.info(
+                    "All pipeline steps completed. Job marked complete",
+                    extra={"job_id": str(job.id)},
+                )
             return job
