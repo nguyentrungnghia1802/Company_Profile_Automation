@@ -1,6 +1,7 @@
 """Database models package."""
 
 from company_profile.db.models.ai import AiRun
+from company_profile.db.models.audit import AuditLog
 from company_profile.db.models.company import (
     CompanyAlias,
     CompanyProfile,
@@ -11,6 +12,7 @@ from company_profile.db.models.draft import DraftFieldSelection, ProfileDraft
 from company_profile.db.models.export import ExportJob
 from company_profile.db.models.fact import Evidence, FactCandidate
 from company_profile.db.models.identity import User, Workspace, WorkspaceMember
+from company_profile.db.models.policy import PolicySet
 from company_profile.db.models.publication import (
     ProfileFieldEvidence,
     ProfileFieldValue,
@@ -28,6 +30,7 @@ from company_profile.db.models.source import (
 
 __all__ = [
     "AiRun",
+    "AuditLog",
     "CompanyAlias",
     "CompanyProfile",
     "CompanyRelationship",
@@ -39,6 +42,7 @@ __all__ = [
     "Evidence",
     "ExportJob",
     "FactCandidate",
+    "PolicySet",
     "ProfileDraft",
     "ProfileFieldEvidence",
     "ProfileFieldValue",

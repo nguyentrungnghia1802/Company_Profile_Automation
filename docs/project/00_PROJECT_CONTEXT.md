@@ -213,7 +213,7 @@ The architecture documents are authoritative for implementation boundaries. Exac
 | Facts & Conflicts engine | Implemented | Phase 7 complete: fact_candidates, evidences, conflicts, conflict_candidates migrations, ORM models, ConfidenceCalculator, FreshnessEvaluator, ConflictEngine, facts/conflicts API router, React UI components, and test suite complete |
 | Review and publication | Implemented | Phase 8 complete: review_tasks, review_decisions, profile_drafts, draft_field_selections, profile_versions, profile_field_values, profile_field_evidences migrations, ReviewTaskService, ProfileDraftService, PublicationService, review & profile API routers, React UI components, and test suite complete |
 | Profile search and history | Implemented | Phase 9 complete: export_jobs migration, ExportJob ORM model, ProfileDiffService, MeetingBriefGenerator (VI/EN), ExportService (JSON/PDF), library API router, React UI components, and test suite complete |
-| Production operations | Planned | Deployment and readiness gates specified |
+| Production operations | Implemented | Phase 10 complete: policy_sets & audit_logs migrations, PolicySet & AuditLog ORM models, PolicyService, AuditService with secret redaction, policies, audit, & operations API routers, React UI components, and test suite complete |
 
 Agents must change these statuses only after verifying source code and tests.
 

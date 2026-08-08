@@ -9,11 +9,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from company_profile.api.errors import register_error_handlers
 from company_profile.api.middleware.correlation import CorrelationIdMiddleware
 from company_profile.api.routers import (
+    audit,
     auth,
     companies,
     facts,
     health,
     library,
+    operations,
+    policies,
     profiles,
     research,
     review,
@@ -73,5 +76,8 @@ def create_app() -> FastAPI:
     app.include_router(review.router, prefix="/api/v1", tags=["review-tasks"])
     app.include_router(profiles.router, prefix="/api/v1", tags=["profiles"])
     app.include_router(library.router, prefix="/api/v1", tags=["library"])
+    app.include_router(policies.router, prefix="/api/v1", tags=["policies"])
+    app.include_router(audit.router, prefix="/api/v1", tags=["audit"])
+    app.include_router(operations.router, prefix="/api/v1", tags=["operations"])
 
     return app

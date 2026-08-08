@@ -645,6 +645,54 @@ export class ApiClient {
       headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
     });
   }
+
+  async listPolicyVersions(token: string, workspaceId: string): Promise<any> {
+    return this.request<any>("/policies", {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async createPolicyVersion(
+    token: string,
+    workspaceId: string,
+    payload: { name: string; description?: string; policy_config?: any }
+  ): Promise<any> {
+    return this.request<any>("/policies", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async activatePolicyVersion(token: string, workspaceId: string, policyId: string): Promise<any> {
+    return this.request<any>(`/policies/${encodeURIComponent(policyId)}/activate`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async listAuditTrail(token: string, workspaceId: string, action?: string, actorId?: string): Promise<any> {
+    const params = new URLSearchParams();
+    if (action) params.append("action", action);
+    if (actorId) params.append("actor_id", actorId);
+    const query = params.toString() ? `?${params.toString()}` : "";
+
+    return this.request<any>(`/audit${query}`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async getProviderSettings(token: string, workspaceId: string): Promise<any> {
+    return this.request<any>("/provider-settings", {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async getOperationsUsage(token: string, workspaceId: string): Promise<any> {
+    return this.request<any>("/operations/usage", {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
 }
 
 let defaultClientInstance: ApiClient | null = null;
