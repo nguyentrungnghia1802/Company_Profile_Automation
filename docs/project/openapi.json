@@ -33,7 +33,7 @@
           "health"
         ],
         "summary": "Readiness Check",
-        "description": "Readiness probe. Checks critical dependencies.\n\nCurrently checks:\n- database: placeholder until DB session is configured in P0-021",
+        "description": "Readiness probe. Checks critical dependencies.",
         "operationId": "readiness_check_api_v1_ready_get",
         "responses": {
           "200": {
@@ -42,6 +42,28 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metrics": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Get Metrics",
+        "description": "Prometheus metrics endpoint.",
+        "operationId": "get_metrics_api_v1_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }

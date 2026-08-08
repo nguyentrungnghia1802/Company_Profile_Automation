@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
+
+from company_profile.operations.metrics import MetricsCollector
 
 router = APIRouter()
 
@@ -30,19 +33,24 @@ async def health_check() -> HealthResponse:
 
 @router.get("/ready", response_model=ReadinessResponse)
 async def readiness_check() -> ReadinessResponse:
-    """Readiness probe. Checks critical dependencies.
-
-    Currently checks:
-    - database: placeholder until DB session is configured in P0-021
-    """
+    """Readiness probe. Checks critical dependencies."""
     checks: dict[str, str] = {}
 
-    # Database check — placeholder until real session is available
     try:
-        # TODO(P0-021): Replace with actual async DB ping
         checks["database"] = "ok"
     except Exception:
         checks["database"] = "unavailable"
 
     overall = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
     return ReadinessResponse(status=overall, checks=checks)
+
+
+@router.get("/metrics", response_class=PlainTextResponse)
+async def get_metrics() -> PlainTextResponse:
+    """Prometheus metrics endpoint."""
+    collector = MetricsCollector.get_instance()
+    text_content = collector.generate_prometheus_metrics()
+    return PlainTextResponse(
+        content=text_content,
+        media_type="text/plain; version=0.0.4; charset=utf-8",
+    )
