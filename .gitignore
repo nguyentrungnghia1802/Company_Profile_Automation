@@ -37,8 +37,8 @@ out/
 Thumbs.db
 
 # === Documentation & Agent ===
-docs/
-AGENT.md
+# Do not modify or stage docs/*; documentation is intentionally local-only.
+docs/*
 
 # === Docker ===
 *.log
