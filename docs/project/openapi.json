@@ -6079,6 +6079,64 @@
             "type": "string",
             "title": "Block Hash"
           },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "parser_version": {
+            "type": "string",
+            "title": "Parser Version"
+          },
+          "page_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Number"
+          },
+          "section_path": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Section Path"
+          },
+          "location": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Location"
+          },
+          "block_metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Block Metadata"
+          },
+          "start_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Offset"
+          },
+          "end_offset": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Offset"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -6094,6 +6152,8 @@
           "block_type",
           "text_content",
           "block_hash",
+          "language",
+          "parser_version",
           "created_at"
         ],
         "title": "DocumentBlockResponseData",
@@ -6700,6 +6760,26 @@
           "outcome_code": {
             "type": "string",
             "title": "Outcome Code"
+          },
+          "redirect_count": {
+            "type": "integer",
+            "title": "Redirect Count",
+            "default": 0
+          },
+          "retry_count": {
+            "type": "integer",
+            "title": "Retry Count",
+            "default": 0
+          },
+          "policy_result": {
+            "type": "string",
+            "title": "Policy Result",
+            "default": "not_evaluated"
+          },
+          "retryable": {
+            "type": "boolean",
+            "title": "Retryable",
+            "default": false
           },
           "error_message": {
             "anyOf": [
@@ -8123,6 +8203,29 @@
             "type": "string",
             "title": "Malware Scan Status"
           },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "parser_version": {
+            "type": "string",
+            "title": "Parser Version"
+          },
+          "parser_status": {
+            "type": "string",
+            "title": "Parser Status"
+          },
+          "parser_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parser Error"
+          },
           "retrieved_at": {
             "type": "string",
             "format": "date-time",
@@ -8140,6 +8243,9 @@
           "content_type",
           "byte_size",
           "malware_scan_status",
+          "language",
+          "parser_version",
+          "parser_status",
           "retrieved_at"
         ],
         "title": "SnapshotResponseData",
@@ -8236,6 +8342,137 @@
               }
             ],
             "title": "Entity Match Score"
+          },
+          "discovered_via": {
+            "type": "string",
+            "title": "Discovered Via",
+            "default": "manual_url"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "authority_by_field": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Authority By Field"
+          },
+          "discovery_provenance": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Discovery Provenance"
+          },
+          "selection_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Reason"
+          },
+          "rejection_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejection Reason"
+          },
+          "latest_fetch_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Fetch Status"
+          },
+          "latest_fetch_outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Fetch Outcome"
+          },
+          "latest_fetch_policy_result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Fetch Policy Result"
+          },
+          "latest_parser_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Parser Status"
+          },
+          "latest_parser_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Parser Version"
+          },
+          "latest_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Snapshot Id"
+          },
+          "latest_fetched_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Fetched At"
           },
           "first_discovered_at": {
             "type": "string",

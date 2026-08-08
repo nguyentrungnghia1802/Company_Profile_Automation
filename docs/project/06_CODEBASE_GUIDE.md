@@ -422,3 +422,16 @@ The crawl/parser ownership is:
 - `db/models/source.py` and migration `20260809_0020_crawl_parse_metadata.py`: parser, language, evidence-location, fetch-policy, and retry audit metadata.
 
 The source body remains untrusted data. No parser executes scripts, no browser fallback bypasses access controls, and no deterministic regex infers broad semantic fields.
+
+## Verified implementation addendum — TASK-CRAWL-005 (2026-08-09)
+
+The AI-degraded/review ownership is split as follows:
+
+- `modules/research/pipeline.py`: optional AI reason/failure state, partial-result warnings, deterministic conflict/review-task creation, mandatory high-impact field checks, and idempotent review references;
+- `modules/sources/discovery.py`: typed warnings for unconfigured/failed search, official website, and trusted-provider calls while preserving other discovery paths;
+- `api/routers/sources.py`: one workspace-scoped response mapper for source provenance and latest fetch/parser artifacts;
+- `features/research/ResearchProgressTracker.tsx`: persisted pipeline-step/count/status rendering and explicit AI-unavailable/review-evidence guidance;
+- `features/sources/SourcesList.tsx` and `features/review/ReviewInbox.tsx`: source evidence metadata and AI-independent review lifecycle UI;
+- `test_task005_ai_disabled_e2e.py`: deterministic end-to-end fixtures for AI-disabled/key-missing/mock-AI/no-source/provider-outage/review/conflict/source-API behavior.
+
+No frontend component decides authority, entity match, review priority, or publication eligibility; those remain backend rules.

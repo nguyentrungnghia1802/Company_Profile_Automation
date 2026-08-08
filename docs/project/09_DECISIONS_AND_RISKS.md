@@ -292,3 +292,13 @@ The implementation confirms ADR-003, ADR-004, ADR-006, ADR-008, ADR-009, ADR-010
 **Decision:** Parse untrusted documents into deterministic, versioned `DocumentBlock` rows with stable keys, hashes, offsets, language, section/location metadata, page numbers, JSON field paths, and provider provenance. Run direct structured and strongly labelled identity extraction before optional AI. Do not use broad regex to infer semantic fields; preserve unknown values when direct evidence is insufficient.
 
 **Consequences:** Evidence lookup is stable and auditable across parser retries, while coverage for ambiguous semantic claims remains intentionally limited. Parser versions and bounded failure statuses must be monitored and migrated forward without rewriting prior snapshots.
+
+## ADR-022: AI-degraded acquisition and deterministic review
+
+**Status:** Accepted for TASK-CRAWL-005.
+
+**Context:** Source acquisition must remain useful when AI credentials, quotas, providers, or optional semantic processors are unavailable. A generic job failure would hide deterministic evidence and make reviewers unable to distinguish missing data from an outage.
+
+**Decision:** Persist explicit AI skipped/unavailable/failure reason codes and continue all non-AI acquisition, parsing, deterministic fact, conflict, and evidence work. Create idempotent, AI-independent review tasks for entity ambiguity, provider verification, deterministic/strong-identifier conflicts, and missing mandatory high-impact fields. Expose durable source and parser metadata to the UI, and report useful degraded runs as `partial_success`.
+
+**Consequences:** The system never fabricates a source or fact to fill an AI/provider gap, and reviewer workload becomes visible. Live provider and browser staging remains a separate operational gate; deterministic no-live-Internet fixtures do not prove production provider availability.

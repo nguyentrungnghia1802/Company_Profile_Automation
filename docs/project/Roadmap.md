@@ -2193,3 +2193,38 @@ A task linked to an open defect that violates its acceptance criteria remains `[
 - Known independent debt: DEF-CRAWL-002 remains open. The mixed primary worktree still has the unrelated dirty `CompanyService` test failure and OpenAPI drift from user-owned API edits; neither reproduces in the clean task-only validation worktree.
 - Commit/branch: `task/crawl-004-crawl-parse-extraction`, commit recorded in the Git handoff.
 - Remaining: TASK-CRAWL-005 and later tasks remain untouched.
+
+## RUN-20260809-15 — TASK-CRAWL-005 AI-degraded research, Review Inbox, and evidence UI
+
+- Roadmap task(s): TASK-CRAWL-005 only; TASK-CRAWL-006 and later tasks were not started.
+- Status before: `[ ]`.
+- Status after: `[x]` under `docs/agent/AGENT.md`.
+- Implemented: explicit AI disabled/missing-key/timeout/provider-unavailable outcomes; acquisition-first continuation; typed SearchProvider/official/trusted-provider warnings; AI-independent ambiguity/provider/conflict/high-impact review tasks; persisted progress/source evidence UI; and additive source/fetch/snapshot/document-block API metadata.
+- Verification:
+  - task-scoped deterministic research/source/crawl/parser/browser/PDF/review suite — 51 passed;
+  - clean task-only backend suite — 148 passed, 1 warning;
+  - task-scoped Ruff check, format check, and mypy — passed;
+  - frontend `bun run typecheck` — passed;
+  - clean OpenAPI drift, docs, docs-sync, requirement-ID, and secrets checks — passed;
+  - no database migration required; generated API client remained unchanged because its response boundaries are passthrough types.
+- Full-repository baseline remains separately reported: Ruff has 115 existing errors, format has 20 existing files, and full source mypy has 7 existing errors; none is in the task-scoped files or the clean task-only acceptance suite.
+- Documentation: affected canonical project docs, both Roadmap copies, OpenAPI snapshot, local `docs/agent/task.md`, and the Defect Ledger were updated.
+- Known limitations: live Gemini/Search/trusted-provider and real Playwright staging are intentionally not exercised by no-live-Internet tests; see `DEF-CRAWL-003`. `DEF-CRAWL-002` remains independent repository baseline debt.
+- Commit/branch: `task/crawl-005-ai-disabled-review`; final commit recorded in the Git handoff.
+- Remaining: TASK-CRAWL-006 and later tasks remain untouched.
+
+### DEF-CRAWL-003 — Live provider and browser staging not exercised by deterministic gate
+
+- Status: accepted_limitation
+- Severity: medium
+- Priority: P1
+- Discovered: 2026-08-09 in RUN-20260809-15
+- Affects: live Gemini, SearchProvider, trusted-provider, and Playwright enablement
+- Impact: deterministic tests prove degraded-mode control flow and evidence preservation but do not prove external quotas, credentials, provider terms, or a deployed browser runtime.
+- Reproduction/evidence: all TASK-CRAWL-005 automated tests use fixture providers, monkeypatched HTTP, or the deterministic Playwright fallback; no live Internet or credentials are used.
+- Suspected cause: the repository validation policy requires no-live-Internet automated tests.
+- Workaround: keep production AI/search/trusted/browser integrations disabled until staging verification is approved.
+- Required fix: run isolated staging E2E with approved credentials, robots/terms/egress controls, provider quotas, and real Playwright installation.
+- Closure validation: staging source→fetch→parse→AI/provider and JS-rendering workflows pass with audit records and no policy bypass.
+- Owner: unassigned
+- Notes: This is an accepted operational limitation, not an acceptance failure for TASK-CRAWL-005.

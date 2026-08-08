@@ -195,3 +195,7 @@ The affected canonical documents now describe bounded robots-aware official webs
 ## Verified synchronization record — TASK-CRAWL-004 (2026-08-09)
 
 The affected current-state, requirements, architecture, domain-flow, database, codebase, development/testing, operations, decisions/risks, Roadmap, and task documents now describe the HTTP-first bounded `CrawlCoordinator`, redirect/DNS/IP and response limits, controlled browser fallback, stable HTML/structured/PDF blocks, migration `20260809_0020`, language/parser metadata, and deterministic evidence-linked facts. `pypdf` is recorded in `pyproject.toml`/`uv.lock` and `.env.example` includes the new fetch budgets. No API/OpenAPI contract changed; TASK-CRAWL-005 and later tasks remain untouched.
+
+## Verified synchronization record — TASK-CRAWL-005 (2026-08-09)
+
+The affected canonical documents now describe explicit AI-degraded outcomes, acquisition-first continuation, AI-independent Review Inbox tasks, progress/source evidence states, and the additive source/fetch/snapshot/block API contract. The task-scoped deterministic suite passed 51 tests; frontend typecheck and task-scoped quality/contract checks are recorded in the Roadmap entry. No database migration was required. TASK-CRAWL-006 and later tasks remain untouched.
