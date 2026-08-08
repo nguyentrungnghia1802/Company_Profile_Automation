@@ -437,3 +437,11 @@ Search queries are generated deterministically from canonical name, aliases, cou
 ## Verified implementation addendum — TASK-CRAWL-004 (2026-08-09)
 
 The following acquisition requirements are verified by deterministic fixtures and task-scoped tests: `FR-FETCH-001` through `FR-FETCH-011` for bounded HTTP-first retrieval, SSRF/redirect/DNS/IP, limits, MIME/retry/rate policy, browser fallback boundaries, immutable snapshots, parser metadata, safe malformed-file handling, and source-language preservation. Structured JSON/API provenance and high-precision direct fact candidates are evidence-linked to stable `DocumentBlock` rows. The implementation deliberately does not infer industry, markets, business model, or financial meaning from broad text patterns, and no API/OpenAPI contract changed.
+
+## Verified implementation addendum — TASK-CRAWL-005 (2026-08-09)
+
+- AI-disabled, missing-key, timeout, SearchProvider, and trusted-provider outcomes are explicit and non-fatal when acquisition can continue; raw provider details are not exposed as durable error text.
+- AI unavailability skips only semantic AI work. Entity resolution, source discovery/selection, trusted/search metadata, sitemap/internal discovery, crawl, parse, snapshots, document blocks, deterministic facts, evidence, conflicts, and review tasks remain available.
+- Review tasks are AI-independent and cover ambiguous entity matches, unavailable/blocked providers, conflicting deterministic facts/strong identifiers, and mandatory high-impact fields.
+- The UI distinguishes completed acquisition from optional AI unavailability and directs reviewers to the available evidence. Source metadata includes provenance, authority, entity match, selection, fetch/policy, parser, and last-fetched state.
+- Deterministic fixtures cover the required no-live-Internet acceptance paths; the related regression set passed 51 tests.

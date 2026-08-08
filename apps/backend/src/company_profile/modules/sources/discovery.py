@@ -447,6 +447,16 @@ class SourceDiscoveryService:
     ) -> None:
         """Collect search metadata without treating snippets as evidence."""
         if self.search_provider is None:
+            if bool(scope.get("include_search_results", False)):
+                result.warnings.append("SEARCH_PROVIDER_UNAVAILABLE:NOT_CONFIGURED")
+                result.provider_outcomes.append(
+                    ProviderOutcomeRecord(
+                        "search_provider",
+                        "search",
+                        ProviderOutcome.UNAVAILABLE,
+                        "NOT_CONFIGURED",
+                    )
+                )
             return
         if candidates and not bool(scope.get("include_search_results", False)):
             return
@@ -524,7 +534,20 @@ class SourceDiscoveryService:
         """Run the bounded official website adapter and merge its candidates."""
         if self.website_discoverer is None:
             return
-        website_result = await self.website_discoverer.discover(url, scope=scope)
+        try:
+            website_result = await self.website_discoverer.discover(url, scope=scope)
+        except Exception as exc:  # one website adapter failure must not stop discovery
+            reason = type(exc).__name__
+            result.provider_outcomes.append(
+                ProviderOutcomeRecord(
+                    "official_website",
+                    "website_discovery",
+                    ProviderOutcome.UNAVAILABLE,
+                    reason,
+                )
+            )
+            result.warnings.append(f"OFFICIAL_WEBSITE_UNAVAILABLE:{reason}")
+            return
         robots_key = website_result.robots.decision if website_result.robots else "unknown"
         outcome = {
             "allowed": ProviderOutcome.SUCCESS,
@@ -724,13 +747,17 @@ class SourceDiscoveryService:
             try:
                 lookup = await provider.discover(company=company, scope=scope)
             except Exception as exc:  # one trusted provider must not stop discovery
+                reason = type(exc).__name__
                 result.provider_outcomes.append(
                     ProviderOutcomeRecord(
                         definition.key,
                         definition.provider_type,
                         ProviderOutcome.UNAVAILABLE,
-                        type(exc).__name__,
+                        reason,
                     )
+                )
+                result.warnings.append(
+                    f"TRUSTED_PROVIDER_{ProviderOutcome.UNAVAILABLE.value.upper()}:{definition.key}:{reason}"
                 )
                 continue
 
@@ -742,6 +769,15 @@ class SourceDiscoveryService:
                     lookup.reason,
                 )
             )
+            if lookup.outcome in {
+                ProviderOutcome.BLOCKED,
+                ProviderOutcome.MANUAL_REQUIRED,
+                ProviderOutcome.UNAVAILABLE,
+            }:
+                reason = lookup.reason or "NO_DETAILS"
+                result.warnings.append(
+                    f"TRUSTED_PROVIDER_{lookup.outcome.value.upper()}:{definition.key}:{reason}"
+                )
             for candidate in lookup.candidates:
                 self._add_candidate(candidates, candidate, company)
 

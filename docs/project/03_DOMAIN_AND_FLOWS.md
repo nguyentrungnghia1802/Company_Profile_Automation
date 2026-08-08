@@ -539,3 +539,13 @@ Search queries are generated from canonical name, aliases, country, domain, regi
 After source selection, `CrawlCoordinator` processes seed URLs and same-domain links within explicit depth, domain-page, and job-page budgets. `WebFetcher` performs direct HTTP first and validates HTTP(S), DNS/IP, every redirect, timeout, response/decompression size, MIME, retry, rate, and per-domain concurrency boundaries. Browser rendering is a bounded fallback only for JS-like or 404 pages when enabled and policy-allowed; it never bypasses authentication, CAPTCHA, anti-bot controls, robots decisions, or SSRF checks.
 
 HTML produces stable title, metadata/OpenGraph, JSON-LD, heading, paragraph, list, table, link, and section blocks. JSON/API blocks preserve JSON field paths and provider provenance. PDF blocks retain page numbers and stable `p<page>_b<block>` evidence keys. The deterministic extractor emits only direct structured or strongly labelled identity facts and attaches each candidate/evidence row to its source block; uncertain semantic meaning remains unknown.
+
+### 15.3 Verified AI-degraded review flow — TASK-CRAWL-005 (2026-08-09)
+
+```text
+entity resolution → discovery/selection → fetch → parse
+  → deterministic facts/evidence → optional AI
+  → conflicts + AI-independent review tasks → finalize
+```
+
+AI disabled, a missing Gemini key, a timeout, or an unavailable provider marks only the optional semantic branch as skipped/unavailable. Acquisition artifacts and deterministic evidence continue to finalization. Review tasks are created for ambiguous entity matches, provider verification, strong-identifier/deterministic conflicts, and missing mandatory high-impact fields; repeated worker delivery reuses the same task. If no source is usable, the job ends as a clear `partial_success` with zero fabricated source, snapshot, block, or fact rows.

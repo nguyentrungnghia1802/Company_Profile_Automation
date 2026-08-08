@@ -457,3 +457,7 @@ Server stores request hash. Reusing a key with different body returns `409 IDEMP
 ## Verified implementation addendum — TASK-CRAWL-001 (2026-08-08)
 
 This task changes worker orchestration and the persisted research-job status set but does not add or change an HTTP route, request schema, response schema, or authorization rule. Research-job responses continue to expose the model's string status and optional limited-result message. The committed snapshot passes OpenAPI drift in the clean task-only worktree; unrelated uncommitted API changes still produce drift only in the mixed current worktree.
+
+## Verified implementation addendum — TASK-CRAWL-005 (2026-08-09)
+
+The source contracts now expose the metadata required by the evidence UI. `SourceResponseData` includes discovery method/provider/provenance, field authority, selection/rejection reason, entity match, latest fetch outcome/policy, parser status/version, snapshot ID, and last fetched time. Fetch-attempt responses include redirect/retry/policy/retryable fields; snapshot responses include language/parser status/version/error; document-block responses include language, parser version, page/section/location metadata, and offsets. These are backward-compatible response additions under `/api/v1`; the generated client surface remains compatible because these endpoints already use response data passthrough types. Runtime OpenAPI is regenerated and checked for drift in the clean task-only tree.

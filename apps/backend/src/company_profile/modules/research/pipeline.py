@@ -44,6 +44,15 @@ class ResearchPipelineError(RuntimeError):
     """Raised for a critical pipeline dependency failure."""
 
 
+_DEFAULT_MANDATORY_REVIEW_FIELDS: tuple[tuple[str, str, str], ...] = (
+    ("identity.legal_name", "legal name", "high"),
+    ("identity.tax_id", "tax ID", "urgent"),
+    ("identity.registration_number", "registration number", "urgent"),
+    ("identity.address", "headquarters address", "high"),
+    ("leadership.ceo", "chief executive", "high"),
+)
+
+
 class ResearchPipelineExecutor:
     """Execute one durable research step at a time."""
 
@@ -297,8 +306,18 @@ class ResearchPipelineExecutor:
     async def _ai_extraction(self, job: ResearchJob, state: dict[str, Any]) -> dict[str, Any]:
         """Run optional AI after acquisition and retain all prior artifacts on failure."""
         if self.ai_provider is None:
-            state["ai"] = {"status": "skipped", "reason": "AI_UNAVAILABLE"}
+            reason = self._ai_unavailable_reason()
+            state["ai"] = {
+                "status": "skipped",
+                "reason": reason,
+                "fact_ids": [],
+                "semantic_extraction": "skipped",
+                "translation": "skipped",
+                "comparison": "skipped",
+                "summary": "skipped",
+            }
             self._warn(state, "AI_EXTRACTION_UNAVAILABLE")
+            self._warn(state, f"AI_EXTRACTION_SKIPPED:{reason}")
             return state
 
         company = await self._get_company(state)
@@ -341,11 +360,11 @@ class ResearchPipelineExecutor:
                     research_job_id=job.id,
                 )
             except Exception as exc:
-                ai_failures.append(f"{type(exc).__name__}:{exc}")
+                ai_failures.append(self._ai_failure_code(exc))
                 continue
 
             if not outcome.is_valid or outcome.sanitized_result is None:
-                ai_failures.extend(outcome.errors or ["AI_OUTPUT_INVALID"])
+                ai_failures.append("AI_OUTPUT_INVALID")
                 continue
             ai_fact_ids.extend(
                 await self._persist_ai_facts(
@@ -353,10 +372,18 @@ class ResearchPipelineExecutor:
                 )
             )
 
+        failure_reason = ai_failures[0] if ai_failures else None
         state["ai"] = {
-            "status": "completed" if not ai_failures else "partial",
+            "status": "completed"
+            if not ai_failures
+            else ("unavailable" if not ai_fact_ids else "partial"),
+            "reason": failure_reason,
             "fact_ids": ai_fact_ids,
             "failures": ai_failures,
+            "semantic_extraction": "completed" if ai_fact_ids else "skipped",
+            "translation": "skipped",
+            "comparison": "skipped",
+            "summary": "skipped",
         }
         if ai_failures:
             for failure in ai_failures:
@@ -425,9 +452,10 @@ class ResearchPipelineExecutor:
             FactCandidate.research_job_id == job.id,
         )
         candidate_result = await self.session.execute(candidate_stmt)
-        fields = {candidate.field_key for candidate in candidate_result.scalars().all()}
+        candidates = list(candidate_result.scalars().all())
+        fields = {candidate.field_key for candidate in candidates}
         conflict_ids: list[str] = []
-        review_ids: list[str] = []
+        review_ids: list[str] = list(state.get("review_task_ids", []))
         conflict_engine = ConflictEngine(self.session)
         review_service = ReviewTaskService(self.session)
 
@@ -449,23 +477,176 @@ class ResearchPipelineExecutor:
             review_result = await self.session.execute(review_stmt)
             review_task = review_result.scalar_one_or_none()
             if review_task is None:
-                review_task = await review_service.create_task(
+                review_task = await self._get_or_create_review_task(
+                    review_service,
                     workspace_id=job.workspace_id,
                     company_id=job.company_id,
                     research_job_id=job.id,
                     conflict_id=conflict.id,
                     task_type="field_conflict",
                     title=f"Review conflicting value for {field_key}",
-                    description="Automated sources disagree; compare evidence before publication.",
-                    priority="high" if conflict.materiality in ("critical", "high") else "medium",
+                    description=(
+                        "Automated sources disagree; compare linked evidence before publication."
+                    ),
+                    priority=(
+                        "urgent"
+                        if conflict.materiality == "critical"
+                        else ("high" if conflict.materiality == "high" else "medium")
+                    ),
                 )
             review_ids.append(str(review_task.id))
 
+        for rejected in state.get("rejected_sources", []):
+            reason = str(rejected.get("reason", ""))
+            if not any(
+                marker in reason for marker in ("ENTITY_MATCH_REVIEW_REQUIRED", "LOW_ENTITY_MATCH")
+            ):
+                continue
+            url = str(rejected.get("url", ""))
+            review_task = await self._get_or_create_review_task(
+                review_service,
+                workspace_id=job.workspace_id,
+                company_id=job.company_id,
+                research_job_id=job.id,
+                task_type="identity_ambiguity",
+                title=f"Review source identity match: {url}",
+                description=(
+                    f"A discovered source may belong to a same-name or ambiguous entity. "
+                    f"Selection reason: {reason}. URL: {url}"
+                ),
+                priority="high",
+            )
+            review_ids.append(str(review_task.id))
+
+        for outcome in state.get("source_provider_outcomes", []):
+            outcome_name = str(outcome.get("outcome", "")).lower()
+            if outcome_name not in {"blocked", "manual_required", "unavailable"}:
+                continue
+            provider = str(outcome.get("provider", "provider"))
+            reason = str(outcome.get("reason", "NO_DETAILS"))
+            review_task = await self._get_or_create_review_task(
+                review_service,
+                workspace_id=job.workspace_id,
+                company_id=job.company_id,
+                research_job_id=job.id,
+                task_type="source_verification",
+                title=f"Verify source provider availability: {provider}",
+                description=(
+                    f"Provider outcome is {outcome_name}; no source or fact was fabricated. "
+                    f"Reason: {reason}. Confirm an approved public source manually."
+                ),
+                priority="high" if outcome_name in {"blocked", "unavailable"} else "medium",
+            )
+            review_ids.append(str(review_task.id))
+
+        company = await self._get_company(state)
+        candidate_fields = {
+            candidate.field_key
+            for candidate in candidates
+            if not candidate.is_unknown and candidate.fact_status != "rejected"
+        }
+        for field_key, label, priority in self._mandatory_review_fields(state):
+            if self._field_is_present(company, field_key, candidate_fields):
+                continue
+            review_task = await self._get_or_create_review_task(
+                review_service,
+                workspace_id=job.workspace_id,
+                company_id=job.company_id,
+                research_job_id=job.id,
+                task_type="high_impact_fact",
+                title=f"Verify mandatory high-impact field: {label}",
+                description=(
+                    f"No evidence-backed value is available for {label}. "
+                    "Review approved public sources before publication."
+                ),
+                priority=priority,
+            )
+            review_ids.append(str(review_task.id))
+
         state["conflict_ids"] = conflict_ids
-        state["review_task_ids"] = review_ids
+        state["review_task_ids"] = list(dict.fromkeys(review_ids))
+        state["review_task_count"] = len(state["review_task_ids"])
         if conflict_ids:
             self._warn(state, f"REVIEW_REQUIRED_CONFLICTS:{len(conflict_ids)}")
+        elif review_ids:
+            self._warn(state, f"REVIEW_REQUIRED:{len(state['review_task_ids'])}")
         return state
+
+    async def _get_or_create_review_task(
+        self,
+        review_service: ReviewTaskService,
+        *,
+        workspace_id: uuid.UUID,
+        company_id: uuid.UUID,
+        research_job_id: uuid.UUID,
+        task_type: str,
+        title: str,
+        description: str,
+        priority: str,
+        conflict_id: uuid.UUID | None = None,
+        fact_candidate_id: uuid.UUID | None = None,
+    ) -> ReviewTask:
+        """Create one deterministic review task per job/reason key."""
+        stmt = select(ReviewTask).where(
+            ReviewTask.workspace_id == workspace_id,
+            ReviewTask.company_id == company_id,
+            ReviewTask.research_job_id == research_job_id,
+            ReviewTask.task_type == task_type,
+            ReviewTask.title == title,
+        )
+        result = await self.session.execute(stmt)
+        existing = result.scalar_one_or_none()
+        if existing is not None:
+            return existing
+        return await review_service.create_task(
+            workspace_id=workspace_id,
+            company_id=company_id,
+            research_job_id=research_job_id,
+            conflict_id=conflict_id,
+            fact_candidate_id=fact_candidate_id,
+            task_type=task_type,
+            title=title,
+            description=description,
+            priority=priority,
+        )
+
+    @staticmethod
+    def _mandatory_review_fields(state: dict[str, Any]) -> tuple[tuple[str, str, str], ...]:
+        """Return configured mandatory high-impact fields for this job."""
+        scope = state.get("scope", {})
+        configured = scope.get("mandatory_high_impact_fields") if isinstance(scope, dict) else None
+        if not isinstance(configured, list):
+            return _DEFAULT_MANDATORY_REVIEW_FIELDS
+        defaults = {
+            field_key: (label, priority)
+            for field_key, label, priority in _DEFAULT_MANDATORY_REVIEW_FIELDS
+        }
+        fields: list[tuple[str, str, str]] = []
+        for raw_field in configured:
+            field_key = str(raw_field).strip()
+            if not field_key:
+                continue
+            label, priority = defaults.get(field_key, (field_key, "high"))
+            fields.append((field_key, label, priority))
+        return tuple(fields)
+
+    @staticmethod
+    def _field_is_present(
+        company: CompanyProfile,
+        field_key: str,
+        candidate_fields: set[str],
+    ) -> bool:
+        """Check a direct company value or an evidence-backed candidate."""
+        if field_key in candidate_fields:
+            return True
+        company_attributes = {
+            "identity.legal_name": "legal_name",
+            "identity.tax_id": "tax_id",
+            "identity.registration_number": "registration_number",
+            "identity.address": "headquarters_address",
+        }
+        attribute = company_attributes.get(field_key)
+        return bool(getattr(company, attribute, None)) if attribute else False
 
     async def _finalize(self, _job: ResearchJob, state: dict[str, Any]) -> dict[str, Any]:
         """Emit a stable result status without changing prior artifacts."""
@@ -483,6 +664,29 @@ class ResearchPipelineExecutor:
         if snapshot is None:
             return None
         return await self.session.get(Source, snapshot.source_id)
+
+    def _ai_unavailable_reason(self) -> str:
+        """Return a stable, non-sensitive reason for skipping optional AI."""
+        if self.settings.ai_kill_switch_enabled:
+            return "AI_KILL_SWITCH_ENABLED"
+        provider_name = self.settings.ai_provider.strip().lower()
+        if provider_name in {"disabled", "none", "off"}:
+            return "AI_DISABLED"
+        if provider_name == "gemini" and not self.settings.gemini_api_key.strip():
+            return "GEMINI_KEY_MISSING"
+        return "AI_PROVIDER_UNAVAILABLE"
+
+    @staticmethod
+    def _ai_failure_code(error: Exception) -> str:
+        """Map provider failures to safe durable codes without leaking details."""
+        if isinstance(error, TimeoutError) or "timeout" in type(error).__name__.lower():
+            return "AI_TIMEOUT"
+        error_name = type(error).__name__.upper()
+        if "KILLSWITCH" in error_name:
+            return "AI_KILL_SWITCH_ENABLED"
+        if "BUDGET" in error_name:
+            return "AI_BUDGET_EXCEEDED"
+        return "AI_PROVIDER_ERROR"
 
     @staticmethod
     def _build_ai_provider(settings: Settings) -> AiProvider | None:
