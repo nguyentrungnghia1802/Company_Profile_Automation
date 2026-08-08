@@ -693,6 +693,38 @@ export class ApiClient {
       headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
     });
   }
+
+  async listFitAssessments(token: string, workspaceId: string, companyId: string): Promise<any> {
+    return this.request<any>(`/companies/${encodeURIComponent(companyId)}/fit-assessments`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+  }
+
+  async evaluateProgramFit(
+    token: string,
+    workspaceId: string,
+    companyId: string,
+    payload: { program_name?: string }
+  ): Promise<any> {
+    return this.request<any>(`/companies/${encodeURIComponent(companyId)}/fit-assessments`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async overrideFitAssessment(
+    token: string,
+    workspaceId: string,
+    assessmentId: string,
+    payload: { override_status: string; notes?: string }
+  ): Promise<any> {
+    return this.request<any>(`/fit-assessments/${encodeURIComponent(assessmentId)}/override`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      body: JSON.stringify(payload),
+    });
+  }
 }
 
 let defaultClientInstance: ApiClient | null = null;

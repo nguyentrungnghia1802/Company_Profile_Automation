@@ -12,6 +12,7 @@ from company_profile.db.models.draft import DraftFieldSelection, ProfileDraft
 from company_profile.db.models.export import ExportJob
 from company_profile.db.models.fact import Evidence, FactCandidate
 from company_profile.db.models.identity import User, Workspace, WorkspaceMember
+from company_profile.db.models.fit_assessment import ProgramFitAssessment
 from company_profile.db.models.policy import PolicySet
 from company_profile.db.models.publication import (
     ProfileFieldEvidence,
@@ -47,6 +48,7 @@ __all__ = [
     "ProfileFieldEvidence",
     "ProfileFieldValue",
     "ProfileVersion",
+    "ProgramFitAssessment",
     "ResearchJob",
     "ResearchTask",
     "ReviewDecision",

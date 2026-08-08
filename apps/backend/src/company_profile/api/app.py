@@ -13,6 +13,7 @@ from company_profile.api.routers import (
     auth,
     companies,
     facts,
+    fit_assessment,
     health,
     library,
     operations,
@@ -79,5 +80,6 @@ def create_app() -> FastAPI:
     app.include_router(policies.router, prefix="/api/v1", tags=["policies"])
     app.include_router(audit.router, prefix="/api/v1", tags=["audit"])
     app.include_router(operations.router, prefix="/api/v1", tags=["operations"])
+    app.include_router(fit_assessment.router, prefix="/api/v1", tags=["fit-assessment"])
 
     return app

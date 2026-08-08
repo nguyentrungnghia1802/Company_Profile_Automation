@@ -5071,6 +5071,217 @@
           }
         }
       }
+    },
+    "/api/v1/companies/{company_id}/fit-assessments": {
+      "get": {
+        "tags": [
+          "fit-assessment"
+        ],
+        "summary": "List Fit Assessments",
+        "description": "List program fit assessments for a company profile.",
+        "operationId": "list_fit_assessments_api_v1_companies__company_id__fit_assessments_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Workspace-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FitAssessmentResponse"
+                  },
+                  "title": "Response List Fit Assessments Api V1 Companies  Company Id  Fit Assessments Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "fit-assessment"
+        ],
+        "summary": "Evaluate Program Fit",
+        "description": "Evaluate company program fit against innovation program criteria.",
+        "operationId": "evaluate_program_fit_api_v1_companies__company_id__fit_assessments_post",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "name": "X-Actor-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Actor-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateFitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitAssessmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fit-assessments/{assessment_id}/override": {
+      "post": {
+        "tags": [
+          "fit-assessment"
+        ],
+        "summary": "Override Fit Assessment",
+        "description": "Apply human reviewer decision override on a program fit assessment.",
+        "operationId": "override_fit_assessment_api_v1_fit_assessments__assessment_id__override_post",
+        "parameters": [
+          {
+            "name": "assessment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assessment Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "name": "X-Actor-ID",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "X-Actor-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverrideFitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FitAssessmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6031,6 +6242,18 @@
         ],
         "title": "DraftFieldSelectionResponse"
       },
+      "EvaluateFitRequest": {
+        "properties": {
+          "program_name": {
+            "type": "string",
+            "title": "Program Name",
+            "default": "AI Riser Innovation Accelerator 2026"
+          }
+        },
+        "type": "object",
+        "title": "EvaluateFitRequest",
+        "description": "Request payload to evaluate company program fit."
+      },
       "EvidenceResponse": {
         "properties": {
           "id": {
@@ -6504,6 +6727,100 @@
         "title": "FetchAttemptResponseData",
         "description": "Fetch attempt model."
       },
+      "FitAssessmentResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id"
+          },
+          "company_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Company Id"
+          },
+          "program_name": {
+            "type": "string",
+            "title": "Program Name"
+          },
+          "overall_fit_status": {
+            "type": "string",
+            "title": "Overall Fit Status"
+          },
+          "fit_score": {
+            "type": "number",
+            "title": "Fit Score"
+          },
+          "assessment_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Assessment Json"
+          },
+          "reviewer_override_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Override Status"
+          },
+          "reviewer_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Notes"
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "company_id",
+          "program_name",
+          "overall_fit_status",
+          "fit_score",
+          "assessment_json",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FitAssessmentResponse",
+        "description": "Program fit assessment response schema."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -6585,6 +6902,31 @@
         ],
         "title": "MergeCompanyRequest",
         "description": "Merge company request body."
+      },
+      "OverrideFitRequest": {
+        "properties": {
+          "override_status": {
+            "type": "string",
+            "title": "Override Status"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "override_status"
+        ],
+        "title": "OverrideFitRequest",
+        "description": "Request payload to apply human reviewer override."
       },
       "PolicySetResponse": {
         "properties": {

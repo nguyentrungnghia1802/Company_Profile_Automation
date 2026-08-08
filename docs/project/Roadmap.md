@@ -935,14 +935,14 @@ Evidence:
 
 This phase does not block trusted-profile Roadmap completion unless stakeholders explicitly move it into required scope.
 
-- [ ] **P13-001** Define program criteria and decision ownership.
-- [ ] **P13-002** Separate profile facts from assessment rules and generated recommendations.
-- [ ] **P13-003** Implement rules-based explainable fit assessment.
-- [ ] **P13-004** Require evidence references for every assessment reason.
-- [ ] **P13-005** Add reviewer override and no-automatic-rejection policy.
-- [ ] **P13-006** Add meeting-question suggestions labeled as guidance.
-- [ ] **P13-007** Evaluate fairness, false certainty, and misuse risks.
-- [ ] **P13-008** Add assessment history and audit.
+- [x] **P13-001** Define program criteria and decision ownership.
+- [x] **P13-002** Separate profile facts from assessment rules and generated recommendations.
+- [x] **P13-003** Implement rules-based explainable fit assessment.
+- [x] **P13-004** Require evidence references for every assessment reason.
+- [x] **P13-005** Add reviewer override and no-automatic-rejection policy.
+- [x] **P13-006** Add meeting-question suggestions labeled as guidance.
+- [x] **P13-007** Evaluate fairness, false certainty, and misuse risks.
+- [x] **P13-008** Add assessment history and audit.
 
 ---
 
@@ -2041,6 +2041,40 @@ No run entry may claim success for a command that was not executed.
   - `feat/block-12a-cloud-and-demo`
 - Remaining work:
   - All core project phases complete!
+
+## RUN-20260808-08 — Optional Phase 13: Post-MVP Fit Assessment
+
+- Executed block: Optional Phase 13 — Post-MVP Fit Assessment (P13-001 through P13-008)
+- Requirements addressed:
+  - Post-MVP rules-based program fit assessment, explainable criteria evidence links, interview question generation, and reviewer decision override policy.
+- Implementation changes:
+  - Created Alembic migration `20260808_0016_fit_assessments.py` for `program_fit_assessments` table.
+  - Created ORM model `ProgramFitAssessment` in `company_profile/db/models/fit_assessment.py`.
+  - Implemented `ProgramFitAssessmentService` in `company_profile/modules/fit_assessment/service.py` for rules evaluation, evidence linking, and human reviewer decision overrides.
+  - Created FastAPI router `company_profile/api/routers/fit_assessment.py`.
+  - Regenerated OpenAPI snapshot (`docs/project/openapi.json`) and TypeScript API client (`packages/api-client/src/index.ts`).
+  - Implemented React UI component `ProgramFitCard.tsx` in `apps/web/src/features/fit_assessment/ProgramFitCard.tsx`.
+  - Created test suite `apps/backend/tests/test_fit_assessment.py`.
+- Validation results:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (108 source files)
+  - `uv run pytest apps/backend/tests` — passed (122 passed)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+  - `bun run --cwd apps/web typecheck` — passed (0 errors)
+- Documentation updated:
+  - `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`, `docs/project/openapi.json`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-13a-fit-assessment`
+- Remaining work:
+  - All core and optional roadmap phases complete!
 
 ---
 
