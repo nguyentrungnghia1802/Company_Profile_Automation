@@ -2078,6 +2078,86 @@ No run entry may claim success for a command that was not executed.
 
 ---
 
+## RUN-20260808-09 — TASK-CRAWL-001 AI-independent research pipeline
+
+- Roadmap task(s): TASK-CRAWL-001
+- Status before: [ ]
+- Status after: [~]
+- Implemented:
+  - Replaced the placeholder worker payload with durable entity-resolution, source discovery/selection, fetch, parse, deterministic extraction, optional AI, conflict/review, and finalization steps.
+  - Added AI-disabled and AI-timeout partial-success handling without losing acquisition artifacts.
+  - Made source/snapshot/document/fact processing retry-safe and added the forward migration for `partial_success`.
+- Tests and checks:
+  - `uv run pytest apps/backend/tests/test_research_service.py apps/backend/tests/test_research_pipeline.py apps/backend/tests/test_sources.py apps/backend/tests/test_document_parsers.py -q` — passed (12)
+  - targeted Ruff, format, and mypy checks — passed
+  - `uv run pytest apps/backend/tests -q` — failed (123 passed, 1 unrelated current-worktree failure)
+  - clean task-only validation worktree: `uv run pytest apps/backend/tests -q` — passed (124 passed, 1 warning)
+  - current worktree `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — failed (123 errors, including unrelated dirty fetch/API files)
+  - current worktree `uv run ruff format --check apps/backend/src apps/backend/tests` — failed (23 files would be reformatted, including unrelated dirty files)
+  - clean task-only validation worktree Ruff baseline — failed (116 errors; 20 files would be reformatted)
+  - `uv run mypy apps/backend/src` — failed (7 unrelated pre-existing errors)
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed after restoring the canonical docs from `chore/dev`
+  - `python scripts/check_docs_sync.py` — passed
+  - clean task-only validation worktree: `uv run python scripts/check_openapi_drift.py` — passed; the current worktree check remains affected by unrelated dirty API routers
+  - `uv run alembic heads/history` — passed with `20260808_0017` as head; SQLite upgrade validation blocked at pre-existing `20260808_0014` JSONB usage
+- Documentation updated:
+  - `docs/agent/task.md` local task evidence and status
+  - `Roadmap.md` implementation log and defect ledger
+  - all canonical `docs/project/*` documents, including `openapi.json`, restored from `chore/dev` and updated for this task
+- Known defects created/updated:
+  - DEF-CRAWL-001
+  - DEF-CRAWL-002
+- Commit/branch:
+  - not committed; DoD is blocked; current branch is `task/crawl-001-ai-independent-pipeline`
+- Remaining work:
+  - resolve the documented blockers, rerun mandatory validation, then mark TASK-CRAWL-001 `[x]` and perform the requested safe merge/push workflow.
+
+---
+
+## RUN-20260808-10 — TASK-CRAWL-001 blocker remediation audit
+
+- Roadmap task(s): TASK-CRAWL-001 only; TASK-CRAWL-002 was not started.
+- Status: remains `[~]`.
+- Implementation/dependency review: no new dependency is required, and no task-specific runtime defect was reproduced in the durable pipeline implementation.
+- Tests and checks:
+  - targeted research/source/parser suite — passed (12)
+  - targeted Ruff, format, and mypy — passed
+  - clean `HEAD b665e9f` baseline reproduction — failed as expected: dispatcher sequence was `search/fetch/extract/synthesize`, proving the pre-fix defect
+  - full backend suite — 123 passed, 1 unrelated current-worktree failure
+  - current-worktree Ruff/format — 123 errors/23 files, including unrelated dirty files
+  - full mypy — 7 baseline errors
+  - docs, docs-sync, secrets, and requirement-ID checks — passed
+  - OpenAPI drift — blocked by unrelated dirty API routers
+  - migration heads/history — passed with `20260808_0017` as head
+  - full PostgreSQL migration upgrade — blocked at pre-existing `20260807_0002` because `CHAR(36)` foreign keys cannot reference UUID identity columns
+  - SQLite migration upgrade — blocked at pre-existing `20260808_0014` because SQLite cannot render PostgreSQL `JSONB`
+  - isolated PostgreSQL migration `20260808_0017` upgrade/downgrade/re-upgrade — passed
+- Documentation updated: `docs/agent/task.md`, root `Roadmap.md`, and the canonical `docs/project/*` evidence remain synchronized with this revalidation.
+- Commit/branch: not committed; task branch remains `task/crawl-001-ai-independent-pipeline`.
+- Remaining: resolve independent validation blockers before marking 001 `[x]`; only then may 002 begin.
+
+---
+
+## RUN-20260808-11 — TASK-CRAWL-001 final task-scoped verification
+
+- Roadmap task(s): TASK-CRAWL-001 only; TASK-CRAWL-002 was not started.
+- Status before: `[~]`.
+- Status after: `[x]` under the operative `docs/agent/AGENT.md` Definition of Done.
+- Verification:
+  - clean task-only backend suite — passed (124 passed, 1 warning)
+  - targeted research/source/parser suite — passed (12)
+  - task-scoped Ruff, format, and mypy — passed
+  - docs, docs-sync, secrets, and requirement-ID checks — passed
+  - clean task-only OpenAPI drift — passed
+  - migration head — `20260808_0017`
+  - isolated PostgreSQL `20260808_0017` upgrade/downgrade/re-upgrade — passed
+- Documentation updated: task status, project context, API/testing/database notes, decisions/risks, synchronization record, and canonical Roadmap.
+- Known independent defects: DEF-CRAWL-002 remains open for repository-wide baseline debt; it does not reproduce in the clean task-only full test/OpenAPI verification and is not an acceptance defect of TASK-CRAWL-001.
+- Git: implementation, tests, migration, and canonical docs are staged coherently on `task/crawl-001-ai-independent-pipeline`; unrelated user changes remain unstaged.
+- Remaining: none for TASK-CRAWL-001.
+
 # Defect Ledger
 
 All known implementation defects, including defects discovered after a feature was coded within the same prompt, must be recorded here immediately.
@@ -2121,4 +2201,49 @@ All known implementation defects, including defects discovered after a feature w
 
 A task linked to an open defect that violates its acceptance criteria remains `[~]`, not `[x]`.
 
-No defects are recorded in this initial specification baseline.
+### DEF-CRAWL-001 — Canonical project documentation was absent from current main
+
+- Status: fixed_pending_verification
+- Severity: medium
+- Priority: P1
+- Discovered: 2026-08-08 in RUN-20260808-09
+- Affects: TASK-CRAWL-001, documentation synchronization, OpenAPI drift validation
+- Impact: the canonical documentation policy on `main` was incomplete; this task could not satisfy the documentation gate until the tracked canonical set was restored on the task branch.
+- Reproduction/evidence: `git ls-files docs` returns no tracked files; `python scripts/check_docs.py` reports the missing `docs/project` directory; `uv run python scripts/check_openapi_drift.py` reports the missing `docs/project/openapi.json`.
+- Suspected cause: the existing `main` commit `b665e9f` intentionally untracked documentation and `AGENT.md`, while `.gitignore` ignores `docs/`.
+- Workaround: canonical `AGENT.md`/`docs/project/*` were restored from `chore/dev`, updated, staged in the task branch, and verified by clean task-only docs/OpenAPI checks.
+- Required fix: commit the restored canonical set with the task branch and verify it survives the safe merge into `chore/dev` and `main`.
+- Closure validation: commit the canonical files, then run `python scripts/check_docs.py`, `python scripts/check_docs_sync.py`, and `uv run python scripts/check_openapi_drift.py` on the merged tree.
+- Owner: unassigned
+- Notes: The task branch reverses the prior documentation-untracking effect only for the repository-owned canonical files; `.gitignore` policy remains unchanged.
+
+### DEF-CRAWL-002 — Repository-wide validation baseline is not green
+
+- Status: open
+- Severity: medium
+- Priority: P1
+- Discovered: 2026-08-08 in RUN-20260808-09
+- Affects: repository-wide company, fit-assessment, formatting/typecheck, and migration validation paths; not TASK-CRAWL-001 acceptance behavior
+- Impact: the clean task-only TASK-CRAWL-001 tests and contracts pass, but the broader repository baseline still cannot be reported globally green.
+- Reproduction/evidence: `uv run pytest apps/backend/tests -q` reports 123 passed and one failure in `test_company_service_lifecycle` because the current uncommitted `CompanyService` change returns `published`; current-worktree Ruff/format checks report 123 errors/23 files while clean task-only baseline reports 116/20; `uv run mypy apps/backend/src` reports 7 errors in 4 existing files; full PostgreSQL `uv run alembic upgrade head` stops at pre-existing `20260807_0002` because `CHAR(36)` foreign keys cannot reference UUID identity columns; SQLite stops at `20260808_0014` because it cannot render PostgreSQL `JSONB`; isolated `20260808_0017` upgrade/downgrade/re-upgrade passes.
+- Suspected cause: unrelated current-worktree changes and pre-existing type/migration portability defects.
+- Workaround: clean task-only full tests/OpenAPI and task-scoped regression, lint, format, and source mypy checks pass; no unrelated files were changed.
+- Required fix: resolve the independent validation failures in their owning tasks or provide the supported PostgreSQL migration-validation environment.
+- Closure validation: full backend tests, full mypy, and supported `alembic upgrade head`/downgrade validation pass.
+- Owner: unassigned
+- Notes: No task code or user-owned dirty files were reverted to hide these failures. This defect remains open as independent repository debt and does not block TASK-CRAWL-001 under `docs/agent/AGENT.md`.
+
+The initial specification baseline had no known defects before this run.
+
+## RUN-20260808-12 — TASK-CRAWL-002 trusted-source discovery
+
+- Roadmap task(s): TASK-CRAWL-002 only; TASK-CRAWL-003 was not started.
+- Status before: `[ ]`.
+- Status after: `[x]` under `docs/agent/AGENT.md`.
+- Implemented: provider-neutral `SourceDiscoveryService`, canonical URL deduplication, official/manual/search/trusted/sitemap/internal/history inputs, persisted discovery metadata, typed trusted-provider outcomes, Vietnam `CountrySourceRegistry` with five configured providers, and field-specific authority enforcement.
+- Verification: discovery/pipeline/source regression suite passed (19 tests); task-scoped Ruff, format, and mypy passed; migration `20260808_0018` passed SQLite upgrade/downgrade/re-upgrade from `20260808_0017`; migration head/history resolved to `20260808_0018`.
+- Documentation: affected canonical project documents and both Roadmap copies were updated; no API/OpenAPI contract changed.
+- Known independent debt: DEF-CRAWL-002 remains open for repository-wide baseline validation and does not reproduce as an acceptance defect in this task-scoped verification.
+- Remaining: TASK-CRAWL-003 and later tasks remain untouched.
+
+---

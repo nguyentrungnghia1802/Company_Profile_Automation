@@ -425,3 +425,37 @@ The baseline is suitable for a small-to-medium internal workload. Before larger 
 - [ ] Failure behavior is covered by tests or documented operational checks.
 - [ ] New external dependencies are recorded with secrets, cost, privacy, and fallback behavior.
 - [ ] Any departure from this architecture has an ADR in `09_DECISIONS_AND_RISKS.md`.
+
+## Verified implementation addendum — TASK-CRAWL-001 (2026-08-08)
+
+The worker implementation currently uses the following durable step sequence:
+
+```text
+entity_resolution
+→ source_discovery
+→ source_selection
+→ source_fetch
+→ document_parse
+→ deterministic_extraction
+→ ai_extraction (optional)
+→ fact_processing
+→ finalize
+```
+
+`ResearchPipelineExecutor` owns orchestration while `WebFetcher`, document parsers, deterministic fact extraction, AI validation, conflict detection, and review-task services retain their provider/domain boundaries. Each completed worker step is committed before the dispatcher creates the next step. Optional AI failures become warnings in the durable payload; acquisition artifacts are not rolled back.
+
+## Verified implementation addendum — TASK-CRAWL-002 (2026-08-08)
+
+Source discovery responsibilities are now split from pipeline orchestration:
+
+```text
+ResearchPipelineExecutor
+  -> SourceDiscoveryService
+       -> SearchProvider metadata
+       -> CountrySourceRegistry / TrustedSourceProvider adapters
+       -> scope links (official, manual, sitemap, internal)
+       -> tenant-scoped Source history
+       -> deterministic canonicalization and selection
+```
+
+`modules/sources/discovery.py` contains provider-neutral contracts and policy orchestration. `modules/sources/trusted_sources.py` contains country configuration and the default no-fabrication adapter. The core service does not import AI or call websites directly. A production adapter must prefer public structured/API access, enforce robots/terms/access controls, and return a typed outcome before any permitted fetch adapter is used. `Source.authority_for_field()` is the boundary used by deterministic and AI fact confidence calculations; no single domain score is treated as authoritative for every field.

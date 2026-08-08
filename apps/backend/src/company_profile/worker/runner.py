@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import logging
 from typing import TYPE_CHECKING
 
 from company_profile.db.session import get_db_session
 from company_profile.modules.research.dispatcher import PostgresTaskDispatcher
+from company_profile.modules.research.pipeline import ResearchPipelineExecutor
 from company_profile.modules.research.queue import ResearchQueueRepository
 
 if TYPE_CHECKING:
@@ -31,12 +33,14 @@ class WorkerRunner:
         batch_size: int = 5,
         lease_seconds: int = 300,
         session_factory: Callable[[], AsyncSession] | None = None,
+        pipeline_factory: Callable[[AsyncSession], ResearchPipelineExecutor] | None = None,
     ) -> None:
         self.worker_id = worker_id
         self.poll_interval = poll_interval
         self.batch_size = batch_size
         self.lease_seconds = lease_seconds
         self.session_factory = session_factory
+        self.pipeline_factory = pipeline_factory
         self._running = False
         self._stop_event = asyncio.Event()
 
@@ -104,8 +108,13 @@ class WorkerRunner:
             },
         )
         try:
-            output_payload = f'{{"status": "success", "step": "{task.step_type}"}}'
-            task.complete(output_payload)
+            pipeline = (
+                self.pipeline_factory(session)
+                if self.pipeline_factory is not None
+                else ResearchPipelineExecutor(session)
+            )
+            output_payload = await pipeline.execute(task)
+            task.complete(json.dumps(output_payload, ensure_ascii=False, sort_keys=True))
             await session.commit()
 
             # Advance job pipeline step sequence

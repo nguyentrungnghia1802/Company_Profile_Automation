@@ -436,3 +436,34 @@ A task is complete only when:
 - [ ] CI runs the documented mandatory gates.
 - [ ] Definition of done matches `AGENT.md`.
 - [ ] Failed or skipped checks are recorded in Roadmap notes.
+
+## Verified implementation addendum — TASK-CRAWL-001 (2026-08-08)
+
+Task-scoped verification:
+
+```text
+uv run pytest apps/backend/tests/test_research_service.py apps/backend/tests/test_research_pipeline.py apps/backend/tests/test_sources.py apps/backend/tests/test_document_parsers.py -q  # 12 passed
+uv run ruff check <task-scoped Python files>       # passed
+uv run ruff format --check <task-scoped files>     # passed
+uv run mypy <task-scoped source files>             # passed
+python scripts/check_requirement_ids.py            # passed
+python scripts/check_secrets.py                    # passed
+python scripts/check_docs.py                       # passed with the restored canonical set
+python scripts/check_docs_sync.py                  # passed
+```
+
+The clean task-only validation worktree also passed the full backend suite (`124 passed`) and OpenAPI drift check. Isolated PostgreSQL migration `20260808_0017` upgrade/downgrade/re-upgrade passed. The current mixed worktree and broader repository baseline still have independent test, Ruff/format, mypy, OpenAPI, and historical migration defects recorded in the root `Roadmap.md`; they are not represented as TASK-CRAWL-001 failures.
+
+## Verified implementation addendum — TASK-CRAWL-002 (2026-08-08)
+
+Task-scoped regression and contract checks:
+
+```text
+uv run pytest apps/backend/tests/test_source_discovery.py apps/backend/tests/test_sources.py apps/backend/tests/test_source_policy.py apps/backend/tests/test_sources_e2e.py apps/backend/tests/test_research_service.py apps/backend/tests/test_research_pipeline.py -q  # 19 passed
+uv run ruff check <TASK-CRAWL-002 Python files>          # passed
+uv run ruff format --check <TASK-CRAWL-002 Python files> # passed
+uv run mypy <TASK-CRAWL-002 source files>                # passed
+uv run alembic heads; uv run alembic history            # head/history passed; head 20260808_0018
+```
+
+The new tests use deterministic providers and monkeypatched URL-safety decisions; they do not call live websites. The isolated migration check covered upgrade/downgrade/re-upgrade of `20260808_0018`. Full repository validation remains subject to the independent defects recorded in the root Roadmap and is not silently claimed as green.

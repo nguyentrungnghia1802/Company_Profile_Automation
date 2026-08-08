@@ -179,3 +179,11 @@ When every required Roadmap task and final completion gate is complete:
 9. Continue updating canonical docs for every maintenance change.
 
 Roadmap completion does not end documentation discipline.
+
+## Verified synchronization record — TASK-CRAWL-001 (2026-08-08)
+
+The affected current-state, architecture, domain-flow, database, codebase, development/testing, operations, decisions/risks, API, and Roadmap documents contain addenda describing the verified AI-independent pipeline. TASK-CRAWL-001 is `[x]` after clean task-only full tests, task-scoped quality checks, docs/OpenAPI checks, and isolated PostgreSQL migration verification; independent repository baseline debt remains recorded in the root Roadmap defect ledger.
+
+## Verified synchronization record — TASK-CRAWL-002 (2026-08-08)
+
+The affected current-state, requirements, architecture, domain-flow, database, codebase, development/testing, operations, decisions/risks, and Roadmap documents now describe the provider-neutral discovery service, Vietnam source registry, typed outcomes, source metadata migration `20260808_0018`, field-specific authority, and the verified validation scope. No API route or OpenAPI contract changed. TASK-CRAWL-003 remains unstarted.

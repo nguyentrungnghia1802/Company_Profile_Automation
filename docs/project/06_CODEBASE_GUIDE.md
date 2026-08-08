@@ -371,3 +371,28 @@ This may live in a commit message, pull request template, or agent completion no
 - [ ] All visible copy exists in Vietnamese and English.
 - [ ] Sensitive files and local artifacts are ignored.
 - [ ] Affected docs and Roadmap entries are updated.
+
+## Verified implementation addendum — TASK-CRAWL-001 (2026-08-08)
+
+Actual ownership for the verified pipeline is:
+
+- `modules/research/dispatcher.py`: durable ordered task creation and job finalization;
+- `modules/research/pipeline.py`: application-level step orchestration and optional-provider handling;
+- `modules/sources/fetcher.py`: safe fetch, immutable snapshot persistence, and idempotent parsing;
+- `modules/facts/deterministic.py`: high-precision structured/labeled extraction with evidence;
+- `worker/runner.py`: task claim execution, output persistence, and step advancement;
+- `integrations/ai/*`, `integrations/search/*`, and storage adapters: provider boundaries and deterministic test doubles.
+
+## Verified implementation addendum — TASK-CRAWL-002 (2026-08-08)
+
+Source-discovery ownership is:
+
+- `modules/sources/discovery.py`: canonical candidate model, provider outcome contract, source aggregation, tenant-scoped history reuse, deterministic selection, and persisted provenance;
+- `modules/sources/trusted_sources.py`: `TrustedSourceProvider`, `CountrySourceRegistry`, Vietnam definitions, and the no-fabrication configured adapter;
+- `modules/sources/policy.py`: domain classification and compatibility authority tier defaults;
+- `db/models/source.py`: discovery/provider/reason metadata and field-specific authority lookup;
+- `modules/research/pipeline.py`: only step orchestration and provider injection.
+
+New country providers register through `CountrySourceRegistry` and do not require edits to the discovery core. Provider adapters may return explicit public structured results only; no adapter is allowed to turn a blocked/unavailable response into guessed data.
+
+The worker does not place source-of-truth or publication decisions in AI/provider adapters. Every AI fact is validated and linked to an allowed document block; deterministic facts are created before optional AI processing.

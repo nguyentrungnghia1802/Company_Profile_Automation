@@ -413,3 +413,17 @@ For every code change affecting behavior:
 - [ ] Partial implementation is marked Partial or In progress, not Implemented.
 - [ ] Known defects are recorded in `Roadmap.md` defect ledger.
 - [ ] Last verified date and commit are updated when applicable.
+
+## Verified implementation addendum — TASK-CRAWL-001 (2026-08-08)
+
+- AI is an optional semantic processor, not a prerequisite for acquisition.
+- With `AI_PROVIDER=disabled`, the worker still runs source discovery, source selection, fetch, parse, and deterministic fact extraction.
+- Provider timeout/unavailability preserves prior acquisition artifacts and results in a limited `partial_success` job rather than fabricated data.
+- Retry delivery reuses normalized source/snapshot/document/fact records and records fetch attempts for auditability.
+- Acceptance behavior is covered by the task-scoped regression suite; repository-wide validation limitations remain recorded in the root Roadmap defect ledger.
+
+## Verified implementation addendum — TASK-CRAWL-002 (2026-08-08)
+
+The source-discovery subset is verified without AI: candidate provenance covers official and verified domains, manual URLs, SearchProvider results, configured trusted providers, supplied sitemap/internal links, and source history. URL normalization is the deduplication boundary; search snippets remain discovery metadata and are not promoted as evidence. Selection persists entity-match and explainable acceptance/rejection reasons.
+
+Trusted-source configuration is country-extensible and field-specific. The default Vietnam definitions give government registries priority for legal identity and tax verification, while Wikipedia, Vietstock, and CafeF are limited to their configured overview, leadership, ownership, finance, or discovery roles. A provider that is blocked or not configured yields a typed outcome and no fabricated source candidate. Live network adapters and full link crawling remain separately bounded work.

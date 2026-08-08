@@ -453,3 +453,7 @@ Server stores request hash. Reusing a key with different body returns `409 IDEMP
 - [ ] Frontend generated client is refreshed.
 - [ ] Runtime OpenAPI drift check passes.
 - [ ] New endpoints update relevant requirements, domain flows, and Roadmap tasks.
+
+## Verified implementation addendum — TASK-CRAWL-001 (2026-08-08)
+
+This task changes worker orchestration and the persisted research-job status set but does not add or change an HTTP route, request schema, response schema, or authorization rule. Research-job responses continue to expose the model's string status and optional limited-result message. The committed snapshot passes OpenAPI drift in the clean task-only worktree; unrelated uncommitted API changes still produce drift only in the mixed current worktree.

@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     auth_audience: str = ""
 
     # --- AI Provider ---
-    ai_provider: str = "mock"  # mock | gemini
+    ai_provider: str = "mock"  # disabled | mock | gemini
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash"
     ai_timeout: int = 60

@@ -279,3 +279,15 @@ After any material change, verify:
 - [ ] Last verified commit and date are updated when a repository exists.
 - [ ] Completed behavior is not described as merely planned.
 - [ ] Planned behavior is not described as implemented.
+
+## Verified implementation addendum — TASK-CRAWL-001 (2026-08-08)
+
+The research worker now executes acquisition independently of optional AI processing. The verified sequence is entity resolution, source discovery and selection, source fetch, document parse, deterministic extraction, optional AI extraction, fact/conflict/review processing, and finalization. AI-disabled and provider-failure runs preserve acquired sources, snapshots, document blocks, and deterministic facts and expose `partial_success` when the result is limited.
+
+TASK-CRAWL-001 is complete under `docs/agent/AGENT.md`: a clean task-only worktree passed the full backend suite, task-scoped quality checks, docs checks, and OpenAPI drift, while the task migration passed isolated PostgreSQL upgrade/downgrade/re-upgrade. Independent repository baseline defects remain recorded in the root Roadmap and are not represented as task acceptance failures.
+
+## Verified implementation addendum — TASK-CRAWL-002 (2026-08-08)
+
+`SourceDiscoveryService` now performs deterministic, AI-independent source aggregation and selection. It canonicalizes and deduplicates official, verified-domain, manual, SearchProvider, trusted-provider, sitemap, internal-link, and prior-source-history inputs, while persisting provenance, provider, source type, entity match, field-specific authority, and selection/rejection reasons on `Source`.
+
+The Vietnam registry is configuration-driven with five trusted-source adapters: the two government registries, Wikipedia, Vietstock, and CafeF. The default configured adapter consumes explicit structured results and returns typed `success`, `not_found`, `blocked`, `manual_required`, or `unavailable` outcomes; it does not fabricate URLs or bypass access controls. Government authority is stronger for legal/tax fields than reference or financial media authority, while those secondary sources remain available for their configured fields. TASK-CRAWL-003 remains unstarted.
