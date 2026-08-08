@@ -473,3 +473,16 @@ The new tests use deterministic providers and monkeypatched URL-safety decisions
 The fixture suite uses an in-memory website provider containing robots rules, a homepage with English/Vietnamese links, canonical metadata, irrelevant paths, and a bounded large sitemap. A provider-neutral recording search double verifies deterministic bilingual query generation, persisted result metadata, and same-name review behavior. No live website or search API is required.
 
 Additional discovery checks cover robots disallow/unavailable decisions, sitemap and page budgets, fragment/tracking canonicalization, duplicate-link merging, multilingual page-group ranking, sensitive-path rejection, and migration `20260808_0019` upgrade/downgrade/re-upgrade.
+
+## Verified validation addendum — TASK-CRAWL-004 (2026-08-09)
+
+Task-scoped regression checks use only deterministic fixtures and monkeypatched HTTP; they do not call live sites, registries, search APIs, or browser credentials:
+
+```text
+uv run --extra dev pytest apps/backend/tests/test_crawl_parse_extraction.py apps/backend/tests/test_document_parsers.py apps/backend/tests/test_sources.py apps/backend/tests/test_http_safety.py apps/backend/tests/test_browser_fallback.py apps/backend/tests/test_research_pipeline.py apps/backend/tests/test_research_service.py -q  # 25 passed
+uv run --extra dev ruff check <TASK-CRAWL-004 Python files>       # passed
+uv run --extra dev ruff format --check <TASK-CRAWL-004 files>     # passed
+uv run --extra dev mypy <TASK-CRAWL-004 source files>             # passed
+```
+
+Coverage includes HTML metadata/JSON-LD/links/sections, structured JSON field paths and provenance, real page-aware PDF parsing, malformed/oversized PDF safety, bounded same-domain crawl, redirect SSRF revalidation, retry/MIME audit, browser safety, and deterministic candidates with exact block evidence. The isolated migration check covers `20260809_0020` upgrade/downgrade/re-upgrade. The clean task-only full backend suite is the completion gate; mixed-worktree failures from unrelated user changes remain reported separately.

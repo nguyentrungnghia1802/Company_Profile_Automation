@@ -18,7 +18,7 @@ from company_profile.db.models.company import CompanyProfile
 from company_profile.db.models.fact import FactCandidate
 from company_profile.db.models.research import ResearchJob, ResearchTask
 from company_profile.db.models.review import ReviewTask
-from company_profile.db.models.source import DocumentBlock, Source, SourceSnapshot
+from company_profile.db.models.source import DocumentBlock, Source, SourceSnapshot, normalize_url
 from company_profile.integrations.ai.mock_ai import MockAiProvider
 from company_profile.integrations.ai.protocol import AiInputBlock
 from company_profile.integrations.fetch.website_discovery import HttpxWebsiteFetchProvider
@@ -30,7 +30,7 @@ from company_profile.modules.facts.deterministic import DeterministicFactExtract
 from company_profile.modules.facts.repository import FactCandidateRepository
 from company_profile.modules.review.service import ReviewTaskService
 from company_profile.modules.sources.discovery import SourceDiscoveryService
-from company_profile.modules.sources.fetcher import WebFetcher
+from company_profile.modules.sources.fetcher import CrawlCoordinator, WebFetcher
 from company_profile.modules.sources.official_discovery import OfficialWebsiteDiscovery
 
 if TYPE_CHECKING:
@@ -183,39 +183,57 @@ class ResearchPipelineExecutor:
         company_id = uuid.UUID(state["company_id"])
         fetched: list[dict[str, Any]] = []
         failures: list[dict[str, str]] = []
-
-        for selected in state.get("selected_sources", []):
-            try:
-                result = await self.fetcher.fetch_and_store_source(
-                    workspace_id=workspace_id,
-                    company_id=company_id,
-                    url=str(selected["url"]),
-                    source_type=str(selected.get("source_type", "web_page")),
-                    research_job_id=job.id,
-                    parse_content=False,
-                )
-            except Exception as exc:  # one source must not roll back other sources
-                failures.append(
-                    {"url": str(selected["url"]), "error": f"{type(exc).__name__}:{exc}"}
-                )
-                continue
-
+        selected_sources = list(state.get("selected_sources", []))
+        selected_by_url = {
+            normalize_url(str(selected["url"])): selected for selected in selected_sources
+        }
+        source_types = {
+            normalize_url(str(selected["url"])): str(selected.get("source_type", "web_page"))
+            for selected in selected_sources
+        }
+        coordinator = CrawlCoordinator(
+            self.fetcher,
+            max_depth=self.settings.crawl_max_depth,
+            max_pages_per_domain=self.settings.crawl_max_pages_per_domain,
+            max_pages_per_job=self.settings.crawl_max_pages_per_job,
+        )
+        pages = await coordinator.crawl(
+            workspace_id,
+            company_id,
+            [str(selected["url"]) for selected in selected_sources],
+            research_job_id=job.id,
+            source_type_by_url=source_types,
+            parse_content=False,
+        )
+        fetched_urls: set[str] = set()
+        for page in pages:
+            result = page.result
+            fetched_urls.add(normalize_url(page.url))
             if result.snapshot is None:
                 failures.append(
                     {
-                        "url": str(selected["url"]),
+                        "url": page.url,
                         "error": result.error_message or f"HTTP_{result.status_code}",
                     }
                 )
                 continue
+            selected = selected_by_url.get(normalize_url(page.url), {})
             fetched.append(
                 {
                     "source_id": str(result.source.id),
                     "snapshot_id": str(result.snapshot.id),
-                    "url": str(selected["url"]),
+                    "url": page.url,
                     "content_type": result.snapshot.content_type,
+                    "crawl_depth": page.depth,
+                    "discovered_via": selected.get("discovered_via", "crawl_link"),
                 }
             )
+        for selected in selected_sources:
+            selected_url = normalize_url(str(selected["url"]))
+            if selected_url not in fetched_urls:
+                failures.append(
+                    {"url": str(selected["url"]), "error": "CRAWL_BUDGET_OR_QUEUE_LIMIT"}
+                )
 
         state["fetched_sources"] = fetched
         state["fetch_failures"] = failures

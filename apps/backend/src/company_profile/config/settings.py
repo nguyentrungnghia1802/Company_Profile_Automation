@@ -55,7 +55,12 @@ class Settings(BaseSettings):
     fetch_user_agent: str = "VCPS-Bot/0.1 (+https://example.com/bot)"
     fetch_timeout: int = 30
     fetch_max_response_bytes: int = 10_000_000  # 10 MB
+    fetch_max_decompressed_bytes: int = 10_000_000  # 10 MB after content decoding
     fetch_max_redirects: int = 5
+    fetch_max_retries: int = 2
+    fetch_rate_limit_seconds: float = 0.25
+    fetch_max_concurrency_per_domain: int = 2
+    fetch_browser_fallback_max_pages: int = 2
     fetch_browser_fallback_enabled: bool = False
     crawl_max_depth: int = 1
     crawl_max_pages_per_domain: int = 25

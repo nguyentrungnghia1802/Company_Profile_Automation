@@ -190,4 +190,8 @@ The affected current-state, requirements, architecture, domain-flow, database, c
 
 ## Verified synchronization record — TASK-CRAWL-003 (2026-08-08)
 
-The affected canonical documents now describe bounded robots-aware official website discovery, multilingual URL ranking, deterministic provider-neutral query generation, `ResearchQuery`/`SearchResult` persistence migration `20260808_0019`, discovery budgets, fail-closed policy behavior, and the explicit boundary before TASK-CRAWL-004. No API/OpenAPI route changed.
+The affected canonical documents now describe bounded robots-aware official website discovery, multilingual URL ranking, deterministic provider-neutral query generation, `ResearchQuery`/`SearchResult` persistence migration `20260808_0019`, discovery budgets, and fail-closed policy behavior. TASK-CRAWL-004 is synchronized by the record below; no API/OpenAPI route changed.
+
+## Verified synchronization record — TASK-CRAWL-004 (2026-08-09)
+
+The affected current-state, requirements, architecture, domain-flow, database, codebase, development/testing, operations, decisions/risks, Roadmap, and task documents now describe the HTTP-first bounded `CrawlCoordinator`, redirect/DNS/IP and response limits, controlled browser fallback, stable HTML/structured/PDF blocks, migration `20260809_0020`, language/parser metadata, and deterministic evidence-linked facts. `pypdf` is recorded in `pyproject.toml`/`uv.lock` and `.env.example` includes the new fetch budgets. No API/OpenAPI contract changed; TASK-CRAWL-005 and later tasks remain untouched.

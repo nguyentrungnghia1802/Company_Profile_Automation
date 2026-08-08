@@ -74,9 +74,26 @@ class PlaywrightBrowserAdapter:
                     url, timeout=self.timeout * 1000, wait_until="domcontentloaded"
                 )
                 final_url = page.url
+                final_safe, final_reason = validate_url_safety(final_url)
+                if not final_safe:
+                    await browser.close()
+                    return RenderedPageResult(
+                        final_url=final_url,
+                        http_status=400,
+                        content_html="",
+                        reason=f"SSRF_PREVENTION: {final_reason}",
+                    )
                 status = response.status if response else 200
                 html_content = await page.content()
                 await browser.close()
+
+                if len(html_content.encode("utf-8")) > self.settings.fetch_max_decompressed_bytes:
+                    return RenderedPageResult(
+                        final_url=final_url,
+                        http_status=413,
+                        content_html="",
+                        reason="BROWSER_RESPONSE_TOO_LARGE",
+                    )
 
                 return RenderedPageResult(
                     final_url=final_url,
@@ -88,6 +105,14 @@ class PlaywrightBrowserAdapter:
 
         except Exception as exc:
             logger.info("Playwright execution unavailable or failed (%s); using fallback", exc)
+            fallback_safe, fallback_reason = validate_url_safety(url)
+            if not fallback_safe:
+                return RenderedPageResult(
+                    final_url=url,
+                    http_status=400,
+                    content_html="",
+                    reason=f"SSRF_PREVENTION: {fallback_reason}",
+                )
             return RenderedPageResult(
                 final_url=url,
                 http_status=200,

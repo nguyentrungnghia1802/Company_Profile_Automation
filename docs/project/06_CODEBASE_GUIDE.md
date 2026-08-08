@@ -408,3 +408,17 @@ Relevant source-discovery boundaries are:
 - `db/models/search.py` and migration `20260808_0019_search_discovery_metadata.py`: durable query/result metadata.
 
 These components return discovery metadata only. They do not publish facts, treat snippets as evidence, bypass robots/access controls, or import Gemini.
+
+## Verified implementation addendum — TASK-CRAWL-004 (2026-08-09)
+
+The crawl/parser ownership is:
+
+- `modules/sources/fetcher.py`: `WebFetcher`, per-domain limiter, bounded retry/redirect/MIME/size policy, immutable snapshot persistence, and `CrawlCoordinator`;
+- `modules/sources/coordinator.py`: public coordinator import boundary;
+- `modules/sources/validator.py`: HTTP(S), DNS/IP, reserved-network, credential, and redirect safety validation;
+- `modules/sources/parser.py`: deterministic HTML, structured JSON, and bounded page-aware PDF parsing;
+- `modules/sources/browser_adapter.py`: Playwright fallback with initial, subresource, final-URL, and response-size safety checks;
+- `modules/facts/deterministic.py`: direct structured/labelled fact extraction and evidence linking;
+- `db/models/source.py` and migration `20260809_0020_crawl_parse_metadata.py`: parser, language, evidence-location, fetch-policy, and retry audit metadata.
+
+The source body remains untrusted data. No parser executes scripts, no browser fallback bypasses access controls, and no deterministic regex infers broad semantic fields.

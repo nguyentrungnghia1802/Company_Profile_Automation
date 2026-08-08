@@ -71,6 +71,13 @@ _LABEL_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         "identity.email",
         re.compile(r"^(?:email|e-mail)\s*[:\-]\s*([^\s]+@[^\s]+)$", re.IGNORECASE),
     ),
+    (
+        "identity.founding_date",
+        re.compile(
+            r"^(?:founding|founded|incorporation)\s+(?:date|day)?\s*[:\-]\s*(.+)$",
+            re.IGNORECASE,
+        ),
+    ),
 )
 
 
@@ -176,10 +183,13 @@ class DeterministicFactExtractor:
     ) -> list[tuple[str, Any, str]]:
         """Return high-precision facts from one block."""
         facts: list[tuple[str, Any, str]] = []
-        if block.block_type == "table":
+        if block.block_type in {"table", "structured"} or block.block_metadata.get("format") in {
+            "json",
+            "json-ld",
+        }:
             try:
                 payload = json.loads(block.text_content)
-            except json.JSONDecodeError:
+            except (TypeError, json.JSONDecodeError):
                 payload = None
             if payload is not None:
                 entity_text = json.dumps(payload, ensure_ascii=False)
@@ -201,7 +211,7 @@ class DeterministicFactExtractor:
         return facts
 
     def _facts_from_structured_payload(self, payload: Any) -> list[tuple[str, Any, str]]:
-        """Extract only direct Organization/Contact schema properties."""
+        """Extract only direct schema/API fields with an explicit JSON path."""
         facts: list[tuple[str, Any, str]] = []
         for item in self._walk_dicts(payload):
             name = item.get("legalName") or item.get("name")
@@ -211,6 +221,10 @@ class DeterministicFactExtractor:
             website = item.get("url")
             if isinstance(website, str) and website.startswith(("http://", "https://")):
                 facts.append(("identity.website", website.strip(), "structured"))
+
+            tax_id = item.get("taxID") or item.get("taxId") or item.get("tax_id")
+            if isinstance(tax_id, (str, int)) and str(tax_id).strip():
+                facts.append(("identity.tax_id", str(tax_id).strip(), "structured"))
 
             telephone = item.get("telephone")
             if isinstance(telephone, str) and telephone.strip():
@@ -236,10 +250,86 @@ class DeterministicFactExtractor:
             elif isinstance(identifier, dict):
                 identifier_value = identifier.get("value")
                 if isinstance(identifier_value, str) and identifier_value.strip():
-                    facts.append(
-                        ("identity.registration_number", identifier_value.strip(), "structured")
+                    property_id = str(identifier.get("propertyID", "")).lower()
+                    identifier_key = (
+                        "identity.tax_id"
+                        if "tax" in property_id
+                        else "identity.registration_number"
                     )
+                    facts.append((identifier_key, identifier_value.strip(), "structured"))
+
+            founding_date = item.get("foundingDate") or item.get("founding_date")
+            if isinstance(founding_date, (str, int, float)) and str(founding_date).strip():
+                facts.append(("identity.founding_date", str(founding_date).strip(), "structured"))
+
+            ticker = item.get("ticker")
+            if isinstance(ticker, str) and ticker.strip():
+                facts.append(("identity.ticker", ticker.strip(), "structured"))
+            exchange = item.get("exchange") or item.get("stockExchange")
+            if isinstance(exchange, str) and exchange.strip():
+                facts.append(("identity.exchange", exchange.strip(), "structured"))
+
+            social_links = item.get("sameAs")
+            if isinstance(social_links, str):
+                social_links = [social_links]
+            if isinstance(social_links, list):
+                links = [
+                    value.strip()
+                    for value in social_links
+                    if isinstance(value, str) and value.startswith(("http://", "https://"))
+                ]
+                if links:
+                    facts.append(("identity.official_social_links", links, "structured"))
+
+            ceo = item.get("ceo")
+            if isinstance(ceo, dict):
+                person = self._person_value(ceo)
+                if person is not None:
+                    facts.append(("leadership.ceo", person, "structured"))
+
+            founders = item.get("founders", item.get("founder"))
+            if isinstance(founders, dict):
+                founders = [founders]
+            if isinstance(founders, list):
+                people = [
+                    person
+                    for value in founders
+                    if isinstance(value, dict)
+                    for person in [self._person_value(value)]
+                    if person is not None
+                ]
+                if people:
+                    facts.append(("leadership.founders", people, "structured"))
+
+            employees = item.get("employee")
+            if isinstance(employees, dict):
+                employees = [employees]
+            if isinstance(employees, list):
+                board_members = [
+                    person
+                    for value in employees
+                    if isinstance(value, dict)
+                    for person in [self._person_value(value)]
+                    if person is not None
+                    and str(value.get("jobTitle", value.get("role", ""))).lower()
+                    in {"ceo", "chief executive officer", "director", "board member"}
+                ]
+                if board_members:
+                    facts.append(("leadership.board_members", board_members, "structured"))
         return facts
+
+    @staticmethod
+    def _person_value(value: dict[str, Any]) -> dict[str, str] | None:
+        """Keep only a named person and directly supplied role/title labels."""
+        name = value.get("name")
+        if not isinstance(name, str) or not name.strip():
+            return None
+        result = {"name": name.strip()}
+        for key in ("role", "jobTitle", "title"):
+            role = value.get(key)
+            if isinstance(role, str) and role.strip():
+                result["role" if key == "jobTitle" else key] = role.strip()
+        return result
 
     @staticmethod
     def _walk_dicts(value: Any) -> list[dict[str, Any]]:
