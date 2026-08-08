@@ -582,52 +582,59 @@ Evidence:
 
 ## Block 7A — Fact and evidence persistence
 
-- [ ] **P7-001** Add `fact_candidates` and `evidences` migrations.
-- [ ] **P7-002** Implement candidate/evidence transaction.
-- [ ] **P7-003** Implement typed value serialization and field normalization.
-- [ ] **P7-004** Implement direct, inferred, estimated, and unknown status handling.
-- [ ] **P7-005** Implement duplicate candidate/evidence prevention.
+- [x] **P7-001** Add `fact_candidates` and `evidences` migrations.
+- [x] **P7-002** Implement candidate/evidence transaction.
+- [x] **P7-003** Implement typed value serialization and field normalization.
+- [x] **P7-004** Implement direct, inferred, estimated, and unknown status handling.
+- [x] **P7-005** Implement duplicate candidate/evidence prevention.
 
 ## Block 7B — Confidence and source agreement
 
-- [ ] **P7-006** Implement versioned confidence policy components.
-- [ ] **P7-007** Implement field-specific source authority lookup.
-- [ ] **P7-008** Implement recency/freshness calculation.
-- [ ] **P7-009** Implement evidence-quality and extraction-reliability components.
-- [ ] **P7-010** Implement source-agreement adjustment.
-- [ ] **P7-011** Persist human-readable confidence explanation.
-- [ ] **P7-012** Add calibration fixture dataset and baseline evaluation report.
+- [x] **P7-006** Implement versioned confidence policy components.
+- [x] **P7-007** Implement field-specific source authority lookup.
+- [x] **P7-008** Implement recency/freshness calculation.
+- [x] **P7-009** Implement evidence-quality and extraction-reliability components.
+- [x] **P7-010** Implement source-agreement adjustment.
+- [x] **P7-011** Persist human-readable confidence explanation.
+- [x] **P7-012** Add calibration fixture dataset and baseline evaluation report.
 
 ## Block 7C — Conflict engine
 
-- [ ] **P7-013** Add `conflicts` and `conflict_candidates` migrations.
-- [ ] **P7-014** Implement field-specific equivalence and material-difference comparators.
-- [ ] **P7-015** Create conflicts without overwriting candidates.
-- [ ] **P7-016** Support multiple time-scoped valid values.
-- [ ] **P7-017** Reopen resolved conflict when new material evidence arrives.
-- [ ] **P7-018** Add targeted re-research request creation.
+- [x] **P7-013** Add `conflicts` and `conflict_candidates` migrations.
+- [x] **P7-014** Implement field-specific equivalence and material-difference comparators.
+- [x] **P7-015** Create conflicts without overwriting candidates.
+- [x] **P7-016** Support multiple time-scoped valid values.
+- [x] **P7-017** Reopen resolved conflict when new material evidence arrives.
+- [x] **P7-018** Add targeted re-research request creation.
 
 ## Block 7D — Fact and conflict UI
 
-- [ ] **P7-019** Add grouped fact-candidate view.
-- [ ] **P7-020** Add evidence context panel.
-- [ ] **P7-021** Add confidence component explanation.
-- [ ] **P7-022** Add conflict comparison and status UI.
-- [ ] **P7-023** Add stale and missing-information indicators.
+- [x] **P7-019** Add grouped fact-candidate view.
+- [x] **P7-020** Add evidence context panel.
+- [x] **P7-021** Add confidence component explanation.
+- [x] **P7-022** Add conflict comparison and status UI.
+- [x] **P7-023** Add stale and missing-information indicators.
 
 ## Block 7E — Verification
 
-- [ ] **P7-024** Add exact/range/date/name/unit conflict tests.
-- [ ] **P7-025** Add source priority and recency tests.
-- [ ] **P7-026** Add inferred/estimated display regression tests.
-- [ ] **P7-027** Add confidence non-guarantee copy and accessibility review.
+- [x] **P7-024** Add exact/range/date/name/unit conflict tests.
+- [x] **P7-025** Add source priority and recency tests.
+- [x] **P7-026** Add inferred/estimated display regression tests.
+- [x] **P7-027** Add confidence non-guarantee copy and accessibility review.
+
+Evidence:
+- Implemented: `db/migrations/versions/20260808_0008_fact_candidates_and_evidences.py`, `db/migrations/versions/20260808_0009_conflicts_schema.py`, `company_profile/db/models/fact.py`, `company_profile/db/models/conflict.py`, `company_profile/modules/facts/repository.py`, `company_profile/modules/facts/confidence.py`, `company_profile/modules/facts/freshness.py`, `company_profile/modules/conflicts/engine.py`, `company_profile/api/routers/facts.py`, `apps/web/src/features/facts/FactCandidatesList.tsx`, `apps/web/src/features/conflicts/ConflictsList.tsx`, `apps/backend/tests/test_facts.py`, `apps/backend/tests/test_conflicts.py`
+- Tests: `uv run ruff check` passed, `uv run ruff format` passed, `uv run mypy` passed (95 source files), `uv run pytest` passed (110/110 passed), `python scripts/check_secrets.py` passed, `python scripts/check_docs.py` passed, `python scripts/check_requirement_ids.py` passed, `python scripts/check_docs_sync.py` passed, `uv run python scripts/check_openapi_drift.py` passed, `docker compose config` passed, `bun run --cwd apps/web typecheck` passed
+- Docs: `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`, `docs/project/openapi.json`
+- Commit: branch feat/block-7a-fact-persistence
+- Remaining: Phase 8 (Human Review and Publication)
 
 ### Phase 7 completion gate
 
-- [ ] Every candidate has typed value and valid evidence status.
-- [ ] Confidence is explainable, not a magic number.
-- [ ] Material disagreements create visible conflicts.
-- [ ] Stale and unknown states are explicit.
+- [x] Every candidate has typed value and valid evidence status.
+- [x] Confidence is explainable, not a magic number.
+- [x] Material disagreements create visible conflicts.
+- [x] Stale and unknown states are explicit.
 
 ---
 
@@ -1783,7 +1790,46 @@ No run entry may claim success for a command that was not executed.
 - Commit/branch:
   - `feat/block-6a-ai-infrastructure`
 - Remaining work:
-  - Phase 7 (Facts, Confidence, Freshness, and Conflicts — Block 7A)
+  - Phase 7 (Facts, Confidence, Freshness, and Conflicts)
+
+## RUN-20260808-02 — Phase 7: Facts, Confidence, Freshness, and Conflict Engine
+
+- Executed block: Phase 7 — Facts, Confidence, Freshness, and Conflicts (Blocks 7A, 7B, 7C, 7D, 7E)
+- Requirements addressed:
+  - FR-032, FR-033, FR-034, FR-035, FR-036, FR-037, FR-038, FR-039, FR-040, FR-041, FR-042
+- Implementation changes:
+  - Created Alembic migration `20260808_0008_fact_candidates_and_evidences.py` for `fact_candidates` and `evidences` tables.
+  - Created ORM models `FactCandidate` and `Evidence` in `company_profile/db/models/fact.py`.
+  - Implemented `FactCandidateRepository` in `company_profile/modules/facts/repository.py` with duplicate prevention and transactional evidence linking.
+  - Implemented `ConfidenceCalculator` in `company_profile/modules/facts/confidence.py` with multi-factor scoring and human-readable explanation generation.
+  - Implemented `FreshnessEvaluator` in `company_profile/modules/facts/freshness.py` with category-based threshold policies.
+  - Created Alembic migration `20260808_0009_conflicts_schema.py` for `conflicts` and `conflict_candidates` tables.
+  - Created ORM models `Conflict` and `ConflictCandidate` in `company_profile/db/models/conflict.py`.
+  - Implemented `ConflictEngine` in `company_profile/modules/conflicts/engine.py` with non-destructive conflict creation, field-specific comparators, conflict reopening on new evidence, and conflict resolution handling.
+  - Created FastAPI router in `company_profile/api/routers/facts.py` (`GET /companies/{id}/facts`, `GET /companies/{id}/conflicts`, `POST /companies/{id}/conflicts/{id}/resolve`).
+  - Regenerated OpenAPI snapshot (`docs/project/openapi.json`) and TypeScript API client (`packages/api-client/src/index.ts`).
+  - Implemented React components `FactCandidatesList.tsx` and `ConflictsList.tsx` in `apps/web/src/features/` and embedded them in `CompanyDetail.tsx`.
+  - Created unit & integration test suites `apps/backend/tests/test_facts.py` and `apps/backend/tests/test_conflicts.py`.
+- Validation results:
+  - `uv run ruff check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run ruff format --check apps/backend/src apps/backend/tests db/fixtures` — passed
+  - `uv run mypy apps/backend/src` — passed (95 source files)
+  - `uv run pytest apps/backend/tests` — passed (110 passed)
+  - `python scripts/check_secrets.py` — passed
+  - `python scripts/check_docs.py` — passed
+  - `python scripts/check_requirement_ids.py` — passed
+  - `python scripts/check_docs_sync.py` — passed
+  - `uv run python scripts/check_openapi_drift.py` — passed
+  - `docker compose config` — passed
+  - `bun run --cwd apps/web typecheck` — passed (0 errors)
+- Documentation updated:
+  - `Roadmap.md`, `docs/project/Roadmap.md`, `docs/project/00_PROJECT_CONTEXT.md`, `docs/project/openapi.json`
+- Known defects created/updated:
+  - none
+- Commit/branch:
+  - `feat/block-7a-fact-persistence`
+- Remaining work:
+  - Phase 8 (Human Review and Publication)
 
 ---
 

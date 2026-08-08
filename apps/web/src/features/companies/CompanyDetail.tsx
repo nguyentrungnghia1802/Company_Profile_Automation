@@ -5,6 +5,8 @@ import { getApiClient } from "@vcps/api-client";
 import { useAuth } from "../../stores/authContext";
 import { ResearchProgressTracker } from "../research/ResearchProgressTracker";
 import { SourcesList } from "../sources/SourcesList";
+import { FactCandidatesList } from "../facts/FactCandidatesList";
+import { ConflictsList } from "../conflicts/ConflictsList";
 
 export interface CompanyDetailItem {
   id: string;
@@ -32,6 +34,7 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"sources" | "facts" | "conflicts">("facts");
 
   // Edit form state
   const [editName, setEditName] = useState("");
@@ -222,7 +225,57 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
           </div>
 
           <div style={{ marginTop: "24px" }}>
-            <SourcesList companyId={company.id} />
+            <div style={{ display: "flex", borderBottom: "1px solid #d0d7de", gap: "16px", marginBottom: "16px" }}>
+              <button
+                onClick={() => setActiveTab("facts")}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  border: "none",
+                  borderBottom: activeTab === "facts" ? "2px solid #0969da" : "2px solid transparent",
+                  color: activeTab === "facts" ? "#0969da" : "#57606a",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Fact Candidates
+              </button>
+              <button
+                onClick={() => setActiveTab("conflicts")}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  border: "none",
+                  borderBottom: activeTab === "conflicts" ? "2px solid #0969da" : "2px solid transparent",
+                  color: activeTab === "conflicts" ? "#0969da" : "#57606a",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Conflicts
+              </button>
+              <button
+                onClick={() => setActiveTab("sources")}
+                style={{
+                  padding: "8px 12px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  border: "none",
+                  borderBottom: activeTab === "sources" ? "2px solid #0969da" : "2px solid transparent",
+                  color: activeTab === "sources" ? "#0969da" : "#57606a",
+                  background: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Sources & Snapshots
+              </button>
+            </div>
+
+            {activeTab === "facts" && <FactCandidatesList companyId={company.id} />}
+            {activeTab === "conflicts" && <ConflictsList companyId={company.id} />}
+            {activeTab === "sources" && <SourcesList companyId={company.id} />}
           </div>
         </div>
       )}

@@ -2327,6 +2327,325 @@
           }
         }
       }
+    },
+    "/api/v1/companies/{company_id}/facts": {
+      "get": {
+        "tags": [
+          "facts",
+          "conflicts",
+          "facts",
+          "conflicts"
+        ],
+        "summary": "List fact candidates for a company",
+        "description": "List fact candidates and evidence links for a company.",
+        "operationId": "list_company_facts_api_v1_companies__company_id__facts_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "field_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional field key filter",
+              "title": "Field Key"
+            },
+            "description": "Optional field key filter"
+          },
+          {
+            "name": "fact_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional status filter",
+              "title": "Fact Status"
+            },
+            "description": "Optional status filter"
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FactCandidateResponse"
+                  },
+                  "title": "Response List Company Facts Api V1 Companies  Company Id  Facts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{company_id}/conflicts": {
+      "get": {
+        "tags": [
+          "facts",
+          "conflicts",
+          "facts",
+          "conflicts"
+        ],
+        "summary": "List conflicts for a company",
+        "description": "List material conflicts and competing candidates for a company.",
+        "operationId": "list_company_conflicts_api_v1_companies__company_id__conflicts_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional status filter",
+              "title": "Status"
+            },
+            "description": "Optional status filter"
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConflictResponse"
+                  },
+                  "title": "Response List Company Conflicts Api V1 Companies  Company Id  Conflicts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{company_id}/conflicts/{conflict_id}/resolve": {
+      "post": {
+        "tags": [
+          "facts",
+          "conflicts",
+          "facts",
+          "conflicts"
+        ],
+        "summary": "Resolve a conflict",
+        "description": "Resolve a conflict with resolution type, reason, and selected candidates.",
+        "operationId": "resolve_conflict_api_v1_companies__company_id__conflicts__conflict_id__resolve_post",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "conflict_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Conflict Id"
+            }
+          },
+          {
+            "name": "X-Workspace-ID",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Workspace-Id"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveConflictRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2595,6 +2914,127 @@
         ],
         "title": "CompanyResponseData",
         "description": "Company profile item."
+      },
+      "ConflictCandidateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "fact_candidate_id": {
+            "type": "string",
+            "title": "Fact Candidate Id"
+          },
+          "candidate_role": {
+            "type": "string",
+            "title": "Candidate Role"
+          },
+          "is_selected": {
+            "type": "boolean",
+            "title": "Is Selected"
+          },
+          "fact_candidate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactCandidateResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "fact_candidate_id",
+          "candidate_role",
+          "is_selected"
+        ],
+        "title": "ConflictCandidateResponse"
+      },
+      "ConflictResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "company_id": {
+            "type": "string",
+            "title": "Company Id"
+          },
+          "field_key": {
+            "type": "string",
+            "title": "Field Key"
+          },
+          "context_key": {
+            "type": "string",
+            "title": "Context Key"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "materiality": {
+            "type": "string",
+            "title": "Materiality"
+          },
+          "resolution_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Type"
+          },
+          "resolution_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Reason"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/ConflictCandidateResponse"
+            },
+            "type": "array",
+            "title": "Candidates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "company_id",
+          "field_key",
+          "context_key",
+          "status",
+          "materiality"
+        ],
+        "title": "ConflictResponse"
       },
       "CreateCompanyRequest": {
         "properties": {
@@ -2914,6 +3354,60 @@
         "title": "DomainPolicyResponseData",
         "description": "Domain policy response model."
       },
+      "EvidenceResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source_snapshot_id": {
+            "type": "string",
+            "title": "Source Snapshot Id"
+          },
+          "document_block_id": {
+            "type": "string",
+            "title": "Document Block Id"
+          },
+          "original_excerpt": {
+            "type": "string",
+            "title": "Original Excerpt"
+          },
+          "translated_excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translated Excerpt"
+          },
+          "support_type": {
+            "type": "string",
+            "title": "Support Type"
+          },
+          "evidence_quality_score": {
+            "type": "number",
+            "title": "Evidence Quality Score"
+          },
+          "review_status": {
+            "type": "string",
+            "title": "Review Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_snapshot_id",
+          "document_block_id",
+          "original_excerpt",
+          "support_type",
+          "evidence_quality_score",
+          "review_status"
+        ],
+        "title": "EvidenceResponse"
+      },
       "ExchangeTokenRequest": {
         "properties": {
           "token": {
@@ -2986,6 +3480,112 @@
         ],
         "title": "ExchangeTokenResponseData",
         "description": "Token exchange response payload."
+      },
+      "FactCandidateResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "company_id": {
+            "type": "string",
+            "title": "Company Id"
+          },
+          "field_key": {
+            "type": "string",
+            "title": "Field Key"
+          },
+          "context_key": {
+            "type": "string",
+            "title": "Context Key"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "display_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Value"
+          },
+          "fact_status": {
+            "type": "string",
+            "title": "Fact Status"
+          },
+          "origin_type": {
+            "type": "string",
+            "title": "Origin Type"
+          },
+          "is_inferred": {
+            "type": "boolean",
+            "title": "Is Inferred"
+          },
+          "is_estimated": {
+            "type": "boolean",
+            "title": "Is Estimated"
+          },
+          "is_unknown": {
+            "type": "boolean",
+            "title": "Is Unknown"
+          },
+          "confidence_score": {
+            "type": "number",
+            "title": "Confidence Score"
+          },
+          "confidence_explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Explanation"
+          },
+          "observed_at": {
+            "type": "string",
+            "title": "Observed At"
+          },
+          "freshness_status": {
+            "type": "string",
+            "title": "Freshness Status"
+          },
+          "evidences": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceResponse"
+            },
+            "type": "array",
+            "title": "Evidences"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "company_id",
+          "field_key",
+          "context_key",
+          "value",
+          "fact_status",
+          "origin_type",
+          "is_inferred",
+          "is_estimated",
+          "is_unknown",
+          "confidence_score",
+          "observed_at",
+          "freshness_status"
+        ],
+        "title": "FactCandidateResponse"
       },
       "FetchAttemptListResponse": {
         "properties": {
@@ -3510,6 +4110,34 @@
         ],
         "title": "ResolutionCandidate",
         "description": "Duplicate candidate match result."
+      },
+      "ResolveConflictRequest": {
+        "properties": {
+          "resolution_type": {
+            "type": "string",
+            "title": "Resolution Type",
+            "description": "'select_one' | 'accepted_multiple' | 'dismissed'"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Explanation for resolution decision"
+          },
+          "selected_candidate_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Selected Candidate Ids",
+            "description": "Candidate IDs selected for acceptance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resolution_type",
+          "reason"
+        ],
+        "title": "ResolveConflictRequest"
       },
       "ResolvePreviewRequest": {
         "properties": {

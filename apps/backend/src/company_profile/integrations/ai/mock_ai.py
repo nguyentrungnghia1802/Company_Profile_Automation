@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import hashlib
 import time
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from company_profile.integrations.ai.protocol import (
     AiInputBlock,

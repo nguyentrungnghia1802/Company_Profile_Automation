@@ -8,7 +8,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from company_profile.api.errors import register_error_handlers
 from company_profile.api.middleware.correlation import CorrelationIdMiddleware
-from company_profile.api.routers import auth, companies, health, research, sources, workspaces
+from company_profile.api.routers import (
+    auth,
+    companies,
+    facts,
+    health,
+    research,
+    sources,
+    workspaces,
+)
 from company_profile.config.settings import get_settings
 from company_profile.operations.logging import setup_logging
 
@@ -58,5 +66,6 @@ def create_app() -> FastAPI:
     app.include_router(companies.router, prefix="/api/v1", tags=["companies"])
     app.include_router(research.router, prefix="/api/v1", tags=["research"])
     app.include_router(sources.router, prefix="/api/v1", tags=["sources"])
+    app.include_router(facts.router, prefix="/api/v1", tags=["facts", "conflicts"])
 
     return app

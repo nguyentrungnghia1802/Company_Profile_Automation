@@ -6,6 +6,8 @@ from company_profile.db.models.company import (
     CompanyProfile,
     CompanyRelationship,
 )
+from company_profile.db.models.conflict import Conflict, ConflictCandidate
+from company_profile.db.models.fact import Evidence, FactCandidate
 from company_profile.db.models.identity import User, Workspace, WorkspaceMember
 from company_profile.db.models.research import ResearchJob, ResearchTask
 from company_profile.db.models.source import (
@@ -21,8 +23,12 @@ __all__ = [
     "CompanyAlias",
     "CompanyProfile",
     "CompanyRelationship",
+    "Conflict",
+    "ConflictCandidate",
     "DocumentBlock",
     "DomainPolicy",
+    "Evidence",
+    "FactCandidate",
     "ResearchJob",
     "ResearchTask",
     "Source",

@@ -15,6 +15,8 @@ CLIENT_TEMPLATE = """/**
  * Generated from docs/project/openapi.json
  */
 
+declare const process: { env: Record<string, string | undefined> };
+
 export interface ErrorDetail {
   code: string;
   message: string;
@@ -406,6 +408,68 @@ export class ApiClient {
       headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
     });
     return res;
+  }
+
+  async listCompanyFacts(token: string, workspaceId: string, companyId: string): Promise<any[]> {
+    const res = await this.request<any[]>(`/companies/${encodeURIComponent(companyId)}/facts`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+    return res;
+  }
+
+  async listCompanyConflicts(token: string, workspaceId: string, companyId: string): Promise<any[]> {
+    const res = await this.request<any[]>(`/companies/${encodeURIComponent(companyId)}/conflicts`, {
+      headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+    });
+    return res;
+  }
+
+  async resolveConflict(
+    token: string,
+    workspaceId: string,
+    companyId: string,
+    conflictId: string,
+    payload: { resolution_type: string; reason: string; selected_candidate_ids?: string[] }
+  ): Promise<any> {
+    const res = await this.request<any>(
+      `/companies/${encodeURIComponent(companyId)}/conflicts/${encodeURIComponent(conflictId)}/resolve`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+        body: JSON.stringify(payload),
+      }
+    );
+    return res;
+  }
+
+  async listSourceAttempts(token: string, workspaceId: string, sourceId: string): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>(
+      `/sources/${encodeURIComponent(sourceId)}/attempts`,
+      {
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+    return res.data || [];
+  }
+
+  async listSourceSnapshots(token: string, workspaceId: string, sourceId: string): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>(
+      `/sources/${encodeURIComponent(sourceId)}/snapshots`,
+      {
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+    return res.data || [];
+  }
+
+  async listSnapshotBlocks(token: string, workspaceId: string, snapshotId: string): Promise<any[]> {
+    const res = await this.request<{ success: boolean; data: any[] }>(
+      `/snapshots/${encodeURIComponent(snapshotId)}/blocks`,
+      {
+        headers: { Authorization: `Bearer ${token}`, "X-Workspace-ID": workspaceId },
+      }
+    );
+    return res.data || [];
   }
 }
 
