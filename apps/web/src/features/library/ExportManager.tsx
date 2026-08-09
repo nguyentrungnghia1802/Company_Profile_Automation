@@ -40,7 +40,7 @@ export const ExportManager: React.FC<ExportManagerProps> = ({
   const handleDownload = async () => {
     if (!exportJob) return;
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
       const downloadUrl = `${apiUrl}/exports/${exportJob.id}/download`;
 
       const response = await fetch(downloadUrl, {

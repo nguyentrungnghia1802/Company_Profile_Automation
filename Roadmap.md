@@ -2238,6 +2238,7 @@ A task linked to an open defect that violates its acceptance criteria remains `[
 - Required fix: commit the restored canonical set with the task branch and verify it survives the safe merge into `chore/dev` and `main`.
 - Closure validation: commit the canonical files, then run `python scripts/check_docs.py`, `python scripts/check_docs_sync.py`, and `uv run python scripts/check_openapi_drift.py` on the merged tree.
 - Owner: unassigned
+
 - Notes: The task branch reverses the prior documentation-untracking effect only for the repository-owned canonical files; `.gitignore` policy remains unchanged.
 
 ### DEF-CRAWL-002 — Repository-wide validation baseline is not green
@@ -2397,3 +2398,169 @@ The initial specification baseline had no known defects before this run.
 - Production note: production deployments must continue using explicit Alembic migrations; the
   Compose bootstrap is local-development only.
 - Remaining: no work was started on the next roadmap task.
+
+## RUN-20260809-19 — Local web authentication render-loop remediation
+
+- Roadmap task(s): maintenance fix only; no roadmap task was started.
+- Status: complete.
+- Reported behavior: opening `http://localhost:3000` could visibly flicker while the page repeatedly
+  attempted local authentication.
+- Root cause: `MainDashboard` started auto-login from an effect that depended on the render-unstable
+  `login` callback, while `AuthProvider` marked the no-session state as loaded before that effect
+  began. A failed or stale token could therefore re-enter the login/render cycle.
+- Implemented:
+  - moved local session bootstrap into `AuthProvider`;
+  - added a one-time bootstrap guard and stale-session fallback to the configured local token;
+  - stabilized login, logout, workspace-switch, and capability callbacks;
+  - kept the initial loading state active until bootstrap completes;
+  - added deterministic `authBootstrap` regression tests and a `make test-frontend` command.
+- Verification:
+  - frontend bootstrap tests — 3 passed;
+  - `bun run typecheck` in `apps/web` — passed;
+  - `bun run build` in `apps/web` — passed;
+  - `docker compose up -d --build web` — passed;
+  - `docker compose ps` — API, web, worker, and PostgreSQL healthy after the rebuild;
+  - `http://localhost:3000` and `/api/v1/health` — HTTP 200;
+  - browser automation connection was unavailable in this execution environment, so manual visual
+    confirmation in a connected browser remains unverified.
+- Documentation updated: `README.md`, `docs/project/02_SYSTEM_ARCHITECTURE.md`,
+  `docs/project/06_CODEBASE_GUIDE.md`, and `docs/project/07_DEVELOPMENT_AND_TESTING.md`.
+- Remaining: confirm the visual flow in a connected browser.
+
+### DEF-UI-001 — Local auth bootstrap caused main-page flicker
+
+- Status: fixed_pending_manual_verification
+- Severity: medium
+- Priority: P1
+- Discovered: 2026-08-09 from local browser report in RUN-20260809-19
+- Affects: local Next.js root page, mock-auth bootstrap, initial loading state
+- Impact: users could see the main page repeatedly switch while authentication requests were retried.
+- Reproduction/evidence: the root page owned an auto-login effect whose dependency included an
+  unstable context callback; the provider also ended its no-token loading state before auto-login
+  started.
+- Suspected cause: authentication bootstrap was split between `MainDashboard` and `AuthProvider`.
+- Required fix: keep bootstrap in the provider, make it one-shot, and preserve loading until it ends.
+- Closure validation: deterministic frontend tests and TypeScript typecheck pass; manual connected
+  browser validation after a fresh Docker web rebuild is still required.
+- Owner: unassigned
+
+## RUN-20260809-20 — Local auth permission-state diagnosis
+
+- Roadmap task(s): maintenance fix only; no roadmap task was started.
+- Status: fixed_pending_manual_verification.
+- Reported behavior: the research form continued to show `Tài khoản hiện tại không có quyền
+  research:start` even though the configured local researcher token was expected to work.
+- Verification evidence: the running API accepts `mock-token-researcher`, returns the
+  `local-development` workspace, role `researcher`, and `research:start`; CORS preflight from
+  `http://localhost:3000` also succeeds.
+- Root cause: the frontend treated `hasCapability(...) === false` as a permission denial even when
+  authentication had failed or no active workspace had been loaded. A persisted local session could
+  also be retained without a usable workspace.
+- Implemented:
+  - expose normalized auth bootstrap errors to the research form;
+  - retry the configured local token after clearing a stale token/workspace selection;
+  - distinguish authentication, no-workspace, and missing-capability states;
+  - map HTTP 401/403 bootstrap failures to actionable messages;
+  - add deterministic regression tests for fallback, access-state ordering, and 401 normalization.
+- Verification:
+  - `cd apps/web && bun test` — 7 passed;
+  - `cd apps/web && bun run typecheck` — passed;
+  - `bun run lint` — blocked by the existing interactive `next lint` setup prompt because no ESLint
+    configuration is committed; no lint policy was selected as part of this fix;
+  - `git diff --check` — passed (only existing line-ending warnings);
+  - direct API auth exchange and `/me` capability check — passed;
+  - connected browser automation remained unavailable, so fresh-build visual confirmation remains
+    unverified.
+- Documentation updated: `README.md`, `docs/project/02_SYSTEM_ARCHITECTURE.md`,
+  `docs/project/06_CODEBASE_GUIDE.md`, and `docs/project/07_DEVELOPMENT_AND_TESTING.md`.
+- Remaining: rebuild the web image, hard-refresh the user's Chrome tab, and confirm the form shows the
+  workspace and enables `Bắt đầu tra cứu`.
+
+### DEF-UI-002 — Auth bootstrap failure was displayed as missing research permission
+
+- Status: fixed_pending_manual_verification
+- Severity: medium
+- Priority: P1
+- Discovered: 2026-08-09 from the user-provided Chrome screenshot in RUN-20260809-20
+- Affects: local research form, mock-auth bootstrap, workspace-aware capability gate
+- Impact: users could not distinguish an API/session problem from a real authorization denial.
+- Required fix: surface the normalized bootstrap error, recover stale local state, and reserve the
+  missing-capability message for a loaded user/workspace with no `research:start` capability.
+- Closure validation: deterministic frontend tests, typecheck, direct API auth, and CORS checks pass;
+  manual connected-browser validation remains required.
+- Owner: unassigned
+
+## RUN-20260809-21 — Same-origin local auth recovery
+
+- Roadmap task(s): maintenance fix only; no roadmap task was started.
+- Status: fixed_pending_user_ui_verification.
+- Reported behavior: the rebuilt page displayed `NETWORK_ERROR`, while Chrome showed no failed API
+  request and the backend remained healthy.
+- Root causes:
+  - the browser called port 8000 directly even though the web service was the stable local origin;
+  - the API `/me` contract uses snake_case (`active_workspace`, `display_name`), while React auth
+    state expected camelCase, so a successful response could still lose the active workspace and
+    `research:start` capability;
+  - generic browser `TypeError` failures were reduced to `NETWORK_ERROR` without preserving a safe
+    reason or same-origin health check.
+- Implemented:
+  - proxy `/api/v1/*` from Next.js to the Compose API service and make `/api/v1` the browser default;
+  - normalize the `/me` payload before storing the authenticated user;
+  - bind the generated API client's browser fetch implementation;
+  - show safe normalized auth details and route diagnostics;
+  - add an application SVG icon and make `/favicon.ico` resolve without a 404.
+- Verification:
+  - `bun test apps/web/tests` — 10 passed;
+  - Docker production build — compiled, lint/type validation, and static generation passed;
+  - `GET http://localhost:3000/api/v1/health` — HTTP 200;
+  - same-origin token exchange and `/me` — `Dev Researcher`, workspace `local-development`, and
+    `research:start=true`;
+  - `GET http://localhost:3000/favicon.ico` — HTTP 200 with `image/svg+xml`.
+- Remaining: hard-refresh the already-open Chrome tab so it loads the rebuilt frontend bundle.
+
+### DEF-UI-002 closure update
+
+- Status: fixed_pending_user_ui_verification
+- Closure validation: same-origin API health, auth exchange, `/me` workspace/capability, favicon,
+  unit tests, and Docker production build all pass. Only confirmation in the user's existing browser
+  tab remains.
+
+## RUN-20260809-22 — Persist company creation before research trigger
+
+- Roadmap task(s): maintenance fix only; no roadmap task was started.
+- Status: fixed; connected-browser visual confirmation unavailable.
+- Reported behavior: clicking `Bắt đầu tra cứu` created a company response but the subsequent
+  `POST /api/v1/companies/{company_id}/research` returned `500 INTERNAL_ERROR`.
+- Root cause: mock-auth/workspace reads autobegan the request transaction. `CompanyService` detected
+  an existing transaction and correctly deferred ownership, but `get_db_session` never committed a
+  successful request. Closing the session rolled back the new company after its `200` response, so
+  the next request failed the `research_jobs.company_id` foreign key.
+- Implemented:
+  - commit the request-scoped session after successful FastAPI request handling and roll back errors;
+  - validate company existence in the active workspace before creating a research job;
+  - return `404 COMPANY_NOT_FOUND` for missing/cross-workspace company IDs;
+  - add a separate-request regression test that fails under the old transaction behavior.
+- Verification:
+  - focused research API/service tests: 7 passed;
+  - scoped Ruff, format check, and mypy: passed;
+  - Docker API/worker rebuild: passed;
+  - same-origin create-company and trigger-research requests: both returned success;
+  - independent PostgreSQL checks: company count `1`, research-job count `1`;
+  - worker completed all nine smoke-job steps as `partial_success` without API/worker error logs;
+  - exact-ID cleanup removed the temporary company and cascaded job; both post-cleanup counts are `0`;
+  - full backend suite: 155 passed, one existing `DEF-CRAWL-002` lifecycle expectation failure.
+- Limitation: no connected browser was available for automated visual interaction; runtime HTTP,
+  database durability, worker progress, and container logs were verified directly.
+
+### DEF-API-001 — Successful company response was rolled back before research
+
+- Status: fixed
+- Severity: high
+- Priority: P0
+- Discovered: 2026-08-09 from the user-provided Chrome 500 screenshot and API traceback.
+- Affects: all request handlers that rely on service-owned transactions after auth/workspace reads.
+- Impact: mutation endpoints could return success for data that disappeared when the request session
+  closed; the create-company then trigger-research flow always failed with a foreign-key violation.
+- Closure validation: separate-request API regression, scoped quality checks, Docker rebuild,
+  same-origin runtime smoke, direct PostgreSQL durability checks, and worker progression all pass.
+- Owner: unassigned

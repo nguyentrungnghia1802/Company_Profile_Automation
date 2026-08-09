@@ -48,7 +48,12 @@ def get_session_factory() -> async_sessionmaker[AsyncSession]:
 
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:
-    """FastAPI dependency that yields an async database session."""
+    """Yield one request-scoped session and commit successful request writes.
+
+    Authentication and authorization queries can autobegin a transaction before
+    an application service enters its own transaction helper. The request
+    boundary therefore owns the final commit; failed requests are rolled back.
+    """
     factory = get_session_factory()
     async with factory() as session:
         try:
@@ -56,3 +61,5 @@ async def get_db_session() -> AsyncIterator[AsyncSession]:
         except Exception:
             await session.rollback()
             raise
+        else:
+            await session.commit()

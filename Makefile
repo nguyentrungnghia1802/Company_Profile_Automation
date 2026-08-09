@@ -56,7 +56,7 @@ test-contract: ## Run API contract tests
 	uv run python scripts/check_openapi_drift.py
 
 test-frontend: ## Run frontend tests
-	@echo "Frontend tests will be available after test runner setup (P0-013)"
+	cd apps/web && bun test
 
 test-e2e: ## Run end-to-end browser tests
 	@echo "E2E tests will be available after Playwright setup (P0-013)"

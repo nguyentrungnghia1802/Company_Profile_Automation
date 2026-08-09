@@ -66,6 +66,18 @@ for local administration screens and rebuild the web image after changing it. No
 required for the local flow: keep `AI_PROVIDER=disabled` and `SEARCH_PROVIDER=disabled` unless you
 intentionally configure approved real providers.
 
+If the research form reports an authentication problem, use its `Xoá phiên local và xác thực lại`
+button. It clears only the browser's saved VCPS token/workspace selection and retries the configured
+local mock token. The UI reports connection, invalid-session, no-workspace, and missing-capability
+states separately; `research:start` is shown as missing only after a user and active workspace have
+been loaded. After changing a `NEXT_PUBLIC_*` value, run `docker compose up -d --build web` and do a
+hard refresh so the build-time value is loaded.
+
+The local browser API URL is `/api/v1`. Next.js proxies that same-origin path to the Compose `api`
+service, so browser authentication does not depend on a direct CORS request to port 8000. Verify the
+complete route with `http://localhost:3000/api/v1/health`; a healthy stack returns HTTP 200. The API
+remains available directly at `http://localhost:8000/api/v1/health` for backend diagnostics.
+
 ## Documentation policy
 
 - Technical documentation, identifiers, logs, commits, and code comments use English.
@@ -100,3 +112,9 @@ Programmable Search API configured with `SEARCH_PROVIDER=google`, `SEARCH_API_KE
 The Compose worker runs `company_profile.worker.main`, which claims and executes PostgreSQL research
 tasks. Fixture providers are reserved for automated tests and are not enabled by the local product
 stack.
+
+The web root authenticates the local mock session during `AuthProvider` bootstrap. It prefers the
+persisted browser token, exchanges the configured `NEXT_PUBLIC_MOCK_AUTH_TOKEN` only when no session
+exists, and keeps the initial loading screen visible until that attempt finishes. The page does not
+start authentication from a render-dependent effect, so a failed or stale token cannot cause a
+continuous login/render loop.

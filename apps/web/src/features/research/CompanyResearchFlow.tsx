@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { getApiClient } from "@vcps/api-client";
 import { useAuth } from "../../stores/authContext";
+import { resolveResearchAccessState } from "../../stores/authBootstrap";
 import { formatErrorDetails, normalizeClientError, type NormalizedClientError } from "../../utils/errors";
 import { ResearchProgressTracker } from "./ResearchProgressTracker";
 
@@ -40,7 +41,7 @@ export const CompanyResearchFlow: React.FC<CompanyResearchFlowProps> = ({
   workspaceId,
   onSavedSuccess,
 }) => {
-  const { hasCapability } = useAuth();
+  const { activeWorkspace, authError, hasCapability, isAuthenticated, retryLocalLogin } = useAuth();
   const [companyName, setCompanyName] = useState("");
   const [taxId, setTaxId] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -50,8 +51,26 @@ export const CompanyResearchFlow: React.FC<CompanyResearchFlowProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorInfo, setErrorInfo] = useState<NormalizedClientError | null>(null);
   const [createdWithoutJob, setCreatedWithoutJob] = useState(false);
+  const [isRetryingAuth, setIsRetryingAuth] = useState(false);
 
-  const canStart = hasCapability("research:start");
+  const accessState = resolveResearchAccessState({
+    isAuthenticated,
+    hasActiveWorkspace: Boolean(activeWorkspace),
+    hasCapability: hasCapability("research:start"),
+    hasAuthError: Boolean(authError),
+  });
+  const canStart = accessState === "ready";
+
+  const handleAuthRetry = async () => {
+    setIsRetryingAuth(true);
+    try {
+      await retryLocalLogin();
+    } catch {
+      // AuthProvider exposes the normalized failure through authError.
+    } finally {
+      setIsRetryingAuth(false);
+    }
+  };
 
   const buildResearchScope = (): Record<string, unknown> => {
     const scope: Record<string, unknown> = {
@@ -240,11 +259,56 @@ export const CompanyResearchFlow: React.FC<CompanyResearchFlowProps> = ({
         >
           {isSubmitting ? "Đang tạo research job…" : "Bắt đầu tra cứu"}
         </button>
-        {!canStart && (
+        {accessState === "auth_error" && authError ? (
+          <div
+            role="alert"
+            style={{
+              marginTop: "10px",
+              padding: "11px 13px",
+              border: "1px solid #f59e0b",
+              borderRadius: "8px",
+              background: "rgba(120, 53, 15, 0.25)",
+              color: "#fde68a",
+              fontSize: "13px",
+            }}
+          >
+            <div style={{ fontWeight: 800 }}>Không thể xác thực phiên đăng nhập ({authError.code}).</div>
+            <div style={{ marginTop: "4px" }}>{authError.message}</div>
+            {errorDetails(authError).map((detail) => (
+              <div key={detail} style={{ marginTop: "3px", overflowWrap: "anywhere" }}>
+                {detail}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAuthRetry}
+              disabled={isRetryingAuth}
+              style={{
+                marginTop: "9px",
+                padding: "7px 10px",
+                border: "1px solid #fbbf24",
+                borderRadius: "7px",
+                background: "transparent",
+                color: "#fef3c7",
+                cursor: isRetryingAuth ? "not-allowed" : "pointer",
+              }}
+            >
+              {isRetryingAuth ? "Đang xác thực lại…" : "Xoá phiên local và xác thực lại"}
+            </button>
+          </div>
+        ) : accessState === "unauthenticated" ? (
+          <p style={{ margin: "10px 0 0", color: "#fbbf24", fontSize: "13px" }}>
+            Chưa xác thực được tài khoản. Hãy xác thực lại trước khi bắt đầu tra cứu.
+          </p>
+        ) : accessState === "no_workspace" ? (
+          <p style={{ margin: "10px 0 0", color: "#fbbf24", fontSize: "13px" }}>
+            Tài khoản đã xác thực nhưng chưa có workspace hoạt động; chưa thể bắt đầu tra cứu.
+          </p>
+        ) : accessState === "missing_capability" ? (
           <p style={{ margin: "10px 0 0", color: "#fbbf24", fontSize: "13px" }}>
             Tài khoản hiện tại không có quyền research:start.
           </p>
-        )}
+        ) : null}
       </form>
 
       {errorInfo && (

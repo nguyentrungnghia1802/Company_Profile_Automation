@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Verified Company Profile System",
   description:
     "Evidence-first company intelligence platform for AI Riser Vietnam",
+  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({

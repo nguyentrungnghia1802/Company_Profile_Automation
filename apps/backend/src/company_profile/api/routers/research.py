@@ -101,13 +101,21 @@ async def trigger_company_research(
     workspace_id = verify_active_workspace(actor)
     service = ResearchJobService(session)
 
-    job = await service.start_research_job(
-        workspace_id=workspace_id,
-        company_id=company_id,
-        job_type=payload.job_type,
-        scope=payload.scope,
-        requested_by=actor.user_id,
-    )
+    try:
+        job = await service.start_research_job(
+            workspace_id=workspace_id,
+            company_id=company_id,
+            job_type=payload.job_type,
+            scope=payload.scope,
+            requested_by=actor.user_id,
+        )
+    except ValueError as err:
+        if str(err) == "COMPANY_NOT_FOUND":
+            raise NotFoundError(
+                code="COMPANY_NOT_FOUND",
+                message="Company profile not found in the active workspace.",
+            ) from err
+        raise
     full_job = await service.get_job(workspace_id, job.id)
     if not full_job:
         raise NotFoundError(code="JOB_NOT_FOUND", message="Failed to retrieve created job.")

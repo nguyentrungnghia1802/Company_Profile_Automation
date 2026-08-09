@@ -62,7 +62,7 @@ export class ApiClient {
 
   constructor(config: ApiClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\\/+$/, "");
-    this.fetchImpl = config.fetch || globalThis.fetch;
+    this.fetchImpl = config.fetch || globalThis.fetch.bind(globalThis);
   }
 
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -730,7 +730,7 @@ export class ApiClient {
 let defaultClientInstance: ApiClient | null = null;
 
 export function getApiClient(baseUrl?: string): ApiClient {
-  const url = baseUrl || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  const url = baseUrl || process.env.NEXT_PUBLIC_API_URL || "/api/v1";
   if (!defaultClientInstance) {
     defaultClientInstance = new ApiClient({ baseUrl: url });
   }

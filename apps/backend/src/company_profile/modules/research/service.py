@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from company_profile.db.models.company import CompanyProfile
 from company_profile.db.models.research import ResearchJob, ResearchTask
 from company_profile.db.transaction import transactional
 from company_profile.modules.research.dispatcher import PostgresTaskDispatcher
@@ -37,6 +38,15 @@ class ResearchJobService:
         idempotency_key: str | None = None,
     ) -> ResearchJob:
         """Start a new research job for a company profile."""
+        company_exists = await self.session.scalar(
+            select(CompanyProfile.id).where(
+                CompanyProfile.id == company_id,
+                CompanyProfile.workspace_id == workspace_id,
+            )
+        )
+        if company_exists is None:
+            raise ValueError("COMPANY_NOT_FOUND")
+
         return await self.dispatcher.create_research_job(
             workspace_id=workspace_id,
             company_id=company_id,

@@ -24,6 +24,10 @@ export const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
     vi: "Bạn không có quyền thực hiện thao tác này.",
     en: "You do not have permission to perform this action.",
   },
+  UNAUTHORIZED: {
+    vi: "Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Hãy xác thực lại.",
+    en: "The authentication session is invalid or expired. Authenticate again.",
+  },
   CONFLICT: {
     vi: "Dữ liệu bị trùng lặp hoặc xung đột phiên bản.",
     en: "Resource conflict or version mismatch.",
@@ -76,6 +80,14 @@ export const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
     vi: "Không kết nối được tới API. Hãy kiểm tra backend và thử lại.",
     en: "The API could not be reached. Check the backend and try again.",
   },
+  AUTH_NOT_CONFIGURED: {
+    vi: "Chưa cấu hình phiên đăng nhập cho ứng dụng local.",
+    en: "No local authentication session is configured.",
+  },
+  AUTH_USER_PAYLOAD_INVALID: {
+    vi: "API trả về dữ liệu phiên đăng nhập không hợp lệ.",
+    en: "The API returned an invalid authentication session.",
+  },
   SEARCH_PROVIDER_UNAVAILABLE: {
     vi: "Chưa có Search API hoạt động để tìm theo tên doanh nghiệp.",
     en: "No search API is available for name-only company lookup.",
@@ -110,22 +122,34 @@ export function normalizeClientError(
   locale: "vi" | "en" = "vi",
 ): NormalizedClientError {
   if (isRecord(error) && typeof error.code === "string") {
-    const code = error.code;
+    const statusCode = typeof error.statusCode === "number" ? error.statusCode : undefined;
+    const code =
+      error.code === "HTTP_ERROR" && statusCode === 401
+        ? "UNAUTHORIZED"
+        : error.code === "HTTP_ERROR" && statusCode === 403
+          ? "FORBIDDEN"
+          : error.code;
     const serverMessage = typeof error.message === "string" ? error.message : "";
     return {
       code,
       message: ERROR_MAPPINGS[code]?.[locale] || serverMessage || getErrorMessage(code, locale),
       details: isRecord(error.details) ? error.details : {},
       retryable: error.retryable === true,
-      statusCode: typeof error.statusCode === "number" ? error.statusCode : undefined,
+      statusCode,
     };
   }
 
   if (error instanceof TypeError || (error instanceof Error && error.name === "NetworkError")) {
+    const reason = error instanceof Error && error.message ? error.message : "Fetch failed";
     return {
       code: "NETWORK_ERROR",
       message: getErrorMessage("NETWORK_ERROR", locale),
-      details: { next_step: locale === "vi" ? "Kiểm tra API tại http://localhost:8000." : "Check the API at http://localhost:8000." },
+      details: {
+        reason,
+        next_step: locale === "vi"
+          ? "Mở /api/v1/health trên cùng địa chỉ web để kiểm tra proxy API."
+          : "Open /api/v1/health on the same web origin to check the API proxy.",
+      },
       retryable: true,
     };
   }
