@@ -56,7 +56,10 @@ docker compose up --build
 
 The API and worker images build from the repository root so the package metadata can include this
 README. The default local providers are disabled; configure real provider credentials in `.env` when
-needed.
+needed. PostgreSQL is published on `localhost:5433` by default so the stack can start when another
+local PostgreSQL service already owns `5432`; set `POSTGRES_HOST_PORT` in `.env` to a free host port
+if `5433` is also occupied. Containers continue to connect to PostgreSQL through
+`postgres:5432`.
 
 ## Documentation policy
 

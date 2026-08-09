@@ -2317,3 +2317,42 @@ The initial specification baseline had no known defects before this run.
 - Notes: This is an accepted operational limitation, not an acceptance failure for TASK-CRAWL-005.
 
 ---
+
+## RUN-20260809-16 — Local Compose PostgreSQL host-port collision remediation
+
+- Roadmap task(s): maintenance fix only; no roadmap task was started.
+- Status: complete.
+- Implemented: made the local PostgreSQL host binding configurable through `POSTGRES_HOST_PORT`,
+  defaulting to `5433` while keeping the container-to-container database address at
+  `postgres:5432`; documented the setting in `.env.example` and the root README.
+- Verification:
+  - `docker compose config --quiet` — passed;
+  - rendered Compose configuration — `5433:5432`;
+  - `docker compose up -d --build` with an unrelated PostgreSQL container already bound to host
+    `5432` — passed;
+  - PostgreSQL healthy on host port `5433`, API healthy on `8000`, web returned HTTP `200`.
+- Known independent limitation: a new empty `pgdata` volume still requires the repository's explicit
+  Alembic migration workflow before the worker can query `research_tasks`; this was not changed by
+  the host-port fix and remains covered by the existing migration baseline defect.
+- Documentation updated: `.env.example`, `README.md`, and this Roadmap implementation log.
+- Remaining: no work was started on the next roadmap task.
+
+### DEF-OPS-001 — Local Compose PostgreSQL host port was fixed at 5432
+
+- Status: closed
+- Severity: medium
+- Priority: P1
+- Discovered: 2026-08-09 in RUN-20260809-16
+- Affects: local Docker Compose startup, P0-009
+- Impact: `docker compose up --build` failed before starting the stack when another local PostgreSQL
+  container owned host port `5432`.
+- Reproduction/evidence: Docker reported `Bind for 0.0.0.0:5432 failed: port is already allocated`
+  while `lq-dev-postgres` was using `0.0.0.0:5432`.
+- Suspected cause: fixed host-to-container mapping `5432:5432` in `docker-compose.yml`.
+- Workaround: stop the other PostgreSQL service or manually select a free port.
+- Required fix: use a configurable host port with a collision-resistant local default.
+- Closure validation: Compose rendered `5433:5432` and the full stack started successfully while
+  `lq-dev-postgres` continued to own host port `5432`.
+- Owner: unassigned
+- Notes: Set `POSTGRES_HOST_PORT` in `.env` when `5433` is also occupied; the internal database URL
+  remains `postgresql+asyncpg://vcps:vcps_dev@postgres:5432/vcps`.

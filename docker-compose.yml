@@ -10,7 +10,9 @@ services:
       POSTGRES_PASSWORD: vcps_dev
       POSTGRES_DB: vcps
     ports:
-      - "5432:5432"
+      # The container network always uses postgres:5432. Keep the host port
+      # configurable so another local PostgreSQL instance cannot block startup.
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
