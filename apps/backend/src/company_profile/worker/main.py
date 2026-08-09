@@ -9,6 +9,9 @@ from typing import TYPE_CHECKING
 
 import structlog
 
+from company_profile.config.settings import Settings, get_settings
+from company_profile.worker.runner import WorkerRunner
+
 if TYPE_CHECKING:
     from types import FrameType
 
@@ -25,25 +28,39 @@ def _handle_signal(signum: int, _frame: FrameType | None) -> None:
 
 
 async def run_worker() -> None:
-    """Main worker loop — claims and executes research job steps.
-
-    This is a placeholder for Phase 3 (P3-006+). Currently it just
-    starts, logs readiness, and waits for shutdown.
-    """
+    """Start the durable PostgreSQL task runner and stop it gracefully."""
     logger.info("worker_starting")
 
-    # Register signal handlers
+    _shutdown_event.clear()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(sig, _shutdown_event.set)
+        try:
+            loop.add_signal_handler(sig, _shutdown_event.set)
+        except (NotImplementedError, RuntimeError):
+            signal.signal(sig, _handle_signal)
 
-    logger.info("worker_ready", status="waiting_for_jobs")
+    settings = get_settings()
+    runner = build_worker(settings)
+    runner_task = asyncio.create_task(runner.start())
+    logger.info("worker_ready", status="polling_for_jobs", worker_id=runner.worker_id)
 
-    # Wait for shutdown signal
-    await _shutdown_event.wait()
+    try:
+        await _shutdown_event.wait()
+    finally:
+        logger.info("worker_shutting_down")
+        runner.stop()
+        await runner_task
 
-    logger.info("worker_shutting_down")
-    # Future: wait for in-flight steps to finish within grace period
+
+def build_worker(settings: Settings | None = None) -> WorkerRunner:
+    """Create the production worker from environment-backed settings."""
+    config = settings or get_settings()
+    return WorkerRunner(
+        worker_id=config.worker_id,
+        poll_interval=float(config.worker_poll_interval),
+        batch_size=config.worker_batch_size,
+        lease_seconds=config.worker_claim_lease_seconds,
+    )
 
 
 def main() -> None:

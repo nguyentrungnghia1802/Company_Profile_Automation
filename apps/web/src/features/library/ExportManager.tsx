@@ -83,10 +83,11 @@ export const ExportManager: React.FC<ExportManagerProps> = ({
       <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
         <div className="flex items-center gap-6">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Export Format</label>
+            <span className="block text-xs font-semibold text-slate-300 mb-1">Export Format</span>
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-1.5 text-xs text-slate-200 cursor-pointer">
+              <label htmlFor="export-format-pdf" className="flex items-center gap-1.5 text-xs text-slate-200 cursor-pointer">
                 <input
+                  id="export-format-pdf"
                   type="radio"
                   name="format"
                   value="pdf"
@@ -96,8 +97,9 @@ export const ExportManager: React.FC<ExportManagerProps> = ({
                 />
                 PDF Document
               </label>
-              <label className="flex items-center gap-1.5 text-xs text-slate-200 cursor-pointer">
+              <label htmlFor="export-format-json" className="flex items-center gap-1.5 text-xs text-slate-200 cursor-pointer">
                 <input
+                  id="export-format-json"
                   type="radio"
                   name="format"
                   value="json"
@@ -111,9 +113,11 @@ export const ExportManager: React.FC<ExportManagerProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Options</label>
-            <label className="flex items-center gap-1.5 text-xs text-slate-200 cursor-pointer">
+            <span className="block text-xs font-semibold text-slate-300 mb-1">Options</span>
+            <label htmlFor="export-include-appendix" className="flex items-center gap-1.5 text-xs text-slate-200 cursor-pointer">
               <input
+                id="export-include-appendix"
+                name="include_source_appendix"
                 type="checkbox"
                 checked={includeAppendix}
                 onChange={(e) => setIncludeAppendix(e.target.checked)}

@@ -145,6 +145,9 @@ export const ReviewInbox: React.FC<ReviewInboxProps> = ({
 
         <div className="flex items-center gap-3">
           <select
+            id="review-status-filter"
+            name="review_status"
+            aria-label="Filter review tasks by status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-slate-800 border border-slate-700 text-slate-200 text-sm rounded-lg p-2 focus:ring-sky-500"
@@ -266,10 +269,12 @@ export const ReviewInbox: React.FC<ReviewInboxProps> = ({
 
             <form onSubmit={handleComplete} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label htmlFor="review-decision-code" className="block text-xs font-semibold text-slate-300 mb-1">
                   Decision Outcome Code
                 </label>
                 <input
+                  id="review-decision-code"
+                  name="decision_code"
                   type="text"
                   value={decisionCode}
                   onChange={(e) => setDecisionCode(e.target.value)}
@@ -279,10 +284,12 @@ export const ReviewInbox: React.FC<ReviewInboxProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label htmlFor="review-decision-reason" className="block text-xs font-semibold text-slate-300 mb-1">
                   Review Rationale & Justification
                 </label>
                 <textarea
+                  id="review-decision-reason"
+                  name="decision_reason"
                   value={decisionReason}
                   onChange={(e) => setDecisionReason(e.target.value)}
                   rows={4}

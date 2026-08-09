@@ -6,7 +6,11 @@
 __pycache__
 *.pyc
 node_modules
+**/node_modules
 .next
+**/.next
+.venv
+**/.venv
 .env
 .env.local
 .env.*.local

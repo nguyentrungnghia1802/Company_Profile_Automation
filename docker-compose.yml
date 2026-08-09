@@ -33,8 +33,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://vcps:vcps_dev@postgres:5432/vcps
       ENVIRONMENT: development
       AUTH_MODE: mock
-      AI_PROVIDER: mock
-      SEARCH_PROVIDER: fixture
+      # Defaults are disabled; .env may explicitly opt into real providers.
+      AI_PROVIDER: ${AI_PROVIDER:-disabled}
+      SEARCH_PROVIDER: ${SEARCH_PROVIDER:-disabled}
       OBJECT_STORAGE_PROVIDER: local
       TASK_DISPATCHER: postgres
       MALWARE_SCANNER_MODE: mock
@@ -57,8 +58,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://vcps:vcps_dev@postgres:5432/vcps
       ENVIRONMENT: development
       AUTH_MODE: mock
-      AI_PROVIDER: mock
-      SEARCH_PROVIDER: fixture
+      # Defaults are disabled; fixtures remain rejected outside test environments.
+      AI_PROVIDER: ${AI_PROVIDER:-disabled}
+      SEARCH_PROVIDER: ${SEARCH_PROVIDER:-disabled}
       OBJECT_STORAGE_PROVIDER: local
       TASK_DISPATCHER: postgres
       MALWARE_SCANNER_MODE: mock

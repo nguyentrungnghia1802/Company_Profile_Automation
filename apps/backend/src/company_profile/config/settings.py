@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     auth_audience: str = ""
 
     # --- AI Provider ---
-    ai_provider: str = "mock"  # disabled | mock | gemini
+    ai_provider: str = "disabled"  # disabled | mock | gemini
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash"
     ai_timeout: int = 60
@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     ai_kill_switch_enabled: bool = False  # Emergency kill switch to disable all AI calls
 
     # --- Search Provider ---
-    search_provider: str = "fixture"  # fixture | google
+    search_provider: str = "disabled"  # disabled | fixture (tests only) | google
     search_api_key: str = ""
     search_engine_id: str = ""
 

@@ -155,8 +155,10 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
       {isEditing ? (
         <form onSubmit={handleUpdate} style={{ backgroundColor: "#f6f8fa", padding: "16px", borderRadius: "8px" }}>
           <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Company Name</label>
+            <label htmlFor="company-detail-name" style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Company Name</label>
             <input
+              id="company-detail-name"
+              name="company_name"
               type="text"
               required
               value={editName}
@@ -167,8 +169,10 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
 
           <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Tax ID</label>
+              <label htmlFor="company-detail-tax-id" style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Tax ID</label>
               <input
+                id="company-detail-tax-id"
+                name="tax_id"
                 type="text"
                 value={editTaxId}
                 onChange={(e) => setEditTaxId(e.target.value)}
@@ -176,8 +180,10 @@ export const CompanyDetail: React.FC<CompanyDetailProps> = ({ companyId, onBack 
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Status</label>
+              <label htmlFor="company-detail-status" style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Status</label>
               <select
+                id="company-detail-status"
+                name="status"
                 value={editStatus}
                 onChange={(e) => setEditStatus(e.target.value)}
                 style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}

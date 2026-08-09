@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getApiClient } from "@vcps/api-client";
 import { useAuth } from "../../stores/authContext";
+import { formatErrorDetails, normalizeClientError, type NormalizedClientError } from "../../utils/errors";
 
 export interface TaskStep {
   id: string;
@@ -33,7 +34,9 @@ interface ResearchProgressTrackerProps {
 }
 
 interface PipelineState {
+  result_status?: string;
   warnings?: string[];
+  source_discovery_warnings?: string[];
   source_candidates?: unknown[];
   selected_sources?: unknown[];
   fetched_sources?: unknown[];
@@ -98,6 +101,41 @@ function statusLabel(status: string): string {
   return labels[status] || status;
 }
 
+function diagnosticLabel(diagnostic: string): string {
+  if (diagnostic.includes("GOOGLE_CONFIGURATION_MISSING")) {
+    return "Search theo tên chưa chạy: backend thiếu SEARCH_API_KEY hoặc SEARCH_ENGINE_ID.";
+  }
+  if (
+    diagnostic.includes("SEARCH_PROVIDER_UNAVAILABLE:DISABLED") ||
+    diagnostic.includes("NOT_CONFIGURED") ||
+    diagnostic.includes("FIXTURE_DISABLED_IN_RUNTIME")
+  ) {
+    return "Không có Search API được bật. Hãy nhập website chính thức hoặc cấu hình Google Search API.";
+  }
+  if (diagnostic.includes("NO_SOURCE_CANDIDATES")) {
+    return "Không tìm thấy URL nguồn phù hợp từ các nguồn được phép.";
+  }
+  if (diagnostic.includes("NO_SELECTED_SOURCES")) {
+    return "Các URL phát hiện được không vượt qua kiểm tra an toàn hoặc khớp danh tính.";
+  }
+  if (diagnostic.includes("NO_FETCHED_SOURCES")) {
+    return "Không tải được nguồn nào; kiểm tra URL, robots.txt, trạng thái website và network policy.";
+  }
+  if (diagnostic.includes("NO_EVIDENCE_ACQUIRED")) {
+    return "Chưa có snapshot/bằng chứng được lưu. Không có dữ liệu kết quả nào được bịa thêm.";
+  }
+  if (diagnostic.includes("NO_SUPPORTED_FIELDS_EXTRACTED")) {
+    return "Nguồn đã tải nhưng chưa có trường được bộ trích xuất deterministic hỗ trợ; cần xem evidence.";
+  }
+  if (diagnostic.includes("OFFICIAL_WEBSITE_INVALID_URL")) {
+    return "Website không hợp lệ. Dùng URL công khai bắt đầu bằng http:// hoặc https://.";
+  }
+  if (diagnostic.includes("ROBOTS_")) {
+    return "Website không cho phép truy cập theo robots policy; hệ thống không bypass hạn chế này.";
+  }
+  return diagnostic;
+}
+
 function stepIcon(status: string): string {
   if (status === "completed") return "✓";
   if (status === "running") return "…";
@@ -112,14 +150,14 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
   const [selectedJob, setSelectedJob] = useState<ResearchJobItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorInfo, setErrorInfo] = useState<NormalizedClientError | null>(null);
 
   const canStart = hasCapability("research:start");
 
   const loadJobs = useCallback(async () => {
     if (!activeWorkspace || !companyId) return;
     setIsLoading(true);
-    setErrorMsg(null);
+    setErrorInfo(null);
     try {
       const token = localStorage.getItem("vcps_access_token") || "";
       const client = getApiClient();
@@ -132,8 +170,8 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
       } else {
         setSelectedJob(null);
       }
-    } catch {
-      setErrorMsg("Không thể tải trạng thái research.");
+    } catch (error) {
+      setErrorInfo(normalizeClientError(error));
     } finally {
       setIsLoading(false);
     }
@@ -158,8 +196,9 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
         const client = getApiClient();
         const fullJob = await client.getResearchJob(token, activeWorkspace.id, selectedJob.id);
         setSelectedJob(fullJob as ResearchJobItem);
-      } catch {
-        // Keep the last durable state visible when polling temporarily fails.
+      } catch (error) {
+        // Keep the last durable state visible while exposing the safe API diagnostic.
+        setErrorInfo(normalizeClientError(error));
       }
     }, 2000);
 
@@ -175,22 +214,33 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
   const hasEvidence =
     Number(pipelineState.fetched_sources?.length || 0) > 0 ||
     Number(pipelineState.parsed_snapshots?.length || 0) > 0;
+  const diagnostics = Array.from(
+    new Set([
+      ...(pipelineState.warnings || []),
+      ...(pipelineState.source_discovery_warnings || []),
+    ]),
+  );
+  const taskErrors = (selectedJob?.tasks || [])
+    .filter((task) => task.error_message)
+    .map((task) => `${task.step_type}: ${task.error_message}`);
+  const hasActiveJob = selectedJob?.status === "running" || selectedJob?.status === "pending";
 
   const handleStartResearch = async () => {
     if (!activeWorkspace || !companyId) return;
     setIsStarting(true);
-    setErrorMsg(null);
+    setErrorInfo(null);
     try {
       const token = localStorage.getItem("vcps_access_token") || "";
       const client = getApiClient();
       const job = await client.triggerCompanyResearch(token, activeWorkspace.id, companyId, {
         job_type: "initial",
+        scope: { include_search_results: true, crawl_website: true },
         requested_locale: "vi",
       });
       setSelectedJob(job as ResearchJobItem);
       await loadJobs();
-    } catch {
-      setErrorMsg("Không thể bắt đầu research job.");
+    } catch (error) {
+      setErrorInfo(normalizeClientError(error));
     } finally {
       setIsStarting(false);
     }
@@ -204,8 +254,8 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
       const updated = await client.cancelResearchJob(token, activeWorkspace.id, selectedJob.id);
       setSelectedJob(updated as ResearchJobItem);
       await loadJobs();
-    } catch {
-      setErrorMsg("Không thể huỷ research job.");
+    } catch (error) {
+      setErrorInfo(normalizeClientError(error));
     }
   };
 
@@ -236,7 +286,7 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
         {canStart && (
           <button
             onClick={handleStartResearch}
-            disabled={isStarting}
+            disabled={isStarting || hasActiveJob}
             style={{
               padding: "6px 12px",
               backgroundColor: "#2da44e",
@@ -247,14 +297,19 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
               cursor: "pointer",
             }}
           >
-            {isStarting ? "Starting..." : "⚡ Start Research"}
+            {isStarting ? "Đang khởi động…" : hasActiveJob ? "Research đang chạy" : "↻ Thu thập lại"}
           </button>
         )}
       </div>
 
-      {errorMsg && (
-        <div style={{ padding: "10px", backgroundColor: "#ffebe9", color: "#cf222e", borderRadius: "6px", marginBottom: "12px" }}>
-          {errorMsg}
+      {errorInfo && (
+        <div role="alert" style={{ padding: "10px", backgroundColor: "#ffebe9", color: "#cf222e", borderRadius: "6px", marginBottom: "12px" }}>
+          <strong>{errorInfo.code}: </strong>{errorInfo.message}
+          {formatErrorDetails(errorInfo.details).length > 0 && (
+            <ul style={{ margin: "6px 0 0", paddingLeft: "18px" }}>
+              {formatErrorDetails(errorInfo.details).map((detail) => <li key={detail}>{detail}</li>)}
+            </ul>
+          )}
         </div>
       )}
 
@@ -311,6 +366,38 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
                   Snapshots, document blocks, and deterministic evidence remain available.
                 </div>
               )}
+            </div>
+          )}
+
+          {(selectedJob.error_message || taskErrors.length > 0) && (
+            <div role="alert" style={{ padding: "10px", background: "#ffebe9", color: "#cf222e", borderRadius: "6px", marginBottom: "12px", fontSize: "13px" }}>
+              <strong>Chi tiết lỗi của job</strong>
+              {selectedJob.error_message && <div style={{ marginTop: "4px" }}>{selectedJob.error_message}</div>}
+              {taskErrors.length > 0 && (
+                <ul style={{ margin: "6px 0 0", paddingLeft: "18px" }}>
+                  {taskErrors.map((taskError) => <li key={taskError}>{taskError}</li>)}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {diagnostics.length > 0 && (
+            <div role="note" style={{ padding: "10px", background: "#fff8c5", color: "#7a4d00", borderRadius: "6px", marginBottom: "12px", fontSize: "13px" }}>
+              <strong>Chẩn đoán kết quả</strong>
+              <ul style={{ margin: "6px 0 0", paddingLeft: "18px" }}>
+                {diagnostics.map((diagnostic) => (
+                  <li key={diagnostic}>
+                    {diagnosticLabel(diagnostic)} <code style={{ marginLeft: "4px" }}>{diagnostic}</code>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {!hasEvidence && ["completed", "partial_success", "failed"].includes(selectedJob.status) && (
+            <div style={{ padding: "10px", background: "#f6f8fa", color: "#57606a", borderRadius: "6px", marginBottom: "12px", fontSize: "13px" }}>
+              Không có bằng chứng được lưu cho job này. Kiểm tra chẩn đoán bên trên rồi thử lại bằng
+              website chính thức hoặc cấu hình Search API. Hồ sơ vẫn được giữ nguyên.
             </div>
           )}
 

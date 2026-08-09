@@ -153,7 +153,10 @@ export const SourcesList: React.FC<SourcesListProps> = ({ companyId }) => {
       {canEdit && (
         <form onSubmit={handleAddSource} style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
           <input
+            id="source-url"
+            name="source_url"
             type="url"
+            aria-label="Source URL"
             required
             placeholder="https://example.com/company-info"
             value={newUrl}

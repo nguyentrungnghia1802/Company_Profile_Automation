@@ -103,10 +103,12 @@ export const MergeCompanyModal: React.FC<MergeCompanyModalProps> = ({
 
         <form onSubmit={handleMerge}>
           <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, marginBottom: "4px" }}>
+            <label htmlFor="merge-target-company" style={{ display: "block", fontSize: "12px", fontWeight: 600, marginBottom: "4px" }}>
               Select Target Company *
             </label>
             <select
+              id="merge-target-company"
+              name="target_company_id"
               required
               value={targetCompanyId}
               onChange={(e) => setTargetCompanyId(e.target.value)}

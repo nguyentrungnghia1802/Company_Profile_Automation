@@ -83,34 +83,37 @@ export const CompanyLibrary: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1000px", fontFamily: "sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+    <div style={{ maxWidth: "1200px", fontFamily: "inherit" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div>
-          <h2 style={{ margin: 0 }}>Company Profiles Library</h2>
-          <p style={{ color: "#666", margin: "4px 0 0 0" }}>
-            Workspace: <strong>{activeWorkspace?.name || "None"}</strong>
+          <h2 style={{ margin: 0, fontSize: "1.3rem", color: "#f8fafc" }}>Thư viện Doanh nghiệp (Company Profiles)</h2>
+          <p style={{ color: "#94a3b8", fontSize: "0.85rem", margin: "4px 0 0 0" }}>
+            Không gian làm việc: <strong style={{ color: "#3b82f6" }}>{activeWorkspace?.name || "AI Riser Competition Workspace"}</strong>
           </p>
         </div>
         {canCreate && (
           <button
             onClick={() => setIsCreateOpen(true)}
             style={{
-              padding: "8px 16px",
-              backgroundColor: "#2da44e",
+              padding: "10px 18px",
+              backgroundColor: "#10b981",
               color: "#fff",
               border: "none",
-              borderRadius: "6px",
+              borderRadius: "8px",
               fontWeight: 600,
               cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
             }}
           >
-            + Create Company
+            <span>+</span> Tạo hồ sơ mới
           </button>
         )}
       </div>
 
       {errorMsg && (
-        <div style={{ padding: "12px", backgroundColor: "#ffebe9", color: "#cf222e", borderRadius: "6px", marginBottom: "16px" }}>
+        <div style={{ padding: "12px", backgroundColor: "#7f1d1d", color: "#fca5a5", borderRadius: "8px", marginBottom: "16px" }}>
           {errorMsg}
         </div>
       )}
@@ -118,81 +121,132 @@ export const CompanyLibrary: React.FC = () => {
       {/* Filter Controls */}
       <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
         <input
+          id="company-library-search"
+          name="company_search"
           type="text"
+          aria-label="Search companies"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search by name, Tax ID, or Reg Number..."
-          style={{ flex: 1, padding: "8px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
+          placeholder="Lọc theo Tên doanh nghiệp, Mã số thuế Tax ID, Ngành nghề..."
+          style={{
+            flex: 1,
+            padding: "10px 14px",
+            borderRadius: "8px",
+            border: "1px solid #334155",
+            background: "#0f172a",
+            color: "#f8fafc",
+            outline: "none",
+          }}
         />
 
         <select
+          id="company-library-status"
+          name="company_status"
+          aria-label="Filter companies by status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
+          style={{
+            padding: "10px 14px",
+            borderRadius: "8px",
+            border: "1px solid #334155",
+            background: "#0f172a",
+            color: "#f8fafc",
+            outline: "none",
+          }}
         >
-          <option value="">All Statuses</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
-          <option value="merged">Merged</option>
+          <option value="">Tất cả trạng thái</option>
+          <option value="draft">Bản nháp (Draft)</option>
+          <option value="published">Đã xuất bản (Published)</option>
+          <option value="archived">Đã lưu trữ (Archived)</option>
+          <option value="merged">Đã hợp nhất (Merged)</option>
         </select>
       </div>
 
       {/* Company List Table */}
       {isLoading ? (
-        <div>Loading company profiles...</div>
+        <div style={{ padding: "24px", color: "#94a3b8" }}>Đang tải danh sách doanh nghiệp...</div>
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
           <thead>
-            <tr style={{ borderBottom: "2px solid #eaeaea" }}>
-              <th style={{ padding: "12px" }}>Company Name</th>
-              <th style={{ padding: "12px" }}>Tax ID</th>
-              <th style={{ padding: "12px" }}>Industry</th>
-              <th style={{ padding: "12px" }}>Status</th>
-              <th style={{ padding: "12px" }}>Actions</th>
+            <tr style={{ borderBottom: "2px solid #334155", color: "#94a3b8", fontSize: "0.85rem" }}>
+              <th style={{ padding: "12px" }}>Tên Công Ty</th>
+              <th style={{ padding: "12px" }}>Mã Số Thuế</th>
+              <th style={{ padding: "12px" }}>Website / Ngành Nghề</th>
+              <th style={{ padding: "12px" }}>Trạng Thái</th>
+              <th style={{ padding: "12px" }}>Thao Tác</th>
             </tr>
           </thead>
           <tbody>
             {filteredCompanies.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ padding: "24px", textAlign: "center", color: "#666" }}>
-                  No company profiles found in this workspace.
+                <td colSpan={5} style={{ padding: "32px", textAlign: "center", color: "#94a3b8" }}>
+                  Không tìm thấy doanh nghiệp nào phù hợp.
                 </td>
               </tr>
             ) : (
               filteredCompanies.map((c) => (
-                <tr key={c.id} style={{ borderBottom: "1px solid #eaeaea" }}>
-                  <td style={{ padding: "12px", fontWeight: 600 }}>{c.company_name}</td>
-                  <td style={{ padding: "12px" }}>{c.tax_id || "—"}</td>
-                  <td style={{ padding: "12px" }}>{c.industry || "—"}</td>
-                  <td style={{ padding: "12px" }}>
+                <tr key={c.id} style={{ borderBottom: "1px solid #334155" }}>
+                  <td style={{ padding: "14px 12px" }}>
+                    <div style={{ fontWeight: 600, color: "#f8fafc", fontSize: "0.95rem" }}>{c.company_name}</div>
+                    {c.legal_name && <div style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{c.legal_name}</div>}
+                  </td>
+                  <td style={{ padding: "14px 12px", color: "#cbd5e1", fontSize: "0.9rem" }}>{c.tax_id || "—"}</td>
+                  <td style={{ padding: "14px 12px", color: "#cbd5e1", fontSize: "0.9rem" }}>
+                    {c.website_url ? (
+                      <a href={c.website_url} target="_blank" rel="noreferrer" style={{ color: "#3b82f6", textDecoration: "underline" }}>
+                        {c.website_url}
+                      </a>
+                    ) : (
+                      c.industry || "—"
+                    )}
+                  </td>
+                  <td style={{ padding: "14px 12px" }}>
                     <span
                       style={{
-                        padding: "4px 8px",
+                        padding: "4px 10px",
                         borderRadius: "12px",
                         fontSize: "12px",
                         fontWeight: 600,
-                        backgroundColor: c.status === "published" ? "#dafbe1" : c.status === "merged" ? "#ffebe9" : "#fff8c5",
-                        color: c.status === "published" ? "#1a7f37" : c.status === "merged" ? "#cf222e" : "#9a6700",
+                        backgroundColor: c.status === "published" ? "rgba(16, 185, 129, 0.15)" : c.status === "merged" ? "rgba(239, 68, 68, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                        color: c.status === "published" ? "#34d399" : c.status === "merged" ? "#f87171" : "#fbbf24",
+                        border: `1px solid ${c.status === "published" ? "rgba(16, 185, 129, 0.3)" : c.status === "merged" ? "rgba(239, 68, 68, 0.3)" : "rgba(245, 158, 11, 0.3)"}`,
                       }}
                     >
-                      {c.status}
+                      {c.status.toUpperCase()}
                     </span>
                   </td>
-                  <td style={{ padding: "12px" }}>
+                  <td style={{ padding: "14px 12px" }}>
                     <div style={{ display: "flex", gap: "8px" }}>
                       <button
                         onClick={() => setSelectedCompanyId(c.id)}
-                        style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #ccc", background: "#fff", fontSize: "12px", cursor: "pointer" }}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: "6px",
+                          border: "1px solid #475569",
+                          background: "#0f172a",
+                          color: "#f8fafc",
+                          fontSize: "12px",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                        }}
                       >
-                        Details
+                        Chi tiết
                       </button>
                       {canMerge && c.status !== "merged" && (
                         <button
                           onClick={() => setMergeSourceCompany(c)}
-                          style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #cf222e", background: "#fff", color: "#cf222e", fontSize: "12px", cursor: "pointer" }}
+                          style={{
+                            padding: "6px 12px",
+                            borderRadius: "6px",
+                            border: "1px solid #ef4444",
+                            background: "transparent",
+                            color: "#ef4444",
+                            fontSize: "12px",
+                            fontWeight: 500,
+                            cursor: "pointer",
+                          }}
                         >
-                          Merge
+                          Hợp nhất
                         </button>
                       )}
                     </div>

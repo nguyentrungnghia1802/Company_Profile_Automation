@@ -84,6 +84,16 @@ async def test_research_api_trigger_get_cancel_flow(
     assert res_cancel.status_code == 200
     assert res_cancel.json()["data"]["status"] == "cancelled"
 
+    # The old synchronous endpoint must not return unverified snippets or fake facts.
+    res_live = await async_client.post(
+        "/api/v1/research/live-scrape",
+        headers=headers,
+        json={"query": "Research Target Corp"},
+    )
+    assert res_live.status_code == 410
+    assert res_live.json()["error"]["code"] == "LIVE_SCRAPE_RETIRED"
+    assert res_live.json()["error"]["details"]["ai_required"] is False
+
 
 @pytest.mark.asyncio
 async def test_research_jobs_tenant_isolation(

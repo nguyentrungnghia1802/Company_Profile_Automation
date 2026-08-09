@@ -15,7 +15,7 @@ from company_profile.api.dependencies import (
     get_current_actor,
     require_capability,
 )
-from company_profile.api.errors import ForbiddenError, NotFoundError, ValidationError
+from company_profile.api.errors import AppError, ForbiddenError, NotFoundError, ValidationError
 from company_profile.db.session import get_db_session
 from company_profile.modules.research.service import ResearchJobService
 
@@ -266,4 +266,38 @@ async def cancel_research_job(
                 for t in job.tasks
             ],
         ),
+    )
+
+
+class LiveScrapeRequest(BaseModel):
+    """Deprecated synchronous scraper request retained for an explicit error response."""
+
+    query: str
+    website_url: str | None = None
+
+
+@router.post("/research/live-scrape")
+async def live_scrape_company(
+    payload: LiveScrapeRequest,
+    actor: RequestActor = Depends(require_capability("research:start")),
+) -> dict[str, Any]:
+    """Reject the old synchronous path instead of returning unverified snippets."""
+    verify_active_workspace(actor)
+    raise AppError(
+        code="LIVE_SCRAPE_RETIRED",
+        message=(
+            "Synchronous live scraping is retired because search snippets are not evidence. "
+            "Create a research job so sources, snapshots, and evidence are persisted."
+        ),
+        status_code=410,
+        details={
+            "query_received": bool(payload.query.strip()),
+            "website_url_received": bool(payload.website_url and payload.website_url.strip()),
+            "next_action": "POST /api/v1/companies/{company_id}/research",
+            "ai_required": False,
+            "name_only_requirement": (
+                "Configure SEARCH_PROVIDER=google with SEARCH_API_KEY and "
+                "SEARCH_ENGINE_ID, or provide an official website URL."
+            ),
+        },
     )

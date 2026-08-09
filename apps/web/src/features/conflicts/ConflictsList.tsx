@@ -192,7 +192,10 @@ export const ConflictsList: React.FC<ConflictsListProps> = ({ companyId }) => {
                       <div style={{ padding: "8px", border: "1px solid #0969da", borderRadius: "6px", backgroundColor: "#f6f8fa" }}>
                         <div style={{ fontSize: "12px", fontWeight: 600, marginBottom: "6px", color: "#24292f" }}>Select winning candidate above and provide reason:</div>
                         <input
+                          id={`conflict-resolution-reason-${conf.id}`}
+                          name="resolution_reason"
                           type="text"
+                          aria-label={`Resolution rationale for ${conf.field_key}`}
                           placeholder="Resolution rationale..."
                           value={reasonInput}
                           onChange={(e) => setReasonInput(e.target.value)}

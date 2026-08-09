@@ -11,6 +11,7 @@ WORKDIR /app
 
 # Copy dependency files first for caching
 COPY pyproject.toml ./
+COPY README.md ./
 RUN uv sync --no-dev --no-install-project
 
 # Copy source code

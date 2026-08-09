@@ -112,8 +112,10 @@ export const MemberManagement: React.FC = () => {
       {/* Invite Member Form */}
       <form onSubmit={handleAddMember} style={{ display: "flex", gap: "12px", marginBottom: "24px", alignItems: "flex-end" }}>
         <div>
-          <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Email Address</label>
+          <label htmlFor="invite-member-email" style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Email Address</label>
           <input
+            id="invite-member-email"
+            name="invite_email"
             type="email"
             required
             value={inviteEmail}
@@ -124,8 +126,10 @@ export const MemberManagement: React.FC = () => {
         </div>
 
         <div>
-          <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Display Name</label>
+          <label htmlFor="invite-member-name" style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Display Name</label>
           <input
+            id="invite-member-name"
+            name="invite_name"
             type="text"
             value={inviteName}
             onChange={(e) => setInviteName(e.target.value)}
@@ -135,8 +139,10 @@ export const MemberManagement: React.FC = () => {
         </div>
 
         <div>
-          <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Role</label>
+          <label htmlFor="invite-member-role" style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Role</label>
           <select
+            id="invite-member-role"
+            name="invite_role"
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value)}
             style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
@@ -185,6 +191,9 @@ export const MemberManagement: React.FC = () => {
                 <td style={{ padding: "12px" }}>{m.email || "—"}</td>
                 <td style={{ padding: "12px" }}>
                   <select
+                    id={`member-role-${m.member_id}`}
+                    name="member_role"
+                    aria-label={`Role for ${m.display_name}`}
                     value={m.role}
                     onChange={(e) => handleUpdateRole(m.member_id, e.target.value)}
                     style={{ padding: "4px 8px", borderRadius: "4px" }}

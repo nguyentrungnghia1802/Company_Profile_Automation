@@ -104,6 +104,9 @@ export const PublishedProfileView: React.FC<PublishedProfileViewProps> = ({
 
         {allVersions.length > 0 && (
           <select
+            id="published-profile-version"
+            name="profile_version"
+            aria-label="Published profile version"
             onChange={async (e) => {
               const verId = e.target.value;
               const client = getApiClient();

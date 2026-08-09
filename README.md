@@ -48,6 +48,16 @@ Humans should read:
 
 Coding agents must follow `AGENT.md` before editing any file.
 
+## Local stack
+
+```bash
+docker compose up --build
+```
+
+The API and worker images build from the repository root so the package metadata can include this
+README. The default local providers are disabled; configure real provider credentials in `.env` when
+needed.
+
 ## Documentation policy
 
 - Technical documentation, identifiers, logs, commits, and code comments use English.
@@ -66,3 +76,19 @@ Coding agents must follow `AGENT.md` before editing any file.
 6. Human review before publication of high-impact or conflicting facts.
 7. Immutable source snapshots and profile history for auditability.
 8. Legal and ethical acquisition only: no CAPTCHA bypass, account abuse, or prohibited scraping.
+
+## Live research behavior
+
+The research screen uses the durable company and research-job APIs. It does not contain a
+sample-company database and it never derives missing email addresses, websites, tax IDs, or legal
+status from the query text. A field remains unknown until a permitted source provides evidence.
+
+AI is optional. With `AI_PROVIDER=disabled`, an official public website can still be fetched and
+deterministic structured facts can still be extracted. Name-only lookup requires the official Google
+Programmable Search API configured with `SEARCH_PROVIDER=google`, `SEARCH_API_KEY`, and
+`SEARCH_ENGINE_ID`. With no search provider, the job reports
+`SEARCH_PROVIDER_UNAVAILABLE:DISABLED` and keeps the profile unchanged.
+
+The Compose worker runs `company_profile.worker.main`, which claims and executes PostgreSQL research
+tasks. Fixture providers are reserved for automated tests and are not enabled by the local product
+stack.

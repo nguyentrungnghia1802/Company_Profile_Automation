@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import uuid
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
@@ -490,7 +491,12 @@ class SourceDiscoveryService:
                     )
                 )
             except Exception as exc:  # provider outage is non-critical
-                reason = f"{type(exc).__name__}"
+                provider_code = str(getattr(exc, "code", "")).strip()
+                reason = (
+                    provider_code
+                    if re.fullmatch(r"[A-Z0-9_:-]{1,160}", provider_code)
+                    else type(exc).__name__
+                )
                 result.warnings.append(f"SEARCH_PROVIDER_UNAVAILABLE:{reason}")
                 query_state["error"] = reason
                 result.search_queries.append(query_state)

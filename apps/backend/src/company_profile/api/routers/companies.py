@@ -71,6 +71,9 @@ class CreateCompanyRequest(BaseModel):
     registration_number: str | None = None
     industry: str | None = None
     website_url: str | None = None
+    headquarters_address: str | None = None
+    primary_phone: str | None = None
+    primary_email: str | None = None
 
 
 class UpdateCompanyRequest(BaseModel):
@@ -167,6 +170,9 @@ async def create_company(
         registration_number=payload.registration_number,
         industry=payload.industry,
         website_url=payload.website_url,
+        headquarters_address=payload.headquarters_address,
+        primary_phone=payload.primary_phone,
+        primary_email=payload.primary_email,
         actor_id=str(actor.user_id),
     )
     return CompanyDetailResponse(

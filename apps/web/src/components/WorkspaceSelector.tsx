@@ -17,6 +17,7 @@ export const WorkspaceSelector: React.FC = () => {
       </label>
       <select
         id="workspace-select"
+        name="workspace_id"
         value={activeWorkspace?.id || ""}
         onChange={(e) => switchWorkspace(e.target.value)}
         style={{

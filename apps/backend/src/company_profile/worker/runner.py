@@ -6,11 +6,15 @@ import asyncio
 import contextlib
 import json
 import logging
+import re
 from typing import TYPE_CHECKING
 
 from company_profile.db.session import get_db_session
 from company_profile.modules.research.dispatcher import PostgresTaskDispatcher
-from company_profile.modules.research.pipeline import ResearchPipelineExecutor
+from company_profile.modules.research.pipeline import (
+    ResearchPipelineError,
+    ResearchPipelineExecutor,
+)
 from company_profile.modules.research.queue import ResearchQueueRepository
 
 if TYPE_CHECKING:
@@ -122,7 +126,19 @@ class WorkerRunner:
             await dispatcher.advance_job_pipeline(task.research_job_id)
         except Exception as exc:
             logger.error("Task execution failed: %s", exc, exc_info=True)
-            task.fail(str(exc))
+            task.fail(self.safe_task_error(task.step_type, exc))
             await session.commit()
             dispatcher = PostgresTaskDispatcher(session)
             await dispatcher.advance_job_pipeline(task.research_job_id)
+
+    @staticmethod
+    def safe_task_error(step_type: str, error: Exception) -> str:
+        """Keep durable task errors diagnostic without persisting raw provider details."""
+        message = str(error).strip()
+        if isinstance(error, ResearchPipelineError) and message:
+            safe_reason = message[:200]
+        elif message and re.fullmatch(r"[A-Z0-9_:-]{1,160}", message):
+            safe_reason = message
+        else:
+            safe_reason = type(error).__name__.upper()
+        return f"TASK_STEP_FAILED:{step_type}:{safe_reason}"

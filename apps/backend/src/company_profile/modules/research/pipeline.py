@@ -23,6 +23,7 @@ from company_profile.integrations.ai.mock_ai import MockAiProvider
 from company_profile.integrations.ai.protocol import AiInputBlock
 from company_profile.integrations.fetch.website_discovery import HttpxWebsiteFetchProvider
 from company_profile.integrations.search.fixture_search import FixtureSearchProvider
+from company_profile.integrations.search.google_search import GoogleSearchProvider
 from company_profile.modules.ai.service import AiExtractionService
 from company_profile.modules.conflicts.engine import ConflictEngine
 from company_profile.modules.facts.confidence import ConfidenceCalculator
@@ -137,8 +138,10 @@ class ResearchPipelineExecutor:
         company = await self._get_company(state)
         scope = state["scope"]
         provider = self.search_provider
-        if provider is None and self.settings.search_provider == "fixture":
-            provider = FixtureSearchProvider()
+        if provider is None:
+            provider, provider_warning = self.build_search_provider(self.settings)
+            if provider_warning and bool(scope.get("include_search_results", False)):
+                self._warn(state, provider_warning)
         website_discoverer = OfficialWebsiteDiscovery(
             HttpxWebsiteFetchProvider(
                 user_agent=self.settings.fetch_user_agent,
@@ -650,6 +653,10 @@ class ResearchPipelineExecutor:
 
     async def _finalize(self, _job: ResearchJob, state: dict[str, Any]) -> dict[str, Any]:
         """Emit a stable result status without changing prior artifacts."""
+        if not state.get("fetched_sources"):
+            self._warn(state, "NO_EVIDENCE_ACQUIRED")
+        elif not int(state.get("deterministic_fact_count", 0)):
+            self._warn(state, "NO_SUPPORTED_FIELDS_EXTRACTED")
         state["result_status"] = "partial_success" if state.get("partial") else "completed"
         return state
 
@@ -706,6 +713,29 @@ class ResearchPipelineExecutor:
                 budget_usd_per_job=settings.ai_budget_usd_per_job,
             )
         return None
+
+    @staticmethod
+    def build_search_provider(settings: Settings) -> tuple[Any | None, str | None]:
+        """Build only explicitly configured providers; never enable fixtures by default."""
+        provider_name = settings.search_provider.strip().lower()
+        if provider_name in {"", "disabled", "none", "off", "unavailable"}:
+            return None, "SEARCH_PROVIDER_UNAVAILABLE:DISABLED"
+        if provider_name == "fixture":
+            if settings.environment.strip().lower() not in {"test", "testing", "ci"}:
+                return None, "SEARCH_PROVIDER_UNAVAILABLE:FIXTURE_DISABLED_IN_RUNTIME"
+            return FixtureSearchProvider(), None
+        if provider_name == "google":
+            if not settings.search_api_key.strip() or not settings.search_engine_id.strip():
+                return None, "SEARCH_PROVIDER_UNAVAILABLE:GOOGLE_CONFIGURATION_MISSING"
+            return (
+                GoogleSearchProvider(
+                    api_key=settings.search_api_key,
+                    engine_id=settings.search_engine_id,
+                    timeout=settings.fetch_timeout,
+                ),
+                None,
+            )
+        return None, "SEARCH_PROVIDER_UNAVAILABLE:UNKNOWN_PROVIDER"
 
     @staticmethod
     def _decode_state(payload: str | None) -> dict[str, Any]:

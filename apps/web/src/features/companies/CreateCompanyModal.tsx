@@ -96,7 +96,8 @@ export const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: "rgba(0,0,0,0.75)",
+        backdropFilter: "blur(4px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -105,26 +106,32 @@ export const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({
     >
       <div
         style={{
-          backgroundColor: "#fff",
-          borderRadius: "8px",
+          backgroundColor: "#1e293b",
+          border: "1px solid #334155",
+          color: "#f8fafc",
+          borderRadius: "12px",
           padding: "24px",
           maxWidth: "600px",
           width: "100%",
           maxHeight: "90vh",
           overflowY: "auto",
-          fontFamily: "sans-serif",
+          fontFamily: "inherit",
+          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)",
         }}
       >
-        <h3 style={{ marginTop: 0 }}>Create New Company Profile</h3>
+        <h3 style={{ marginTop: 0, fontSize: "1.2rem", fontWeight: 700, color: "#f8fafc" }}>
+          Tạo Hồ Sơ / Tra Cứu Doanh Nghiệp Mới
+        </h3>
 
         {errorMsg && (
           <div
             style={{
-              padding: "10px",
-              backgroundColor: "#ffebe9",
-              color: "#cf222e",
-              borderRadius: "6px",
-              marginBottom: "12px",
+              padding: "10px 14px",
+              backgroundColor: "#7f1d1d",
+              color: "#fca5a5",
+              borderRadius: "8px",
+              marginBottom: "16px",
+              fontSize: "0.9rem",
             }}
           >
             {errorMsg}
@@ -132,117 +139,196 @@ export const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>
-              Company Name *
+          <div style={{ marginBottom: "14px" }}>
+            <label htmlFor="create-company-name" style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#cbd5e1", marginBottom: "6px" }}>
+              Tên Công Ty / Doanh Nghiệp *
             </label>
             <input
+              id="create-company-name"
+              name="company_name"
               type="text"
               required
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="e.g. Công ty TNHH AI Riser Việt Nam"
-              style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+              placeholder="VD: Tập đoàn FPT, VinFast, VNG, Viettel..."
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                border: "1px solid #334155",
+                background: "#0f172a",
+                color: "#f8fafc",
+                outline: "none",
+              }}
             />
           </div>
 
-          <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
+          <div style={{ display: "flex", gap: "12px", marginBottom: "14px" }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Tax ID</label>
+              <label htmlFor="create-company-tax-id" style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#cbd5e1", marginBottom: "6px" }}>
+                Mã Số Thuế (Tax ID)
+              </label>
               <input
+                id="create-company-tax-id"
+                name="tax_id"
                 type="text"
                 value={taxId}
                 onChange={(e) => setTaxId(e.target.value)}
                 placeholder="0101234567"
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #334155",
+                  background: "#0f172a",
+                  color: "#f8fafc",
+                  outline: "none",
+                }}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>
-                Registration Number
+              <label htmlFor="create-company-registration-number" style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#cbd5e1", marginBottom: "6px" }}>
+                Số Đăng Ký Kinh Doanh
               </label>
               <input
+                id="create-company-registration-number"
+                name="registration_number"
                 type="text"
                 value={regNumber}
                 onChange={(e) => setRegNumber(e.target.value)}
                 placeholder="REG-123456"
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #334155",
+                  background: "#0f172a",
+                  color: "#f8fafc",
+                  outline: "none",
+                }}
               />
             </div>
           </div>
 
           {/* Duplicate Candidates Warning Banner */}
-          {isResolving && <div style={{ fontSize: "12px", color: "#666" }}>Checking duplicate candidates...</div>}
+          {isResolving && <div style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "12px" }}>Đang kiểm tra dữ liệu trùng lặp...</div>}
 
           {duplicates.length > 0 && (
             <div
               style={{
-                backgroundColor: "#fff8c5",
-                border: "1px solid #d4a72c",
-                borderRadius: "6px",
+                backgroundColor: "rgba(245, 158, 11, 0.15)",
+                border: "1px solid rgba(245, 158, 11, 0.3)",
+                borderRadius: "8px",
                 padding: "12px",
                 marginBottom: "16px",
               }}
             >
-              <div style={{ fontWeight: 600, color: "#9a6700", marginBottom: "6px" }}>
-                ⚠️ Potential Duplicate Candidates Found ({duplicates.length})
+              <div style={{ fontWeight: 600, color: "#fbbf24", marginBottom: "6px", fontSize: "0.9rem" }}>
+                ⚠️ Phát hiện doanh nghiệp trùng lặp tiềm năng ({duplicates.length})
               </div>
-              <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px" }}>
+              <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "13px", color: "#fef3c7" }}>
                 {duplicates.map((cand) => (
                   <li key={cand.company_id}>
-                    <strong>{cand.company_name}</strong> (Match: {(cand.match_score * 100).toFixed(0)}% — {cand.match_reason})
+                    <strong>{cand.company_name}</strong> (Khớp: {(cand.match_score * 100).toFixed(0)}% — {cand.match_reason})
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          <div style={{ marginBottom: "12px" }}>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Legal Name</label>
+          <div style={{ marginBottom: "14px" }}>
+            <label htmlFor="create-company-legal-name" style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#cbd5e1", marginBottom: "6px" }}>Tên Pháp Lý Đầy Đủ (Legal Name)</label>
             <input
+              id="create-company-legal-name"
+              name="legal_name"
               type="text"
               value={legalName}
               onChange={(e) => setLegalName(e.target.value)}
-              style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+              placeholder="Công ty Cổ phần / TNHH..."
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                border: "1px solid #334155",
+                background: "#0f172a",
+                color: "#f8fafc",
+                outline: "none",
+              }}
             />
           </div>
 
-          <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+          <div style={{ display: "flex", gap: "12px", marginBottom: "20px" }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Industry</label>
+              <label htmlFor="create-company-industry" style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#cbd5e1", marginBottom: "6px" }}>Ngành Nghề</label>
               <input
+                id="create-company-industry"
+                name="industry"
                 type="text"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                placeholder="Software / AI"
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                placeholder="Software / AI / Automative"
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #334155",
+                  background: "#0f172a",
+                  color: "#f8fafc",
+                  outline: "none",
+                }}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600 }}>Website URL</label>
+              <label htmlFor="create-company-website" style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#cbd5e1", marginBottom: "6px" }}>Website URL</label>
               <input
+                id="create-company-website"
+                name="website_url"
                 type="url"
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="https://example.com"
-                style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #334155",
+                  background: "#0f172a",
+                  color: "#f8fafc",
+                  outline: "none",
+                }}
               />
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
             <button
               type="button"
               onClick={onClose}
-              style={{ padding: "8px 16px", borderRadius: "6px", border: "1px solid #ccc", background: "#fff", cursor: "pointer" }}
+              style={{
+                padding: "10px 18px",
+                borderRadius: "8px",
+                border: "1px solid #475569",
+                background: "#0f172a",
+                color: "#f8fafc",
+                cursor: "pointer",
+                fontWeight: 500,
+              }}
             >
-              Cancel
+              Hủy
             </button>
             <button
               type="submit"
-              style={{ padding: "8px 16px", borderRadius: "6px", border: "none", background: "#2da44e", color: "#fff", fontWeight: 600, cursor: "pointer" }}
+              style={{
+                padding: "10px 20px",
+                borderRadius: "8px",
+                border: "none",
+                background: "#10b981",
+                color: "#fff",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
             >
-              {duplicates.length > 0 ? "Create Anyway" : "Create Company"}
+              {duplicates.length > 0 ? "Vẫn Tạo Mới" : "Tạo Hồ Sơ Doanh Nghiệp"}
             </button>
           </div>
         </form>

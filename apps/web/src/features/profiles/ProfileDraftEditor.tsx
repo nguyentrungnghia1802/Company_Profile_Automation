@@ -178,7 +178,10 @@ export const ProfileDraftEditor: React.FC<ProfileDraftEditorProps> = ({
               {activeDraft.status === "ready_for_review" && (
                 <div className="flex items-center gap-2">
                   <input
+                    id="profile-publication-note"
+                    name="publication_note"
                     type="text"
+                    aria-label="Publication release note"
                     placeholder="Release note..."
                     value={publicationNote}
                     onChange={(e) => setPublicationNote(e.target.value)}

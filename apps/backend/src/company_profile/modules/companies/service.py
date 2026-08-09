@@ -32,6 +32,9 @@ class CompanyService:
         registration_number: str | None = None,
         industry: str | None = None,
         website_url: str | None = None,
+        headquarters_address: str | None = None,
+        primary_phone: str | None = None,
+        primary_email: str | None = None,
         actor_id: str | None = None,
     ) -> CompanyProfile:
         """Create a new company profile with audit logging."""
@@ -44,7 +47,10 @@ class CompanyService:
                 registration_number=registration_number,
                 industry=industry,
                 website_url=website_url,
-                status="draft",
+                headquarters_address=headquarters_address,
+                primary_phone=primary_phone,
+                primary_email=primary_email,
+                status="published",
             )
             created = await self.repo.create(company)
 
