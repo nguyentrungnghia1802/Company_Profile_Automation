@@ -2356,3 +2356,18 @@ The initial specification baseline had no known defects before this run.
 - Owner: unassigned
 - Notes: Set `POSTGRES_HOST_PORT` in `.env` when `5433` is also occupied; the internal database URL
   remains `postgresql+asyncpg://vcps:vcps_dev@postgres:5432/vcps`.
+
+## RUN-20260809-17 — Local canonical documentation cleanup
+
+- Roadmap task(s): maintenance cleanup only; no roadmap task was started.
+- Status: complete.
+- Removed local-only duplicate files from `docs/project/`: `AGENT.md` (identical to the root
+  instructions) and the stale duplicate `Roadmap.md` (the root Roadmap is the status source).
+- Kept `docs/project/openapi.json` because the OpenAPI drift checker and API-client generator use it
+  as a continuously maintained contract snapshot; regenerated it against the current runtime schema.
+- Kept `docs/project/11_TENANT_ISOLATION_AND_AUDIT.md` because the security Roadmap evidence still
+  references it as a tenant-isolation specification.
+- Updated `scripts/check_docs.py` and `scripts/check_requirement_ids.py` so validation no longer
+  requires or special-cases the removed duplicate documents.
+- Verification: documentation, requirement-ID, docs-sync, and OpenAPI drift checks passed.
+- Remaining: no work was started on the next roadmap task.

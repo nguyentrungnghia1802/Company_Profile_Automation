@@ -38,9 +38,6 @@ def check_id_uniqueness(root_dir: Path) -> list[str]:
         files_to_check.append(roadmap_file)
     if docs_dir.exists():
         for p in docs_dir.glob("*.md"):
-            # Avoid scanning docs/project/Roadmap.md if root Roadmap.md is already included
-            if p.name == "Roadmap.md" and roadmap_file.exists():
-                continue
             files_to_check.append(p)
 
     for filepath in files_to_check:

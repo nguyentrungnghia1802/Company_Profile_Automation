@@ -25,8 +25,6 @@ REQUIRED_PROJECT_DOCS: list[str] = [
     "08_DEPLOYMENT_AND_OPERATIONS.md",
     "09_DECISIONS_AND_RISKS.md",
     "10_DOCUMENTATION_SYNC_CHECKLIST.md",
-    "AGENT.md",
-    "Roadmap.md",
 ]
 
 ROOT_SYNC_DOCS: list[str] = [
