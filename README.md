@@ -109,6 +109,13 @@ Programmable Search API configured with `SEARCH_PROVIDER=google`, `SEARCH_API_KE
 `SEARCH_ENGINE_ID`. With no search provider, the job reports
 `SEARCH_PROVIDER_UNAVAILABLE:DISABLED` and keeps the profile unchanged.
 
+Gemini failures are stored as non-sensitive reason codes. In particular,
+`AI_QUOTA_EXCEEDED` means the configured Google project/model has exhausted or has not been granted
+quota; changing application data or retrying every snapshot cannot fix it. Check quota/billing in
+Google AI Studio, or set `AI_PROVIDER=disabled` to run only the deterministic pipeline. Search-disabled,
+trusted-provider `manual_required`, and `REVIEW_REQUIRED_CONFLICTS` diagnostics describe operating
+limits or review work and do not by themselves mean that the research job crashed.
+
 The Compose worker runs `company_profile.worker.main`, which claims and executes PostgreSQL research
 tasks. Fixture providers are reserved for automated tests and are not enabled by the local product
 stack.
@@ -118,3 +125,19 @@ persisted browser token, exchanges the configured `NEXT_PUBLIC_MOCK_AUTH_TOKEN` 
 exists, and keeps the initial loading screen visible until that attempt finishes. The page does not
 start authentication from a render-dependent effect, so a failed or stale token cannot cause a
 continuous login/render loop.
+
+## Fetch compatibility and trusted-source opt-in
+
+Direct HTTP always starts with the platform's standard verified TLS policy. For a public site whose
+otherwise valid certificate chain fails only because of an allowlisted OpenSSL compatibility error,
+local operators may set `FETCH_LEGACY_TLS_FALLBACK_ENABLED=true` and keep
+`FETCH_LEGACY_TLS_SECURITY_LEVEL=1`. This creates a request-local verified TLS context; certificate
+and hostname verification remain enabled. The default in `.env.example` is disabled.
+
+Live trusted-source discovery is also disabled by default. Set
+`TRUSTED_SOURCE_LIVE_ENABLED=true` only after reviewing public-access policy and configuring a
+descriptive `FETCH_USER_AGENT`. The current live adapters use the MediaWiki Action API for
+Wikipedia and the robots-allowed public CafeF search page. Dangkykinhdoanh has no approved stable
+anonymous structured endpoint, GDT tax lookup requires CAPTCHA, and Vietstock has no documented
+public company-search endpoint, so those providers return typed manual outcomes rather than guessed
+URLs.

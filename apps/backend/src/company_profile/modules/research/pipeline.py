@@ -8,6 +8,7 @@ worker retries can resume from durable source/snapshot/fact records.
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from typing import TYPE_CHECKING, Any
 
@@ -33,6 +34,8 @@ from company_profile.modules.review.service import ReviewTaskService
 from company_profile.modules.sources.discovery import SourceDiscoveryService
 from company_profile.modules.sources.fetcher import CrawlCoordinator, WebFetcher
 from company_profile.modules.sources.official_discovery import OfficialWebsiteDiscovery
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -138,16 +141,19 @@ class ResearchPipelineExecutor:
         company = await self._get_company(state)
         scope = state["scope"]
         provider = self.search_provider
+        provider_warning: str | None = None
         if provider is None:
             provider, provider_warning = self.build_search_provider(self.settings)
-            if provider_warning and bool(scope.get("include_search_results", False)):
-                self._warn(state, provider_warning)
         website_discoverer = OfficialWebsiteDiscovery(
             HttpxWebsiteFetchProvider(
                 user_agent=self.settings.fetch_user_agent,
                 timeout=self.settings.fetch_timeout,
                 max_response_bytes=self.settings.fetch_max_response_bytes,
                 max_redirects=self.settings.fetch_max_redirects,
+                legacy_tls_fallback_enabled=self.settings.fetch_legacy_tls_fallback_enabled,
+                legacy_tls_security_level=self.settings.fetch_legacy_tls_security_level,
+                rate_limit_seconds=self.settings.fetch_rate_limit_seconds,
+                max_concurrency_per_domain=self.settings.fetch_max_concurrency_per_domain,
             ),
             user_agent=self.settings.fetch_user_agent,
             max_response_bytes=self.settings.fetch_max_response_bytes,
@@ -163,6 +169,9 @@ class ResearchPipelineExecutor:
             trusted_registry=self.source_registry,
             locale=self.settings.default_locale,
             website_discoverer=website_discoverer,
+            search_provider_unavailable_reason=(
+                provider_warning.rsplit(":", 1)[-1] if provider_warning else "NOT_CONFIGURED"
+            ),
         )
         discovery_state = (
             await discovery.discover(company, scope, research_job_id=job.id)
@@ -323,6 +332,21 @@ class ResearchPipelineExecutor:
             self._warn(state, f"AI_EXTRACTION_SKIPPED:{reason}")
             return state
 
+        if not bool(getattr(self.ai_provider, "is_available", True)):
+            reason = str(getattr(self.ai_provider, "unavailable_reason", "AI_PROVIDER_UNAVAILABLE"))
+            state["ai"] = {
+                "status": "unavailable",
+                "reason": reason,
+                "fact_ids": [],
+                "failures": [reason],
+                "semantic_extraction": "skipped",
+                "translation": "skipped",
+                "comparison": "skipped",
+                "summary": "skipped",
+            }
+            self._warn(state, f"AI_EXTRACTION_FAILED:{reason}")
+            return state
+
         company = await self._get_company(state)
         ai_service = AiExtractionService(
             provider=self.ai_provider,
@@ -331,6 +355,7 @@ class ResearchPipelineExecutor:
         )
         ai_fact_ids: list[str] = []
         ai_failures: list[str] = []
+        job_cost_so_far = 0.0
 
         for parsed in state.get("parsed_snapshots", []):
             snapshot_id = uuid.UUID(str(parsed["snapshot_id"]))
@@ -352,7 +377,7 @@ class ResearchPipelineExecutor:
                 for block in blocks
             ]
             try:
-                outcome, _cost = await ai_service.extract(
+                outcome, call_cost = await ai_service.extract(
                     session=self.session,
                     operation="extract_identity",
                     blocks=ai_blocks,
@@ -361,10 +386,38 @@ class ResearchPipelineExecutor:
                     company_id=job.company_id,
                     valid_block_ids={block.block_key for block in blocks},
                     research_job_id=job.id,
+                    job_cost_so_far_usd=job_cost_so_far,
                 )
             except Exception as exc:
-                ai_failures.append(self._ai_failure_code(exc))
+                failure = self._ai_failure_code(exc)
+                logger.warning(
+                    "Optional AI extraction failed: %s",
+                    failure,
+                    extra={
+                        "job_id": str(job.id),
+                        "provider": self.settings.ai_provider,
+                        "failure_code": failure,
+                        "exception_type": type(exc).__name__,
+                    },
+                )
+                if failure not in ai_failures:
+                    ai_failures.append(failure)
+                if failure in {
+                    "AI_PROVIDER_ERROR",
+                    "AI_PROVIDER_SDK_UNAVAILABLE",
+                    "AI_PROVIDER_UNAVAILABLE",
+                    "AI_QUOTA_EXCEEDED",
+                    "AI_AUTHENTICATION_FAILED",
+                    "AI_MODEL_NOT_FOUND",
+                    "AI_REQUEST_REJECTED",
+                    "AI_TIMEOUT",
+                    "AI_BUDGET_EXCEEDED",
+                    "AI_KILL_SWITCH_ENABLED",
+                }:
+                    break
                 continue
+
+            job_cost_so_far += call_cost
 
             if not outcome.is_valid or outcome.sanitized_result is None:
                 ai_failures.append("AI_OUTPUT_INVALID")
@@ -389,7 +442,7 @@ class ResearchPipelineExecutor:
             "summary": "skipped",
         }
         if ai_failures:
-            for failure in ai_failures:
+            for failure in dict.fromkeys(ai_failures):
                 self._warn(state, f"AI_EXTRACTION_FAILED:{failure}")
         return state
 
@@ -501,9 +554,7 @@ class ResearchPipelineExecutor:
 
         for rejected in state.get("rejected_sources", []):
             reason = str(rejected.get("reason", ""))
-            if not any(
-                marker in reason for marker in ("ENTITY_MATCH_REVIEW_REQUIRED", "LOW_ENTITY_MATCH")
-            ):
+            if "ENTITY_MATCH_REVIEW_REQUIRED" not in reason:
                 continue
             url = str(rejected.get("url", ""))
             review_task = await self._get_or_create_review_task(
@@ -686,9 +737,24 @@ class ResearchPipelineExecutor:
     @staticmethod
     def _ai_failure_code(error: Exception) -> str:
         """Map provider failures to safe durable codes without leaking details."""
+        provider_reason = getattr(error, "reason_code", None)
+        allowed_provider_reasons = {
+            "AI_PROVIDER_ERROR",
+            "AI_PROVIDER_SDK_UNAVAILABLE",
+            "AI_PROVIDER_UNAVAILABLE",
+            "AI_QUOTA_EXCEEDED",
+            "AI_AUTHENTICATION_FAILED",
+            "AI_MODEL_NOT_FOUND",
+            "AI_REQUEST_REJECTED",
+            "AI_OUTPUT_INVALID",
+        }
+        if provider_reason in allowed_provider_reasons:
+            return str(provider_reason)
         if isinstance(error, TimeoutError) or "timeout" in type(error).__name__.lower():
             return "AI_TIMEOUT"
         error_name = type(error).__name__.upper()
+        if "SDKUNAVAILABLE" in error_name:
+            return "AI_PROVIDER_SDK_UNAVAILABLE"
         if "KILLSWITCH" in error_name:
             return "AI_KILL_SWITCH_ENABLED"
         if "BUDGET" in error_name:

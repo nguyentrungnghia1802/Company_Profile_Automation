@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     CheckConstraint,
@@ -21,9 +21,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from company_profile.db.base import GUID, Base
 
 if TYPE_CHECKING:
-    from company_profile.db.models.company import CompanyProfile
     from company_profile.db.models.fact import FactCandidate
-    from company_profile.db.models.identity import User, Workspace
 
 
 class ProfileDraft(Base):
@@ -107,9 +105,7 @@ class DraftFieldSelection(Base):
     profile_draft: Mapped[ProfileDraft] = relationship(
         "ProfileDraft", back_populates="field_selections"
     )
-    selected_fact_candidate: Mapped[FactCandidate | None] = relationship(
-        "FactCandidate"
-    )
+    selected_fact_candidate: Mapped[FactCandidate | None] = relationship("FactCandidate")
 
     __table_args__ = (
         CheckConstraint(

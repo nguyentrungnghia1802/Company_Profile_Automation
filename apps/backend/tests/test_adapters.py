@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
 
 from company_profile.db.transaction import transactional
 from company_profile.integrations.ai.mock_ai import MockAiProvider
@@ -17,7 +19,6 @@ from company_profile.integrations.storage.mock_malware import MockMalwareScanner
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from httpx import AsyncClient
     from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -116,6 +117,41 @@ async def test_correlation_id_middleware(async_client: AsyncClient) -> None:
     custom_id = "test-correlation-123"
     response2 = await async_client.get("/api/v1/health", headers={"X-Correlation-ID": custom_id})
     assert response2.headers["X-Correlation-ID"] == custom_id
+
+
+@pytest.mark.asyncio
+async def test_unhandled_error_has_safe_debug_reference(
+    app: FastAPI, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Unexpected failures expose a correlation reference and log the exception server-side."""
+
+    @app.get("/api/v1/test-unhandled-error")
+    async def _raise_unhandled_error() -> None:
+        raise RuntimeError("database password must never be returned")
+
+    correlation_id = "test-internal-error-reference"
+    transport = ASGITransport(app=app, raise_app_exceptions=False)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as error_client:
+        with caplog.at_level("ERROR", logger="company_profile.api.errors"):
+            response = await error_client.get(
+                "/api/v1/test-unhandled-error",
+                headers={"X-Correlation-ID": correlation_id},
+            )
+
+    assert response.status_code == 500
+    assert response.headers["X-Correlation-ID"] == correlation_id
+    error = response.json()["error"]
+    assert error["code"] == "INTERNAL_ERROR"
+    assert error["retryable"] is True
+    assert error["details"] == {
+        "correlation_id": correlation_id,
+        "operation": "GET /api/v1/test-unhandled-error",
+        "next_step": (
+            "Retry once. If the error persists, search the backend logs for this correlation ID."
+        ),
+    }
+    assert "password" not in response.text
+    assert "Unhandled API exception" in caplog.text
 
 
 @pytest.mark.asyncio

@@ -2219,6 +2219,7 @@ All known implementation defects, including defects discovered after a feature w
 - Required fix: ...
 - Closure validation: ...
 - Owner: unassigned
+
 - Notes: ...
 ```
 
@@ -2256,6 +2257,9 @@ A task linked to an open defect that violates its acceptance criteria remains `[
 - Closure validation: full backend tests, full mypy, and supported `alembic upgrade head`/downgrade validation pass.
 - Owner: unassigned
 - Notes: No task code or user-owned dirty files were reverted to hide these failures. This defect remains open as independent repository debt and does not block TASK-CRAWL-001 under `docs/agent/AGENT.md`.
+- Update 2026-08-10: the company lifecycle failure is resolved: creation now honors the model's
+  `draft` default and the full backend suite passes 177 tests. The defect remains open only for the
+  independent full Ruff/format/mypy and historical migration baselines described above.
 
 The initial specification baseline had no known defects before this run.
 
@@ -2564,3 +2568,198 @@ The initial specification baseline had no known defects before this run.
 - Closure validation: separate-request API regression, scoped quality checks, Docker rebuild,
   same-origin runtime smoke, direct PostgreSQL durability checks, and worker progression all pass.
 - Owner: unassigned
+
+## RUN-20260809-23 — Fetch compatibility and trusted-source maintenance
+
+- Roadmap task(s): maintenance change only; no next roadmap task was started.
+- Status: `[~]` because mandatory repository-wide validation still reproduces `DEF-CRAWL-002`.
+- Implemented: standard-first TLS with classified request-local compatibility fallback; verified
+  certificate/hostname checks; shared SSRF-safe transport; typed TLS/connect/browser outcomes;
+  correct robots 4xx/5xx semantics; real robots gate before Playwright; no browser fixture HTML;
+  opt-in MediaWiki and CafeF live adapters; specific manual outcomes for Dangkykinhdoanh, GDT
+  CAPTCHA, and Vietstock; forward migration `20260809_0021`.
+- Verification: affected source/fetch suite `35 passed`; task-scoped Ruff/format/mypy passed; isolated
+  PostgreSQL `0020 -> 0021 -> 0020 -> 0021` passed; Alembic head/history passed. Full backend suite
+  reported `168 passed, 1 failed` at the existing CompanyService draft/published mismatch. Full clean
+  PostgreSQL history still stops at the existing `20260807_0002` UUID/CHAR mismatch. Repository-wide
+  quality baselines remain red with 21 unformatted files, 115 Ruff errors, and 8 mypy errors; none is
+  in the task-scoped files.
+- Documentation: `.env.example`, README, affected canonical project docs, ADR-023, Roadmap, and local
+  `docs/agent/task.md` synchronized; no API/OpenAPI contract changed.
+- Remaining limitation: external uptime, provider policy changes, and real Playwright staging remain
+  covered by `DEF-CRAWL-003`; live adapters and browser fallback stay disabled by default.
+
+## RUN-20260810-24 — Actionable company creation errors
+
+- Roadmap task(s): maintenance fix only; no next roadmap task was started.
+- Status: `[~]` because the mandatory repository-wide gate still reproduces the independent
+  `DEF-CRAWL-002` baseline; the reported API defect itself is fixed and runtime-verified.
+- Reported behavior: submitting a company whose normalized identity already existed returned opaque
+  `500 INTERNAL_ERROR` from `POST /api/v1/companies`.
+- Root cause: `CompanyService.create_company` inserted the company and its default alias without the
+  required duplicate preflight or uniqueness-race mapping. PostgreSQL raised
+  `uq_company_aliases_workspace_alias`, which reached the generic exception handler.
+- Implemented:
+  - deterministic workspace checks for tax ID, registration number, and normalized name/alias;
+  - nested-transaction protection for the concurrent uniqueness race;
+  - typed `409 COMPANY_DUPLICATE_REVIEW_REQUIRED` details with the existing company and next step;
+  - correlation-based safe diagnostics and server logging for truly unexpected 500 errors;
+  - detailed duplicate/error rendering in both company-creation UIs.
+- Verification:
+  - duplicate/error focused backend tests: `12 passed`, including the uniqueness-race path;
+  - frontend tests: `11 passed`; TypeScript typecheck and production build passed;
+  - task-scoped Ruff, format, and mypy passed;
+  - OpenAPI drift, docs, docs-sync, requirement IDs, secrets, and diff checks passed;
+  - Docker API/web rebuild passed; API, web, worker, and PostgreSQL are healthy;
+  - same-origin VNPT duplicate smoke returned `409 COMPANY_DUPLICATE_REVIEW_REQUIRED` with the
+    existing company ID/name and no new `UniqueViolation`/`INTERNAL_ERROR` API log;
+  - full backend suite: `171 passed, 1 failed` at the pre-existing draft/published expectation in
+    `DEF-CRAWL-002`; full format/Ruff/mypy retain the recorded baseline of 21 files, 115 errors, and
+    8 errors outside this fix's scoped files.
+- Documentation: API, domain, architecture, operations, development/testing, context, sync checklist,
+  Roadmap, and Defect Ledger synchronized; no migration or OpenAPI route/schema change required.
+
+### DEF-API-002 — Duplicate company alias surfaced as opaque internal error
+
+- Status: fixed
+- Severity: high
+- Priority: P1
+- Discovered: 2026-08-10 from user-provided browser error and API logs.
+- Affects: FR-COMP-003, P2-008, `POST /api/v1/companies`, company identity creation.
+- Impact: a normal duplicate submission failed as an unexplained server incident and gave the user no
+  path to reuse the existing company.
+- Reproduction/evidence: creating `Công ty TNHH VNPT` after alias `vnpt` existed raised PostgreSQL
+  constraint `uq_company_aliases_workspace_alias` and returned `500 INTERNAL_ERROR`.
+- Suspected cause: preview-only duplicate detection was not enforced by the create service, and the
+  database race had no typed transport mapping.
+- Required fix: return an actionable workspace-safe 409 for deterministic matches and the uniqueness
+  race; keep unknown 500 details safe but traceable.
+- Closure validation: focused preflight/race/API tests, frontend tests/typecheck/build, Docker rebuild,
+  same-origin 409 smoke, and API log inspection passed. Repository-wide independent failures remain
+  tracked by `DEF-CRAWL-002` and do not reproduce in this defect's scoped files.
+- Owner: unassigned
+
+## RUN-20260810-25 — Local VNPT acquisition configuration diagnosis
+
+- Roadmap task(s): maintenance diagnosis only; no next roadmap task was started.
+- `.env` findings: Gemini key/model are valid; Google Search remains intentionally disabled because
+  Search API key and engine ID are empty; legacy TLS fallback and live trusted providers were absent
+  and therefore inherited safe disabled defaults.
+- Local-only remediation: enabled request-local legacy TLS level 1 and live Wikipedia/CafeF adapters
+  in ignored `.env`; certificate/hostname verification and browser fallback remain unchanged.
+- Runtime verification: rebuilt API/worker; both loaded the new settings; a fresh VNPT refresh job
+  completed `partial_success` with 50 parsed snapshots, 115 deterministic facts, 5 conflicts, and 16
+  review tasks. Official VNPT and CafeF sources fetched successfully, proving the prior
+  `LEGACY_FALLBACK_DISABLED`/`LIVE_PROVIDER_DISABLED` acquisition failures are resolved.
+- Remaining expected outcomes: Dangkykinhdoanh has no stable approved public structured endpoint,
+  GDT requires CAPTCHA, Vietstock has no documented public search endpoint, and name-only Google
+  Search remains unavailable until real credentials are supplied.
+- New defect: real Gemini extraction remains unavailable because the runtime image does not install
+  the SDK imported by `GeminiAiProvider`; see `DEF-AI-001`. The configured API key returned HTTP 200
+  and the configured model was present, so this is not an `.env` credential/model defect.
+
+### DEF-AI-001 — Gemini provider configured but runtime SDK is absent
+
+- Status: resolved and runtime-verified; committed in `960c594` (final hash may change after amend).
+- Severity: medium
+- Priority: P1
+- Discovered: 2026-08-10 in RUN-20260810-25.
+- Affects: AI semantic extraction, `GeminiAiProvider`, backend dependency manifest/Docker image.
+- Impact: every parsed snapshot produces `AI_PROVIDER_ERROR`; deterministic acquisition/facts still
+  complete, but jobs end `partial_success` with no AI-derived candidates.
+- Reproduction/evidence: API/worker load a non-empty valid key and available
+  `gemini-2.0-flash`; importing `google.generativeai` in the worker raises `ModuleNotFoundError`, and
+  the dependency is absent from `pyproject.toml`/`uv.lock`.
+- Suspected cause: the adapter was implemented with a lazy legacy SDK import but the production
+  dependency was never declared.
+- Workaround: keep deterministic extraction and treat AI as unavailable; do not use mock AI for real
+  profiles because it would create synthetic output.
+- Required fix: migrate the adapter to the current GA `google-genai` SDK, declare/pin the dependency,
+  preserve async timeout/retry/budget/audit/schema behavior, and add provider/degraded-path tests.
+- Closure validation: container import, deterministic async adapter tests, production API/worker/web
+  builds, and local runtime health pass. A paid/live model-response quality check was deliberately not
+  invoked; it remains an approved staging check and is not replaced with mock output.
+- Owner: unassigned
+
+## RUN-20260810-26 — VNPT research result and Gemini runtime repair
+
+- Roadmap task(s): maintenance repair only; no subsequent roadmap task started.
+- Fixed the false zero-evidence VNPT display by selecting durable output by canonical pipeline step
+  rather than unspecified ORM task order; equivalent Search configuration warnings are grouped.
+- Migrated `GeminiAiProvider` from the undeclared legacy SDK to declared `google-genai` async calls
+  with bounded timeout/retry, typed dependency/provider failures, JSON validation, and no fabricated
+  translation fallback. Provider-wide failures stop repeated per-snapshot calls.
+- Obvious `LOW_ENTITY_MATCH` rejections remain auditable but no longer create ambiguity review tasks;
+  `ENTITY_MATCH_REVIEW_REQUIRED` remains reviewable.
+- Focused backend regression: 23 passed. Frontend regression: 13 passed. Frontend typecheck, scoped
+  Ruff/format/mypy, docs, secrets, requirement-ID, and OpenAPI checks passed. Production API/worker/web
+  builds passed; containers are healthy and worker imports `google-genai`.
+- Same-origin API verification returns the canonical nine-step order and the persisted VNPT job's
+  real counts (55 discovered, 50 selected/fetched, 12,112 blocks, 115 deterministic facts, 14 review
+  tasks) instead of the former zero summary.
+- Mandatory backend suite: 177 passed. Full Ruff/format/mypy retain the existing
+  115/22-file/8-error baseline outside this repair. Browser visual verification was unavailable
+  because no controllable browser was connected.
+- The contradictory `PUBLISHED` company badge with no published profile version was traced to
+  `CompanyService` overriding the model's `draft` default. New companies now remain draft until the
+  review/publication flow advances them; the existing local VNPT record was repaired to draft.
+
+## RUN-20260810-27 — Typed Gemini quota diagnostics and partial-result UX
+
+- Roadmap task(s): maintenance repair for FR-AI-009/P11-019/P12-020; no subsequent roadmap task was
+  started.
+- Gemini HTTP-like provider responses now map to durable, non-sensitive reason codes. Quota/auth/model/
+  request rejections stop immediately, while timeout, transport, and provider 5xx paths retain bounded
+  retry behavior. Worker logs include the safe failure code and exception type without provider payloads
+  or credentials.
+- The research UI explains `AI_QUOTA_EXCEEDED` with quota/billing remediation. Search-disabled and
+  trusted-provider manual outcomes remain visible as policy/configuration limits, and review/conflict
+  counts are identified as Review Inbox work rather than system failures. The red job-error panel is now
+  reserved for failed jobs or failed tasks instead of rendering every `partial_success` warning as a crash.
+- Validation: 183 backend tests, 15 frontend tests, frontend typecheck/build, scoped Ruff/format/mypy,
+  docs/requirement/OpenAPI/secret checks, and production Docker builds passed. API, worker, and web were
+  healthy after rebuild.
+- Runtime evidence: Kiai Soft refresh job `9d1cacfb-e589-45f9-acbd-819dfd5cc266` completed all nine
+  steps as `partial_success`; its durable AI reason is `AI_QUOTA_EXCEEDED` rather than
+  `AI_PROVIDER_ERROR`. The local Google project still has no usable Gemini quota, so semantic extraction
+  remains unavailable until the operator enables quota/billing or disables AI intentionally.
+- Canonical `docs/*` content was inspected but not modified because the tracked repository policy in
+  `.gitignore` explicitly marks that tree local-only and forbids modifying/staging it; README,
+  `.env.example`, Roadmap, code, and tests were synchronized instead.
+
+### DEF-AI-002 — Gemini quota exhaustion collapsed into generic provider error
+
+- Status: fixed and runtime-verified; committed in `960c594` (final hash may change after amend).
+- Severity: medium
+- Priority: P1
+- Discovered: 2026-08-10 from Kiai Soft research job
+  `48eee0a4-7413-45dc-8c0f-6187d6a11d84`.
+- Affects: FR-AI-009, degraded AI extraction, worker observability, research-progress diagnostics.
+- Impact: a Google `429 RESOURCE_EXHAUSTED` response was retried and persisted as
+  `AI_PROVIDER_ERROR`; the UI offered no actionable quota diagnosis and presented expected manual/search/
+  review outcomes under a red job-error heading.
+- Cause: `GeminiAiProvider` discarded SDK status codes and the UI did not distinguish fatal job state
+  from durable partial-success warnings.
+- Required fix: preserve safe typed provider reasons, avoid retrying non-retryable responses, expose a
+  non-secret worker diagnostic, and explain partial-result outcomes without weakening provider policy.
+- Closure validation: deterministic adapter/pipeline/UI regressions plus the full validation and live
+  Kiai Soft evidence recorded in RUN-20260810-27.
+- Remaining operational limitation: application code cannot grant Google quota. Configure quota/billing
+  for the selected project/model or set `AI_PROVIDER=disabled`; no mock data is substituted.
+- Owner: unassigned
+
+## RUN-20260810-28 — MAINT-FETCH-001 completion gate
+
+- Roadmap task(s): `MAINT-FETCH-001` only; no subsequent task was started.
+- Status: `[x]` after closing the validation blockers recorded in `docs/agent/task.md`.
+- Completed validation: full backend `183 passed`; backend Ruff/format/mypy pass; frontend `15 passed`,
+  typecheck and build pass; documentation, requirement-ID, OpenAPI drift, secret, and diff checks pass.
+- Migration `20260809_0021` upgrade/downgrade/re-upgrade was previously validated in an isolated
+  PostgreSQL run. The current Compose image cannot run `alembic heads/history` directly because the
+  repository has no `alembic.ini`/`script_location`; this is recorded as a tooling limitation, not a
+  migration failure.
+- The completed maintenance scope includes standard-first verified TLS compatibility fallback, trusted
+  source policy outcomes, robots-gated browser fallback, typed AI quota diagnostics, and partial-success
+  UI handling. No security boundary or provider access control was weakened.
+- Remaining external limitation: Gemini semantic extraction requires an available Google quota/billing
+  configuration; Search disabled and CAPTCHA/manual provider outcomes remain explicit by policy.

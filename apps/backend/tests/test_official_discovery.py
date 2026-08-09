@@ -202,6 +202,49 @@ async def test_robots_disallow_stops_homepage_and_sitemap_fetch() -> None:
 
 
 @pytest.mark.asyncio
+async def test_robots_404_means_not_published_and_allows_homepage() -> None:
+    """A missing robots file is not evidence that the site blocks crawlers."""
+    root = "https://no-robots.example"
+    fetcher = FixtureWebsiteFetcher(
+        {
+            f"{root}/robots.txt": WebsiteFetchResponse(
+                f"{root}/robots.txt", f"{root}/robots.txt", 404
+            ),
+            root: WebsiteFetchResponse(root, root, 200, content="<h1>Public page</h1>"),
+        }
+    )
+
+    result = await OfficialWebsiteDiscovery(fetcher, max_depth=0).discover(root)
+
+    assert result.robots is not None
+    assert result.robots.decision == "allowed"
+    assert result.robots.reason == "ROBOTS_NOT_PUBLISHED_HTTP_404"
+    assert root in fetcher.calls
+    assert result.candidates
+
+
+@pytest.mark.asyncio
+async def test_robots_server_failure_is_unavailable_not_access_blocked() -> None:
+    """A transient robots failure fails closed without claiming an explicit block."""
+    root = "https://robots-down.example"
+    fetcher = FixtureWebsiteFetcher(
+        {
+            f"{root}/robots.txt": WebsiteFetchResponse(
+                f"{root}/robots.txt", f"{root}/robots.txt", 503
+            )
+        }
+    )
+
+    result = await OfficialWebsiteDiscovery(fetcher).discover(root)
+
+    assert result.robots is not None
+    assert result.robots.decision == "unknown"
+    assert result.robots.reason == "ROBOTS_UNAVAILABLE_HTTP_503"
+    assert result.candidates == []
+    assert fetcher.calls == [f"{root}/robots.txt"]
+
+
+@pytest.mark.asyncio
 async def test_website_without_search_provider_still_discovers_public_pages() -> None:
     """Official discovery is independent from AI and SearchProvider availability."""
     _fetcher, discovery = _website_fixture()

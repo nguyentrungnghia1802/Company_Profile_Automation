@@ -33,8 +33,8 @@ export const ERROR_MAPPINGS: Record<string, ErrorMessage> = {
     en: "Resource conflict or version mismatch.",
   },
   COMPANY_DUPLICATE_REVIEW_REQUIRED: {
-    vi: "Phát hiện doanh nghiệp có nguy cơ trùng lặp. Cần người xem xét xác nhận.",
-    en: "Potential duplicate company detected. Reviewer confirmation required.",
+    vi: "Doanh nghiệp này đã tồn tại trong workspace. Hãy dùng hồ sơ hiện có hoặc kiểm tra dữ liệu trùng lặp trước khi tạo mới.",
+    en: "This company already exists in the workspace. Use the existing profile or review duplicate data before creating another one.",
   },
   COMPANY_ENTITY_AMBIGUOUS: {
     vi: "Thông tin danh tính doanh nghiệp chưa rõ ràng.",

@@ -1,7 +1,7 @@
-"""Tests for ProfileDraftService, PublicationService, publication blockers, and immutable version management."""
+"""Tests for drafts, publication blockers, and immutable profile versions."""
 
-import json
 import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +26,12 @@ async def test_draft_assembly_and_publication(
         email=f"pub-{uuid.uuid4().hex[:6]}@example.com",
         display_name="Publisher",
     )
-    cp = CompanyProfile(id=uuid.uuid4(), workspace_id=ws.id, company_name="Acme Tech JSC", normalized_name="acme tech jsc")
+    cp = CompanyProfile(
+        id=uuid.uuid4(),
+        workspace_id=ws.id,
+        company_name="Acme Tech JSC",
+        normalized_name="acme tech jsc",
+    )
     db_session.add_all([ws, usr, cp])
     await db_session.flush()
 
@@ -135,7 +140,9 @@ async def test_publication_blockers_on_unresolved_conflict(
         email=f"pubblock-{uuid.uuid4().hex[:6]}@example.com",
         display_name="Publisher Block",
     )
-    cp = CompanyProfile(id=uuid.uuid4(), workspace_id=ws.id, company_name="Acme Inc", normalized_name="acme inc")
+    cp = CompanyProfile(
+        id=uuid.uuid4(), workspace_id=ws.id, company_name="Acme Inc", normalized_name="acme inc"
+    )
     db_session.add_all([ws, usr, cp])
     await db_session.flush()
 

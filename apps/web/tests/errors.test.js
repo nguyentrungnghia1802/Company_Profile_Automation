@@ -20,4 +20,22 @@ describe("normalizeClientError", () => {
     expect(error.details.reason).toBe("Failed to fetch");
     expect(error.details.next_step).toContain("/api/v1/health");
   });
+
+  test("preserves actionable duplicate-company details from the API", () => {
+    const error = normalizeClientError({
+      code: "COMPANY_DUPLICATE_REVIEW_REQUIRED",
+      message: "duplicate",
+      statusCode: 409,
+      details: {
+        existing_company_id: "company-123",
+        existing_company_name: "VNPT",
+        match_reason: "EXACT_NORMALIZED_NAME_OR_ALIAS_MATCH",
+      },
+    });
+
+    expect(error.code).toBe("COMPANY_DUPLICATE_REVIEW_REQUIRED");
+    expect(error.message).toContain("đã tồn tại");
+    expect(error.details.existing_company_name).toBe("VNPT");
+    expect(error.statusCode).toBe(409);
+  });
 });

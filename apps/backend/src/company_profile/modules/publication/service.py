@@ -12,7 +12,6 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from company_profile.db.models.draft import ProfileDraft
 from company_profile.db.models.publication import (
     ProfileFieldEvidence,
     ProfileFieldValue,
@@ -25,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class PublicationService:
-    """Service for executing atomic publication transactions and managing immutable profile versions."""
+    """Service for atomic publication transactions and immutable profile versions."""
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
@@ -45,7 +44,11 @@ class PublicationService:
 
         # Check publication blockers
         blockers = await draft_svc.check_publication_blockers(workspace_id, draft.company_id)
-        critical = [b for b in blockers if b.get("materiality") == "critical" or b.get("code") == "MISSING_MANDATORY_FIELD"]
+        critical = [
+            b
+            for b in blockers
+            if b.get("materiality") == "critical" or b.get("code") == "MISSING_MANDATORY_FIELD"
+        ]
         if critical:
             raise ValueError(f"Cannot publish draft: {critical[0]['message']}")
 
@@ -89,7 +92,9 @@ class PublicationService:
             conf_scores.append(cand.confidence_score)
             evidence_count += len(cand.evidences)
 
-        payload_bytes = json.dumps(field_payloads, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        payload_bytes = json.dumps(field_payloads, sort_keys=True, ensure_ascii=False).encode(
+            "utf-8"
+        )
         content_hash = hashlib.sha256(payload_bytes).hexdigest()
 
         avg_confidence = round(sum(conf_scores) / len(conf_scores), 2) if conf_scores else 1.0
@@ -134,7 +139,9 @@ class PublicationService:
                 value_type=cand.value_type,
                 value_json=cand.value_json,
                 display_value=cand.display_value,
-                display_status="verified" if cand.fact_status in ("accepted", "validated") else "inferred",
+                display_status="verified"
+                if cand.fact_status in ("accepted", "validated")
+                else "inferred",
                 confidence_score=cand.confidence_score,
                 confidence_explanation=cand.confidence_explanation,
                 observed_at=cand.observed_at,
@@ -172,9 +179,7 @@ class PublicationService:
         stmt = (
             select(ProfileVersion)
             .options(
-                selectinload(ProfileVersion.field_values).selectinload(
-                    ProfileFieldValue.evidences
-                )
+                selectinload(ProfileVersion.field_values).selectinload(ProfileFieldValue.evidences)
             )
             .where(
                 ProfileVersion.workspace_id == workspace_id,
@@ -192,9 +197,7 @@ class PublicationService:
         stmt = (
             select(ProfileVersion)
             .options(
-                selectinload(ProfileVersion.field_values).selectinload(
-                    ProfileFieldValue.evidences
-                )
+                selectinload(ProfileVersion.field_values).selectinload(ProfileFieldValue.evidences)
             )
             .where(
                 ProfileVersion.workspace_id == workspace_id,
@@ -211,9 +214,7 @@ class PublicationService:
         stmt = (
             select(ProfileVersion)
             .options(
-                selectinload(ProfileVersion.field_values).selectinload(
-                    ProfileFieldValue.evidences
-                )
+                selectinload(ProfileVersion.field_values).selectinload(ProfileFieldValue.evidences)
             )
             .where(
                 ProfileVersion.workspace_id == workspace_id,
@@ -232,6 +233,7 @@ class PublicationService:
         reason: str,
     ) -> ProfileVersion:
         """Withdraw a published profile version."""
+        del actor_id
         pv = await self.get_profile_version(workspace_id, version_id)
         if not pv:
             raise ValueError(f"ProfileVersion '{version_id}' not found.")
@@ -243,7 +245,11 @@ class PublicationService:
         self, company_name: str, field_payloads: list[dict[str, Any]]
     ) -> str:
         """Generate deterministic executive summary strictly from accepted field values."""
-        kv_map = {item["field_key"]: item["display_value"] for item in field_payloads if item.get("display_value")}
+        kv_map = {
+            item["field_key"]: item["display_value"]
+            for item in field_payloads
+            if item.get("display_value")
+        }
         legal_name = kv_map.get("identity.legal_name", company_name)
         desc = kv_map.get("overview.description", "Verified commercial entity profile.")
         industry = kv_map.get("identity.industry") or kv_map.get("overview.industry")

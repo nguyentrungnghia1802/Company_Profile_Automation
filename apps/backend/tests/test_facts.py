@@ -214,7 +214,11 @@ async def test_list_facts_api_endpoint(async_client: AsyncClient, db_session: As
         display_name="User Facts",
     )
     member = WorkspaceMember(
-        id=uuid.uuid4(), workspace_id=ws.id, user_id=user.id, role="workspace_admin", status="active"
+        id=uuid.uuid4(),
+        workspace_id=ws.id,
+        user_id=user.id,
+        role="workspace_admin",
+        status="active",
     )
     cp = CompanyProfile(
         id=uuid.uuid4(),

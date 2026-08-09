@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 from fastapi.responses import JSONResponse
 
+from company_profile.api.middleware.correlation import CORRELATION_ID_HEADER
+
 if TYPE_CHECKING:
     from fastapi import FastAPI, Request
+
+logger = logging.getLogger(__name__)
 
 
 class AppError(Exception):
@@ -89,17 +94,37 @@ def register_error_handlers(app: FastAPI) -> None:
         return _error_response(exc)
 
     @app.exception_handler(Exception)
-    async def unhandled_error_handler(_request: Request, _exc: Exception) -> JSONResponse:
-        # Log the actual exception via structured logging in production.
-        # Never expose stack traces or internal details.
+    async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+        correlation_id = getattr(request.state, "correlation_id", "unavailable")
+        logger.exception(
+            "Unhandled API exception",
+            extra={
+                "error_code": "INTERNAL_ERROR",
+                "correlation_id": correlation_id,
+                "method": request.method,
+                "path": request.url.path,
+                "exception_type": type(exc).__name__,
+            },
+        )
         return JSONResponse(
             status_code=500,
+            headers={CORRELATION_ID_HEADER: correlation_id},
             content={
                 "error": {
                     "code": "INTERNAL_ERROR",
-                    "message": "An unexpected error occurred.",
-                    "details": {},
-                    "retryable": False,
+                    "message": (
+                        "An unexpected server error occurred. Use the correlation ID to "
+                        "inspect the API logs."
+                    ),
+                    "details": {
+                        "correlation_id": correlation_id,
+                        "operation": f"{request.method} {request.url.path}",
+                        "next_step": (
+                            "Retry once. If the error persists, search the backend logs for "
+                            "this correlation ID."
+                        ),
+                    },
+                    "retryable": True,
                 }
             },
         )

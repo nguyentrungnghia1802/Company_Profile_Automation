@@ -73,9 +73,7 @@ class PolicyService:
         await self._session.flush()
         return policy
 
-    async def activate_policy_set(
-        self, workspace_id: uuid.UUID, policy_id: uuid.UUID
-    ) -> PolicySet:
+    async def activate_policy_set(self, workspace_id: uuid.UUID, policy_id: uuid.UUID) -> PolicySet:
         """Activate a policy set, deactivating all other versions for the workspace."""
         policy = await self.get_policy_set(workspace_id, policy_id)
         if not policy:
@@ -83,9 +81,7 @@ class PolicyService:
 
         # Deactivate all
         await self._session.execute(
-            update(PolicySet)
-            .where(PolicySet.workspace_id == workspace_id)
-            .values(is_active=False)
+            update(PolicySet).where(PolicySet.workspace_id == workspace_id).values(is_active=False)
         )
 
         policy.is_active = True

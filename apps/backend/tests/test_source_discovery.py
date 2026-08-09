@@ -4,13 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import httpx
 import pytest
 from db.fixtures.identity_fixtures import DEV_WORKSPACE_ID
 from sqlalchemy import select
 
+from company_profile.config.settings import Settings
 from company_profile.db.models.company import CompanyProfile
 from company_profile.db.models.identity import Workspace
 from company_profile.db.models.source import Source
+from company_profile.integrations.fetch.http_transport import TransportResponse
 from company_profile.integrations.search.fixture_search import SearchResultItem
 from company_profile.modules.companies.repository import CompanyRepository
 from company_profile.modules.sources.discovery import (
@@ -21,7 +24,10 @@ from company_profile.modules.sources.discovery import (
     TrustedSourceLookup,
 )
 from company_profile.modules.sources.trusted_sources import (
+    VIETNAM_TRUSTED_SOURCE_DEFINITIONS,
+    CafeFTrustedSourceProvider,
     CountrySourceRegistry,
+    WikipediaTrustedSourceProvider,
     vietnam_source_registry,
 )
 from company_profile.modules.workspaces.repository import WorkspaceRepository
@@ -81,6 +87,22 @@ class CustomTrustedProvider:
         )
 
 
+class FixtureTransport:
+    """Deterministic transport for live trusted-provider adapter tests."""
+
+    def __init__(self, responses: list[TransportResponse]) -> None:
+        self.responses = responses
+        self.calls: list[str] = []
+
+    async def get(self, url: str, **_kwargs: Any) -> TransportResponse:
+        self.calls.append(url)
+        return self.responses.pop(0)
+
+
+def _settings(**overrides: Any) -> Settings:
+    return Settings(_env_file=None, **overrides)
+
+
 async def _company(db_session: AsyncSession) -> CompanyProfile:
     """Create a deterministic company fixture."""
     workspace = await WorkspaceRepository(db_session).create(
@@ -106,7 +128,7 @@ async def test_discovery_canonicalizes_and_merges_all_local_candidate_origins(
     service = SourceDiscoveryService(
         db_session,
         search_provider=FixtureSearchProvider(),
-        trusted_registry=vietnam_source_registry(),
+        trusted_registry=vietnam_source_registry(_settings()),
     )
 
     result = await service.discover(
@@ -161,7 +183,7 @@ async def test_trusted_registry_is_extensible_and_blocked_payload_has_no_fake_ca
 ) -> None:
     """A new provider is registered through configuration, and blocked data stays empty."""
     company = await _company(db_session)
-    registry = CountrySourceRegistry.for_country("VN")
+    registry = vietnam_source_registry(_settings())
     assert len(registry.providers) == 5
     assert {provider.definition.domain for provider in registry.providers} == {
         "dangkykinhdoanh.gov.vn",
@@ -220,7 +242,9 @@ async def test_source_history_and_field_authority_survive_selection(
     db_session.add(history)
     await db_session.flush()
 
-    service = SourceDiscoveryService(db_session, trusted_registry=vietnam_source_registry())
+    service = SourceDiscoveryService(
+        db_session, trusted_registry=vietnam_source_registry(_settings())
+    )
     result = await service.discover(
         company,
         {
@@ -308,3 +332,87 @@ async def test_rejected_candidate_persists_reason_and_provenance(
     assert source.provider == "search_provider"
     assert source.rejection_reason == "LOW_ENTITY_MATCH:0.0"
     assert source.selection_reason == "entity_match"
+
+
+@pytest.mark.asyncio
+async def test_wikipedia_live_adapter_uses_only_api_provided_canonical_urls() -> None:
+    """The MediaWiki adapter consumes structured URLs and never fabricates article paths."""
+    definition = next(
+        item for item in VIETNAM_TRUSTED_SOURCE_DEFINITIONS if item.key == "wikipedia"
+    )
+    transport = FixtureTransport(
+        [
+            TransportResponse(
+                200,
+                "https://vi.wikipedia.org/w/api.php",
+                httpx.Headers({"content-type": "application/json"}),
+                b'{"query":{"pages":[{"title":"VNPT","description":"Tap doan VNPT",'
+                b'"canonicalurl":"https://vi.wikipedia.org/wiki/VNPT"},'
+                b'{"title":"Bad","canonicalurl":"https://attacker.example/VNPT"}]}}',
+            )
+        ]
+    )
+    provider = WikipediaTrustedSourceProvider(
+        definition, transport, user_agent="VCPS-Test/1.0 (+https://example.com/bot)"
+    )
+    company = CompanyProfile(company_name="VNPT", normalized_name="vnpt")
+
+    result = await provider.discover(company=company, scope={"locale": "vi"})
+
+    assert result.outcome == ProviderOutcome.SUCCESS
+    assert [candidate.url for candidate in result.candidates] == [
+        "https://vi.wikipedia.org/wiki/VNPT"
+    ]
+    assert transport.calls[0].startswith("https://vi.wikipedia.org/w/api.php?")
+
+
+@pytest.mark.asyncio
+async def test_cafef_live_adapter_honours_missing_robots_and_parses_public_links() -> None:
+    """CafeF discovery treats robots 404 correctly and retains only provider-owned matches."""
+    definition = next(item for item in VIETNAM_TRUSTED_SOURCE_DEFINITIONS if item.key == "cafef")
+    transport = FixtureTransport(
+        [
+            TransportResponse(404, "https://cafef.vn/robots.txt", httpx.Headers(), b""),
+            TransportResponse(
+                200,
+                "https://cafef.vn/tim-kiem.chn?keywords=VNPT",
+                httpx.Headers({"content-type": "text/html"}),
+                (
+                    b'<a href="/vnpt-cong-bo-ket-qua-kinh-doanh.chn">'
+                    b"VNPT cong bo ket qua kinh doanh</a>"
+                    b'<a href="https://attacker.example/vnpt.chn">VNPT fake</a>'
+                ),
+            ),
+        ]
+    )
+    provider = CafeFTrustedSourceProvider(definition, transport, user_agent="VCPS-Test/1.0")
+    company = CompanyProfile(company_name="VNPT", normalized_name="vnpt")
+
+    result = await provider.discover(company=company, scope={})
+
+    assert result.outcome == ProviderOutcome.SUCCESS
+    assert [candidate.url for candidate in result.candidates] == [
+        "https://cafef.vn/vnpt-cong-bo-ket-qua-kinh-doanh.chn"
+    ]
+    assert transport.calls == [
+        "https://cafef.vn/robots.txt",
+        "https://cafef.vn/tim-kiem.chn?keywords=VNPT",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_non_automatable_providers_return_specific_manual_outcomes() -> None:
+    """CAPTCHA and undocumented access paths stay explicit typed manual outcomes."""
+    registry = vietnam_source_registry(_settings(trusted_source_live_enabled=False))
+    company = CompanyProfile(company_name="VNPT", normalized_name="vnpt")
+    outcomes = {
+        provider.definition.key: await provider.discover(company=company, scope={})
+        for provider in registry.providers
+    }
+
+    assert outcomes["dangkykinhdoanh"].reason == "NO_STABLE_PUBLIC_STRUCTURED_ENDPOINT"
+    assert outcomes["tracuunnt_gdt"].reason == "CAPTCHA_REQUIRED"
+    assert outcomes["vietstock"].reason == "NO_DOCUMENTED_PUBLIC_COMPANY_SEARCH_ENDPOINT"
+    assert outcomes["wikipedia"].reason == "LIVE_PROVIDER_DISABLED"
+    assert outcomes["cafef"].reason == "LIVE_PROVIDER_DISABLED"
+    assert all(item.outcome == ProviderOutcome.MANUAL_REQUIRED for item in outcomes.values())

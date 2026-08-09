@@ -1,4 +1,4 @@
-"""Service for Innovation Program Fit Assessment calculation, explainability, and reviewer overrides."""
+"""Service for explainable program-fit assessment and reviewer overrides."""
 
 from __future__ import annotations
 
@@ -53,78 +53,96 @@ class ProgramFitAssessmentService:
         # Criterion 1: Valid legal tax identification
         if company.tax_id:
             matched_count += 1
-            reasons.append({
-                "criterion": "tax_registration_verified",
-                "status": "passed",
-                "score": 1.0,
-                "explanation": f"Mã số thuế doanh nghiệp hợp lệ ({company.tax_id})",
-                "evidence_ref": f"company.tax_id:{company.tax_id}",
-            })
+            reasons.append(
+                {
+                    "criterion": "tax_registration_verified",
+                    "status": "passed",
+                    "score": 1.0,
+                    "explanation": f"Mã số thuế doanh nghiệp hợp lệ ({company.tax_id})",
+                    "evidence_ref": f"company.tax_id:{company.tax_id}",
+                }
+            )
         else:
-            reasons.append({
-                "criterion": "tax_registration_verified",
-                "status": "missing",
-                "score": 0.0,
-                "explanation": "Chưa xác minh mã số thuế hợp lệ",
-                "evidence_ref": None,
-            })
+            reasons.append(
+                {
+                    "criterion": "tax_registration_verified",
+                    "status": "missing",
+                    "score": 0.0,
+                    "explanation": "Chưa xác minh mã số thuế hợp lệ",
+                    "evidence_ref": None,
+                }
+            )
 
         # Criterion 2: Verified legal entity name
         if company.legal_name:
             matched_count += 1
-            reasons.append({
-                "criterion": "legal_name_verified",
-                "status": "passed",
-                "score": 1.0,
-                "explanation": f"Tên pháp lý đã được xác minh: {company.legal_name}",
-                "evidence_ref": f"company.legal_name:{company.legal_name}",
-            })
+            reasons.append(
+                {
+                    "criterion": "legal_name_verified",
+                    "status": "passed",
+                    "score": 1.0,
+                    "explanation": f"Tên pháp lý đã được xác minh: {company.legal_name}",
+                    "evidence_ref": f"company.legal_name:{company.legal_name}",
+                }
+            )
         else:
-            reasons.append({
-                "criterion": "legal_name_verified",
-                "status": "missing",
-                "score": 0.0,
-                "explanation": "Tên pháp lý chính thức cần đối chiếu thêm",
-                "evidence_ref": None,
-            })
+            reasons.append(
+                {
+                    "criterion": "legal_name_verified",
+                    "status": "missing",
+                    "score": 0.0,
+                    "explanation": "Tên pháp lý chính thức cần đối chiếu thêm",
+                    "evidence_ref": None,
+                }
+            )
 
         # Criterion 3: Online Footprint / Website URL
         if company.website_url:
             matched_count += 1
-            reasons.append({
-                "criterion": "digital_footprint_established",
-                "status": "passed",
-                "score": 1.0,
-                "explanation": f"Hiện diện trực tuyến chính thức qua website: {company.website_url}",
-                "evidence_ref": f"company.website_url:{company.website_url}",
-            })
+            reasons.append(
+                {
+                    "criterion": "digital_footprint_established",
+                    "status": "passed",
+                    "score": 1.0,
+                    "explanation": (
+                        f"Hiện diện trực tuyến chính thức qua website: {company.website_url}"
+                    ),
+                    "evidence_ref": f"company.website_url:{company.website_url}",
+                }
+            )
         else:
-            reasons.append({
-                "criterion": "digital_footprint_established",
-                "status": "missing",
-                "score": 0.0,
-                "explanation": "Thiếu website thương mại chính thức",
-                "evidence_ref": None,
-            })
+            reasons.append(
+                {
+                    "criterion": "digital_footprint_established",
+                    "status": "missing",
+                    "score": 0.0,
+                    "explanation": "Thiếu website thương mại chính thức",
+                    "evidence_ref": None,
+                }
+            )
 
         # Criterion 4: Facts count threshold
         if len(facts) >= 2:
             matched_count += 1
-            reasons.append({
-                "criterion": "minimum_fact_density",
-                "status": "passed",
-                "score": 1.0,
-                "explanation": f"Hồ sơ chứa {len(facts)} dữ liệu thực tế đã chấp nhận",
-                "evidence_ref": f"facts_count:{len(facts)}",
-            })
+            reasons.append(
+                {
+                    "criterion": "minimum_fact_density",
+                    "status": "passed",
+                    "score": 1.0,
+                    "explanation": f"Hồ sơ chứa {len(facts)} dữ liệu thực tế đã chấp nhận",
+                    "evidence_ref": f"facts_count:{len(facts)}",
+                }
+            )
         else:
-            reasons.append({
-                "criterion": "minimum_fact_density",
-                "status": "missing",
-                "score": 0.0,
-                "explanation": "Mật độ dữ liệu thực tế chưa đủ ngưỡng tối thiểu",
-                "evidence_ref": None,
-            })
+            reasons.append(
+                {
+                    "criterion": "minimum_fact_density",
+                    "status": "missing",
+                    "score": 0.0,
+                    "explanation": "Mật độ dữ liệu thực tế chưa đủ ngưỡng tối thiểu",
+                    "evidence_ref": None,
+                }
+            )
 
         fit_score = round(matched_count / total_criteria, 2)
         if fit_score >= 0.75:
@@ -145,7 +163,10 @@ class ProgramFitAssessmentService:
             "matched_criteria": matched_count,
             "total_criteria": total_criteria,
             "suggested_questions": suggested_questions,
-            "guidance_disclaimer": "Đánh giá sự phù hợp chương trình chỉ mang tính chất tham khảo hỗ trợ hội đồng, không tự động loại trừ doanh nghiệp.",
+            "guidance_disclaimer": (
+                "Đánh giá sự phù hợp chương trình chỉ mang tính chất tham khảo hỗ trợ hội đồng, "
+                "không tự động loại trừ doanh nghiệp."
+            ),
         }
 
         assessment = ProgramFitAssessment(

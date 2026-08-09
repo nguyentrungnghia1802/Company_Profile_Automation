@@ -1,6 +1,7 @@
-"""Tests for review task service, lifecycle transitions, optimistic locking, and decision audit logs."""
+"""Tests for review lifecycle, optimistic locking, and decision audit logs."""
 
 import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,7 +23,9 @@ async def test_review_task_lifecycle(
         email=f"user-{uuid.uuid4().hex[:6]}@example.com",
         display_name="Reviewer",
     )
-    cp = CompanyProfile(id=uuid.uuid4(), workspace_id=ws.id, company_name="Acme Ltd", normalized_name="acme ltd")
+    cp = CompanyProfile(
+        id=uuid.uuid4(), workspace_id=ws.id, company_name="Acme Ltd", normalized_name="acme ltd"
+    )
     db_session.add_all([ws, usr, cp])
     await db_session.flush()
 
@@ -91,7 +94,9 @@ async def test_review_task_version_conflict(
         email=f"user-{uuid.uuid4().hex[:6]}@example.com",
         display_name="Reviewer 2",
     )
-    cp = CompanyProfile(id=uuid.uuid4(), workspace_id=ws.id, company_name="Acme Ltd", normalized_name="acme ltd")
+    cp = CompanyProfile(
+        id=uuid.uuid4(), workspace_id=ws.id, company_name="Acme Ltd", normalized_name="acme ltd"
+    )
     db_session.add_all([ws, usr, cp])
     await db_session.flush()
 

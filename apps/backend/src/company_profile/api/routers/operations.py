@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends
@@ -12,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from company_profile.api.dependencies import (
     RequestActor,
-    get_current_actor,
     require_capability,
 )
 from company_profile.api.errors import ForbiddenError
@@ -47,7 +45,7 @@ class UpdateProviderSettingsRequest(BaseModel):
     summary="Get safe provider status (strictly no secrets)",
 )
 async def get_provider_settings(
-    actor: RequestActor = Depends(require_capability("workspace:manage")),
+    _actor: RequestActor = Depends(require_capability("workspace:manage")),
 ) -> dict[str, Any]:
     """Get safe provider settings."""
     settings = get_settings()
@@ -70,7 +68,7 @@ async def get_provider_settings(
 )
 async def update_provider_settings(
     body: UpdateProviderSettingsRequest,
-    actor: RequestActor = Depends(require_capability("workspace:manage")),
+    _actor: RequestActor = Depends(require_capability("workspace:manage")),
 ) -> dict[str, Any]:
     """Update non-secret provider settings."""
     settings = get_settings()

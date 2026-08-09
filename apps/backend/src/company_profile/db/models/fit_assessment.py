@@ -4,26 +4,20 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from sqlalchemy import DateTime, Float, ForeignKey, Index, JSON, String, Text, func
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from company_profile.db.base import GUID, Base
-
-if TYPE_CHECKING:
-    from company_profile.db.models.company import CompanyProfile
-    from company_profile.db.models.identity import User, Workspace
 
 
 class ProgramFitAssessment(Base):
     """Program fit assessment entity with explainable criteria and evidence links."""
 
     __tablename__ = "program_fit_assessments"
-    __table_args__ = (
-        Index("ix_program_fit_assessments_ws_company", "workspace_id", "company_id"),
-    )
+    __table_args__ = (Index("ix_program_fit_assessments_ws_company", "workspace_id", "company_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
