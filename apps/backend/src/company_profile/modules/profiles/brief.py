@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import uuid
 from typing import TYPE_CHECKING, Any
 
-from company_profile.db.models.publication import ProfileVersion
-
 if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
+    from company_profile.db.models.publication import ProfileVersion
 
 
 class MeetingBriefGenerator:
@@ -17,12 +14,15 @@ class MeetingBriefGenerator:
     def generate_brief(self, profile: ProfileVersion, locale: str = "vi") -> dict[str, Any]:
         """Generate structured meeting brief from published profile payload."""
         fields_map = {
-            f"{fv.field_key}:{fv.context_key}": fv.display_value or (str(fv.value) if fv.value else "")
+            f"{fv.field_key}:{fv.context_key}": fv.display_value
+            or (str(fv.get_value()) if fv.get_value() else "")
             for fv in profile.field_values
         }
 
         legal_name = fields_map.get("identity.legal_name:", profile.title)
-        industry = fields_map.get("identity.industry:", fields_map.get("overview.industry:", "Commercial Entity"))
+        industry = fields_map.get(
+            "identity.industry:", fields_map.get("overview.industry:", "Commercial Entity")
+        )
         description = fields_map.get("overview.description:", profile.executive_summary)
         tax_id = fields_map.get("identity.tax_id:", "N/A")
         website = fields_map.get("identity.website:", "N/A")
@@ -41,20 +41,30 @@ class MeetingBriefGenerator:
         # Suggested verification questions (strictly labeled as guidance)
         suggested_questions = []
         if is_vi:
-            suggested_questions.append(f"Xác nhận tên pháp lý chính thức và mã số thuế hiện tại ({tax_id}).")
+            suggested_questions.append(
+                f"Xác nhận tên pháp lý chính thức và mã số thuế hiện tại ({tax_id})."
+            )
             if "size.employee_range:" in fields_map:
-                suggested_questions.append(f"Xác nhận quy mô nhân sự ({employee_range}) và địa bàn hoạt động chính.")
-            suggested_questions.append("Hỏi về các sản phẩm/dịch vụ chủ lực đang triển khai trong năm nay.")
+                suggested_questions.append(
+                    f"Xác nhận quy mô nhân sự ({employee_range}) và địa bàn hoạt động chính."
+                )
+            suggested_questions.append(
+                "Hỏi về các sản phẩm/dịch vụ chủ lực đang triển khai trong năm nay."
+            )
         else:
-            suggested_questions.append(f"Verify official legal name and tax registration ID ({tax_id}).")
+            suggested_questions.append(
+                f"Verify official legal name and tax registration ID ({tax_id})."
+            )
             if "size.employee_range:" in fields_map:
-                suggested_questions.append(f"Confirm headcount footprint ({employee_range}) and primary market presence.")
-            suggested_questions.append("Inquire about flagship products/services actively offered this year.")
+                suggested_questions.append(
+                    f"Confirm headcount footprint ({employee_range}) and primary market presence."
+                )
+            suggested_questions.append(
+                "Inquire about flagship products/services actively offered this year."
+            )
 
         header_title = (
-            f"Tóm Tắt Cuộc Họp: {legal_name}"
-            if is_vi
-            else f"Executive Meeting Brief: {legal_name}"
+            f"Tóm Tắt Cuộc Họp: {legal_name}" if is_vi else f"Executive Meeting Brief: {legal_name}"
         )
 
         return {
@@ -77,8 +87,10 @@ class MeetingBriefGenerator:
             "missing_sections": missing_sections,
             "suggested_verification_questions": suggested_questions,
             "disclaimer": (
-                "Lưu ý: Các câu hỏi gợi ý là hướng dẫn hỗ trợ cuộc họp, không phải sự thật được khẳng định."
+                "Lưu ý: Các câu hỏi gợi ý là hướng dẫn hỗ trợ cuộc họp, "
+                "không phải sự thật được khẳng định."
                 if is_vi
-                else "Notice: Suggested questions are meeting guidance prompts, not factual assertions."
+                else "Notice: Suggested questions are meeting guidance prompts, "
+                "not factual assertions."
             ),
         }

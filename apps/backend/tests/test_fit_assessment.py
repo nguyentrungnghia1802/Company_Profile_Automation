@@ -1,11 +1,11 @@
 """Unit & integration tests for Program Fit Assessment service and API router."""
 
 import uuid
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from company_profile.api.app import create_app
 from company_profile.db.models.company import CompanyProfile
 from company_profile.db.models.identity import User, Workspace, WorkspaceMember
 from company_profile.modules.fit_assessment.service import ProgramFitAssessmentService
@@ -63,7 +63,7 @@ async def test_program_fit_assessment_rules(db_session: AsyncSession) -> None:
 
 @pytest.mark.asyncio
 async def test_fit_assessment_api_endpoints(
-    async_client: AsyncClient, db_session: AsyncSession
+    async_client: AsyncClient,
 ) -> None:
     """Test HTTP API router for program fit assessment."""
     ws_id = str(uuid.uuid4())

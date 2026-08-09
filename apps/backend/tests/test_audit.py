@@ -1,6 +1,7 @@
 """Tests for AuditService, append-only logging, and secret redaction."""
 
 import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 

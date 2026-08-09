@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { getApiClient } from "@vcps/api-client";
 import { useAuth } from "../../stores/authContext";
+import { formatErrorDetails, normalizeClientError, type NormalizedClientError } from "../../utils/errors";
 
 export interface CandidateItem {
   company_id: string;
@@ -33,7 +34,7 @@ export const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [duplicates, setDuplicates] = useState<CandidateItem[]>([]);
   const [isResolving, setIsResolving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorInfo, setErrorInfo] = useState<NormalizedClientError | null>(null);
 
   // Check duplicate candidates on name or tax_id input debounce
   useEffect(() => {
@@ -68,7 +69,7 @@ export const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeWorkspace || !companyName) return;
-    setErrorMsg(null);
+    setErrorInfo(null);
 
     try {
       const token = localStorage.getItem("vcps_access_token") || "";
@@ -83,8 +84,8 @@ export const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({
       });
       onSuccess();
       onClose();
-    } catch {
-      setErrorMsg("Failed to create company profile.");
+    } catch (error) {
+      setErrorInfo(normalizeClientError(error, "vi"));
     }
   };
 
@@ -123,7 +124,7 @@ export const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({
           Tạo Hồ Sơ / Tra Cứu Doanh Nghiệp Mới
         </h3>
 
-        {errorMsg && (
+        {errorInfo && (
           <div
             style={{
               padding: "10px 14px",
@@ -134,7 +135,14 @@ export const CreateCompanyModal: React.FC<CreateCompanyModalProps> = ({
               fontSize: "0.9rem",
             }}
           >
-            {errorMsg}
+            <strong>{errorInfo.code}: {errorInfo.message}</strong>
+            {formatErrorDetails(errorInfo.details).length > 0 && (
+              <ul style={{ margin: "8px 0 0", paddingLeft: "20px" }}>
+                {formatErrorDetails(errorInfo.details).map((detail) => (
+                  <li key={detail}>{detail}</li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 

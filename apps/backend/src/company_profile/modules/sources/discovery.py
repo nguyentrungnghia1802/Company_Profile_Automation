@@ -202,12 +202,14 @@ class SourceDiscoveryService:
         locale: str = "vi",
         website_discoverer: OfficialWebsiteDiscovery | None = None,
         query_builder: DiscoveryQueryBuilder | None = None,
+        search_provider_unavailable_reason: str = "NOT_CONFIGURED",
     ) -> None:
         self.session = session
         self.search_provider = search_provider
         self.locale = locale
         self.website_discoverer = website_discoverer
         self.query_builder = query_builder or DiscoveryQueryBuilder()
+        self.search_provider_unavailable_reason = search_provider_unavailable_reason
         if trusted_registry is None:
             from company_profile.modules.sources.trusted_sources import CountrySourceRegistry
 
@@ -449,13 +451,14 @@ class SourceDiscoveryService:
         """Collect search metadata without treating snippets as evidence."""
         if self.search_provider is None:
             if bool(scope.get("include_search_results", False)):
-                result.warnings.append("SEARCH_PROVIDER_UNAVAILABLE:NOT_CONFIGURED")
+                reason = self.search_provider_unavailable_reason
+                result.warnings.append(f"SEARCH_PROVIDER_UNAVAILABLE:{reason}")
                 result.provider_outcomes.append(
                     ProviderOutcomeRecord(
                         "search_provider",
                         "search",
                         ProviderOutcome.UNAVAILABLE,
-                        "NOT_CONFIGURED",
+                        reason,
                     )
                 )
             return

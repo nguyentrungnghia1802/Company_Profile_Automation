@@ -32,7 +32,7 @@ class GoogleSearchProvider:
     async def search(self, query: str, **kwargs: Any) -> list[SearchResultItem]:
         """Return only structured public result metadata from the official API."""
         locale = str(kwargs.get("locale") or kwargs.get("language") or "en")
-        params = {
+        params: dict[str, str | int] = {
             "key": self.api_key,
             "cx": self.engine_id,
             "q": query,

@@ -137,6 +137,7 @@ async def test_conflict_engine_reopens_on_new_evidence(db_session: AsyncSession)
     # Resolve conflict
     await engine.resolve_conflict(
         workspace_id=ws.id,
+        company_id=cp.id,
         conflict_id=conflict.id,
         resolution_type="select_one",
         reason="Verified by official report",
@@ -178,7 +179,11 @@ async def test_conflicts_api_endpoints(async_client: AsyncClient, db_session: As
         display_name="Reviewer Conflicts",
     )
     member = WorkspaceMember(
-        id=uuid.uuid4(), workspace_id=ws.id, user_id=user.id, role="workspace_admin", status="active"
+        id=uuid.uuid4(),
+        workspace_id=ws.id,
+        user_id=user.id,
+        role="workspace_admin",
+        status="active",
     )
     cp = CompanyProfile(
         id=uuid.uuid4(),

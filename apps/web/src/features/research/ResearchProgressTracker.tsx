@@ -4,16 +4,14 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getApiClient } from "@vcps/api-client";
 import { useAuth } from "../../stores/authContext";
 import { formatErrorDetails, normalizeClientError, type NormalizedClientError } from "../../utils/errors";
-
-export interface TaskStep {
-  id: string;
-  step_type: string;
-  status: string;
-  attempt_count: number;
-  max_attempts: number;
-  output_payload?: string | null;
-  error_message?: string | null;
-}
+import {
+  aiUnavailableMessage,
+  deduplicateDiagnostics,
+  diagnosticLabel,
+  parsePipelineState,
+  PIPELINE_STEPS,
+  type TaskStep,
+} from "./researchState";
 
 export interface ResearchJobItem {
   id: string;
@@ -33,57 +31,6 @@ interface ResearchProgressTrackerProps {
   companyId: string;
 }
 
-interface PipelineState {
-  result_status?: string;
-  warnings?: string[];
-  source_discovery_warnings?: string[];
-  source_candidates?: unknown[];
-  selected_sources?: unknown[];
-  fetched_sources?: unknown[];
-  parsed_snapshots?: Array<{ block_count?: number }>;
-  deterministic_fact_count?: number;
-  review_task_count?: number;
-  review_task_ids?: string[];
-  source_provider_outcomes?: Array<{
-    provider?: string;
-    outcome?: string;
-    reason?: string;
-  }>;
-  ai?: {
-    status?: string;
-    reason?: string;
-    semantic_extraction?: string;
-    translation?: string;
-    comparison?: string;
-    summary?: string;
-  };
-}
-
-const PIPELINE_STEPS = [
-  ["entity_resolution", "Entity resolved"],
-  ["source_discovery", "Sources discovered"],
-  ["source_selection", "Sources selected"],
-  ["source_fetch", "Sources fetched"],
-  ["document_parse", "Document blocks parsed"],
-  ["deterministic_extraction", "Deterministic facts extracted"],
-  ["ai_extraction", "Optional AI extraction"],
-  ["fact_processing", "Conflicts and review"],
-  ["finalize", "Research finalized"],
-] as const;
-
-function parseState(tasks: TaskStep[] | undefined): PipelineState {
-  const ordered = [...(tasks || [])].reverse();
-  for (const task of ordered) {
-    if (!task.output_payload) continue;
-    try {
-      const value: unknown = JSON.parse(task.output_payload);
-      if (value && typeof value === "object") return value as PipelineState;
-    } catch {
-      // A task can be running before its durable output exists.
-    }
-  }
-  return {};
-}
 
 function stepStatus(job: ResearchJobItem, stepType: string): string {
   return job.tasks?.find((task) => task.step_type === stepType)?.status || "pending";
@@ -99,41 +46,6 @@ function statusLabel(status: string): string {
     cancelled: "Đã huỷ",
   };
   return labels[status] || status;
-}
-
-function diagnosticLabel(diagnostic: string): string {
-  if (diagnostic.includes("GOOGLE_CONFIGURATION_MISSING")) {
-    return "Search theo tên chưa chạy: backend thiếu SEARCH_API_KEY hoặc SEARCH_ENGINE_ID.";
-  }
-  if (
-    diagnostic.includes("SEARCH_PROVIDER_UNAVAILABLE:DISABLED") ||
-    diagnostic.includes("NOT_CONFIGURED") ||
-    diagnostic.includes("FIXTURE_DISABLED_IN_RUNTIME")
-  ) {
-    return "Không có Search API được bật. Hãy nhập website chính thức hoặc cấu hình Google Search API.";
-  }
-  if (diagnostic.includes("NO_SOURCE_CANDIDATES")) {
-    return "Không tìm thấy URL nguồn phù hợp từ các nguồn được phép.";
-  }
-  if (diagnostic.includes("NO_SELECTED_SOURCES")) {
-    return "Các URL phát hiện được không vượt qua kiểm tra an toàn hoặc khớp danh tính.";
-  }
-  if (diagnostic.includes("NO_FETCHED_SOURCES")) {
-    return "Không tải được nguồn nào; kiểm tra URL, robots.txt, trạng thái website và network policy.";
-  }
-  if (diagnostic.includes("NO_EVIDENCE_ACQUIRED")) {
-    return "Chưa có snapshot/bằng chứng được lưu. Không có dữ liệu kết quả nào được bịa thêm.";
-  }
-  if (diagnostic.includes("NO_SUPPORTED_FIELDS_EXTRACTED")) {
-    return "Nguồn đã tải nhưng chưa có trường được bộ trích xuất deterministic hỗ trợ; cần xem evidence.";
-  }
-  if (diagnostic.includes("OFFICIAL_WEBSITE_INVALID_URL")) {
-    return "Website không hợp lệ. Dùng URL công khai bắt đầu bằng http:// hoặc https://.";
-  }
-  if (diagnostic.includes("ROBOTS_")) {
-    return "Website không cho phép truy cập theo robots policy; hệ thống không bypass hạn chế này.";
-  }
-  return diagnostic;
 }
 
 function stepIcon(status: string): string {
@@ -205,7 +117,10 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
     return () => window.clearInterval(timer);
   }, [selectedJob, activeWorkspace]);
 
-  const pipelineState = useMemo(() => parseState(selectedJob?.tasks), [selectedJob?.tasks]);
+  const pipelineState = useMemo(
+    () => parsePipelineState(selectedJob?.tasks),
+    [selectedJob?.tasks],
+  );
   const parsedBlockCount = (pipelineState.parsed_snapshots || []).reduce(
     (total, snapshot) => total + Number(snapshot.block_count || 0),
     0,
@@ -214,15 +129,16 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
   const hasEvidence =
     Number(pipelineState.fetched_sources?.length || 0) > 0 ||
     Number(pipelineState.parsed_snapshots?.length || 0) > 0;
-  const diagnostics = Array.from(
-    new Set([
+  const diagnostics = deduplicateDiagnostics(
+    Array.from(new Set([
       ...(pipelineState.warnings || []),
       ...(pipelineState.source_discovery_warnings || []),
-    ]),
+    ])),
   );
   const taskErrors = (selectedJob?.tasks || [])
     .filter((task) => task.error_message)
     .map((task) => `${task.step_type}: ${task.error_message}`);
+  const fatalJobMessage = selectedJob?.status === "failed" ? selectedJob.error_message : null;
   const hasActiveJob = selectedJob?.status === "running" || selectedJob?.status === "pending";
 
   const handleStartResearch = async () => {
@@ -359,8 +275,9 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
 
           {aiSkipped && (
             <div style={{ padding: "10px", background: "#fff8c5", color: "#7a4d00", borderRadius: "6px", marginBottom: "12px", fontSize: "13px" }}>
-              <div>⚠ AI extraction unavailable{pipelineState.ai?.reason ? ` (${pipelineState.ai.reason})` : ""}.</div>
-              <div style={{ marginTop: "4px" }}>→ Review available evidence in the Human Review Inbox.</div>
+              <div><strong>AI không hoàn tất{pipelineState.ai?.reason ? ` (${pipelineState.ai.reason})` : ""}</strong></div>
+              <div style={{ marginTop: "4px" }}>{aiUnavailableMessage(pipelineState.ai?.reason)}</div>
+              <div style={{ marginTop: "4px" }}>→ Xem bằng chứng hiện có và xử lý mục cần duyệt trong Review Inbox.</div>
               {hasEvidence && (
                 <div style={{ marginTop: "4px" }}>
                   Snapshots, document blocks, and deterministic evidence remain available.
@@ -369,10 +286,10 @@ export const ResearchProgressTracker: React.FC<ResearchProgressTrackerProps> = (
             </div>
           )}
 
-          {(selectedJob.error_message || taskErrors.length > 0) && (
+          {(fatalJobMessage || taskErrors.length > 0) && (
             <div role="alert" style={{ padding: "10px", background: "#ffebe9", color: "#cf222e", borderRadius: "6px", marginBottom: "12px", fontSize: "13px" }}>
               <strong>Chi tiết lỗi của job</strong>
-              {selectedJob.error_message && <div style={{ marginTop: "4px" }}>{selectedJob.error_message}</div>}
+              {fatalJobMessage && <div style={{ marginTop: "4px" }}>{fatalJobMessage}</div>}
               {taskErrors.length > 0 && (
                 <ul style={{ margin: "6px 0 0", paddingLeft: "18px" }}>
                   {taskErrors.map((taskError) => <li key={taskError}>{taskError}</li>)}

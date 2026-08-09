@@ -380,14 +380,24 @@ class OfficialWebsiteDiscovery:
         parser = RobotFileParser(robots_url)
         if response.error:
             return parser, RobotsDecision(None, "unknown", response.error)
-        if response.status_code == 404:
-            parser.parse([])
-            return parser, RobotsDecision(404, "allowed", "ROBOTS_NOT_PUBLISHED")
-        if response.status_code != 200:
+        if response.status_code in {401, 403}:
             return parser, RobotsDecision(
                 response.status_code,
                 "blocked",
-                f"ROBOTS_HTTP_{response.status_code}",
+                f"ROBOTS_ACCESS_CONTROL_HTTP_{response.status_code}",
+            )
+        if 400 <= response.status_code < 500:
+            parser.parse([])
+            return parser, RobotsDecision(
+                response.status_code,
+                "allowed",
+                f"ROBOTS_NOT_PUBLISHED_HTTP_{response.status_code}",
+            )
+        if response.status_code != 200:
+            return parser, RobotsDecision(
+                response.status_code,
+                "unknown",
+                f"ROBOTS_UNAVAILABLE_HTTP_{response.status_code}",
             )
         parser.parse(response.content.splitlines())
         sitemap_urls = tuple(parser.site_maps() or ())

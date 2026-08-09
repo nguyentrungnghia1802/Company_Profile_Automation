@@ -1,6 +1,7 @@
 """Tests for ProfileDiffService and MeetingBriefGenerator."""
 
 import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +27,12 @@ async def test_profile_diff_and_meeting_brief(
         email=f"lib-{uuid.uuid4().hex[:6]}@example.com",
         display_name="Library User",
     )
-    cp = CompanyProfile(id=uuid.uuid4(), workspace_id=ws.id, company_name="TechCorp JSC", normalized_name="techcorp jsc")
+    cp = CompanyProfile(
+        id=uuid.uuid4(),
+        workspace_id=ws.id,
+        company_name="TechCorp JSC",
+        normalized_name="techcorp jsc",
+    )
     db_session.add_all([ws, usr, cp])
     await db_session.flush()
 

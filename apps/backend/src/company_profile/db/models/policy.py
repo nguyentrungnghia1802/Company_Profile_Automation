@@ -5,15 +5,15 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     DateTime,
     ForeignKey,
     Index,
     Integer,
-    JSON,
     String,
     Text,
     func,
@@ -22,9 +22,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from company_profile.db.base import GUID, Base
-
-if TYPE_CHECKING:
-    from company_profile.db.models.identity import User, Workspace
 
 
 class PolicySet(Base):

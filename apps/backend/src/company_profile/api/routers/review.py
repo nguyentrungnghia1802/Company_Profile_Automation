@@ -65,9 +65,13 @@ class ReviewTaskResponse(BaseModel):
 
 
 class CompleteReviewTaskRequest(BaseModel):
-    decision_code: str = Field(..., description="Approved / Rejected / Changes Requested decision code")
+    decision_code: str = Field(
+        ..., description="Approved / Rejected / Changes Requested decision code"
+    )
     reason: str = Field(..., description="Explanation for decision")
-    expected_row_version: int | None = Field(None, description="Optimistic locking row version check")
+    expected_row_version: int | None = Field(
+        None, description="Optimistic locking row version check"
+    )
 
 
 class ReopenReviewTaskRequest(BaseModel):
@@ -298,7 +302,11 @@ async def complete_review_task(
             expected_row_version=body.expected_row_version,
         )
     except ValueError as exc:
-        st = status.HTTP_409_CONFLICT if "version" in str(exc).lower() else status.HTTP_400_BAD_REQUEST
+        st = (
+            status.HTTP_409_CONFLICT
+            if "version" in str(exc).lower()
+            else status.HTTP_400_BAD_REQUEST
+        )
         raise HTTPException(status_code=st, detail=str(exc)) from exc
 
     return {

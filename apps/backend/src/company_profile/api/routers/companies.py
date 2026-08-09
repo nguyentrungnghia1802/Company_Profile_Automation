@@ -14,8 +14,9 @@ from company_profile.api.dependencies import (
     get_current_actor,
     require_capability,
 )
-from company_profile.api.errors import ForbiddenError, NotFoundError, ValidationError
+from company_profile.api.errors import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from company_profile.db.session import get_db_session
+from company_profile.modules.companies.errors import CompanyDuplicateError
 from company_profile.modules.companies.repository import CompanyRepository
 from company_profile.modules.companies.resolution import (
     CompanyResolutionService,
@@ -162,19 +163,42 @@ async def create_company(
     workspace_id = verify_active_workspace(actor)
     service = CompanyService(session)
 
-    c = await service.create_company(
-        workspace_id=workspace_id,
-        company_name=payload.company_name,
-        tax_id=payload.tax_id,
-        legal_name=payload.legal_name,
-        registration_number=payload.registration_number,
-        industry=payload.industry,
-        website_url=payload.website_url,
-        headquarters_address=payload.headquarters_address,
-        primary_phone=payload.primary_phone,
-        primary_email=payload.primary_email,
-        actor_id=str(actor.user_id),
-    )
+    try:
+        c = await service.create_company(
+            workspace_id=workspace_id,
+            company_name=payload.company_name,
+            tax_id=payload.tax_id,
+            legal_name=payload.legal_name,
+            registration_number=payload.registration_number,
+            industry=payload.industry,
+            website_url=payload.website_url,
+            headquarters_address=payload.headquarters_address,
+            primary_phone=payload.primary_phone,
+            primary_email=payload.primary_email,
+            actor_id=str(actor.user_id),
+        )
+    except CompanyDuplicateError as exc:
+        match = exc.match
+        details = {
+            "submitted_company_name": match.submitted_company_name,
+            "normalized_name": match.normalized_name,
+            "match_reason": match.match_reason,
+            "next_step": (
+                "Use the existing company profile or review duplicate candidates before "
+                "creating another record."
+            ),
+        }
+        if match.existing_company_id is not None:
+            details["existing_company_id"] = str(match.existing_company_id)
+        if match.existing_company_name is not None:
+            details["existing_company_name"] = match.existing_company_name
+        raise ConflictError(
+            code="COMPANY_DUPLICATE_REVIEW_REQUIRED",
+            message=(
+                "A company with the same normalized identity already exists in this workspace."
+            ),
+            details=details,
+        ) from exc
     return CompanyDetailResponse(
         success=True,
         data=CompanyResponseData(

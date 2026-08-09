@@ -14,7 +14,15 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-SENSITIVE_KEYS = {"api_key", "secret", "password", "token", "auth_token", "access_token", "private_key"}
+SENSITIVE_KEYS = {
+    "api_key",
+    "secret",
+    "password",
+    "token",
+    "auth_token",
+    "access_token",
+    "private_key",
+}
 
 
 def redact_sensitive_dict(data: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -22,7 +30,7 @@ def redact_sensitive_dict(data: dict[str, Any] | None) -> dict[str, Any] | None:
     if not data:
         return data
 
-    redacted = {}
+    redacted: dict[str, Any] = {}
     for k, v in data.items():
         if any(sk in k.lower() for sk in SENSITIVE_KEYS):
             redacted[k] = "[REDACTED]"
@@ -53,7 +61,7 @@ class AuditService:
         metadata: dict[str, Any] | None = None,
     ) -> AuditLog:
         """Record an append-only audit event with redacted metadata."""
-        safe_meta = redact_sensitive_dict(metadata)
+        safe_meta: dict[str, Any] | None = redact_sensitive_dict(metadata)
         entry = AuditLog(
             id=uuid.uuid4(),
             workspace_id=workspace_id,

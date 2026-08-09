@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from company_profile.api.dependencies import get_db_session
+from company_profile.db.session import get_db_session
 from company_profile.modules.audit.service import AuditService
 from company_profile.modules.fit_assessment.service import ProgramFitAssessmentService
 
@@ -83,14 +83,17 @@ async def evaluate_program_fit(
         )
 
         audit_svc = AuditService(db)
-        await audit_svc.log_event(
+        await audit_svc.record_event(
             workspace_id=x_workspace_id,
             actor_id=x_actor_id,
             actor_type="user" if x_actor_id else "system",
             action="fit_assessment.evaluated",
             resource_type="program_fit_assessment",
             resource_id=str(assessment.id),
-            metadata={"program_name": payload.program_name, "status": assessment.overall_fit_status},
+            metadata={
+                "program_name": payload.program_name,
+                "status": assessment.overall_fit_status,
+            },
         )
 
         await db.commit()
@@ -120,7 +123,7 @@ async def override_fit_assessment(
         )
 
         audit_svc = AuditService(db)
-        await audit_svc.log_event(
+        await audit_svc.record_event(
             workspace_id=x_workspace_id,
             actor_id=x_actor_id,
             actor_type="user",

@@ -11,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from company_profile.api.dependencies import (
     RequestActor,
-    get_current_actor,
     require_capability,
 )
 from company_profile.api.errors import ForbiddenError

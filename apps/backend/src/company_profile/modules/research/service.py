@@ -71,7 +71,20 @@ class ResearchJobService:
             .options(selectinload(ResearchJob.tasks))
         )
         result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
+        job = result.scalar_one_or_none()
+        if job is not None:
+            step_rank = {
+                step_type: index
+                for index, step_type in enumerate(PostgresTaskDispatcher.STEP_SEQUENCE)
+            }
+            job.tasks.sort(
+                key=lambda task: (
+                    step_rank.get(task.step_type, len(step_rank)),
+                    task.created_at,
+                    str(task.id),
+                )
+            )
+        return job
 
     async def list_jobs(
         self,

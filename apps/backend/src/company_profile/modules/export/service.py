@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import uuid
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,9 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from company_profile.config.settings import get_settings
 from company_profile.db.models.export import ExportJob
 from company_profile.modules.publication.service import PublicationService
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 class ExportService:
@@ -145,6 +140,7 @@ class ExportService:
 
     def _build_pdf_bytes(self, pv: Any, locale: str, include_source_appendix: bool) -> bytes:
         """Generate structured PDF document bytes with header, summary, fields, and appendix."""
+        del locale
         title = f"VERIFIED COMPANY PROFILE — v{pv.version_number}"
         header = f"{pv.title} (Published: {pv.published_at.strftime('%Y-%m-%d')})"
         summary = f"Executive Summary:\n{pv.executive_summary}\n\n"
@@ -152,19 +148,27 @@ class ExportService:
         field_rows = []
         for fv in pv.field_values:
             val_str = fv.display_value or str(fv.value)
-            field_rows.append(f"• {fv.field_key}: {val_str} (Confidence: {int(fv.confidence_score * 100)}%)")
+            field_rows.append(
+                f"• {fv.field_key}: {val_str} (Confidence: {int(fv.confidence_score * 100)}%)"
+            )
 
         appendix_str = ""
         if include_source_appendix:
             appendix_rows = []
             for fv in pv.field_values:
                 for e in fv.evidences:
-                    appendix_rows.append(f"  - [{fv.field_key}] Excerpt: \"{e.original_excerpt}\" (URL: {e.source_canonical_url or 'N/A'})")
+                    appendix_rows.append(
+                        f'  - [{fv.field_key}] Excerpt: "{e.original_excerpt}" '
+                        f"(URL: {e.source_canonical_url or 'N/A'})"
+                    )
             if appendix_rows:
                 appendix_str = "\n\nSource Evidence Appendix:\n" + "\n".join(appendix_rows)
 
-        text_doc = f"{title}\n{'=' * len(title)}\n{header}\nHash: {pv.content_hash}\n\n{summary}Fields:\n" + "\n".join(field_rows) + appendix_str
+        text_doc = (
+            f"{title}\n{'=' * len(title)}\n{header}\nHash: {pv.content_hash}\n\n{summary}Fields:\n"
+            + "\n".join(field_rows)
+            + appendix_str
+        )
 
         # Return mock PDF / formatted document bytes with PDF header marker
-        pdf_content = f"%PDF-1.4\n%VERIFIED_PROFILE_EXPORT\n{text_doc}\n%%EOF".encode("utf-8")
-        return pdf_content
+        return f"%PDF-1.4\n%VERIFIED_PROFILE_EXPORT\n{text_doc}\n%%EOF".encode()
