@@ -1,6 +1,5 @@
 """Tests for observability endpoints (/health, /ready, /metrics) and MetricsCollector."""
 
-import pytest
 from fastapi.testclient import TestClient
 
 from company_profile.api.app import create_app

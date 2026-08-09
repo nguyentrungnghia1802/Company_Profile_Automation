@@ -263,6 +263,7 @@ async def resolve_conflict(
         selected_uuids = [uuid.UUID(cid) for cid in body.selected_candidate_ids]
         conf = await engine.resolve_conflict(
             workspace_id=actor.active_workspace.id,
+            company_id=company_id,
             conflict_id=conflict_id,
             resolution_type=body.resolution_type,
             reason=body.reason,

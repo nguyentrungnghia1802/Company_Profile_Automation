@@ -64,7 +64,9 @@ class ProfileDraftService:
             .where(
                 FactCandidate.workspace_id == workspace_id,
                 FactCandidate.company_id == company_id,
-                FactCandidate.fact_status.in_(["accepted", "recommended", "validated", "candidate"]),
+                FactCandidate.fact_status.in_(
+                    ["accepted", "recommended", "validated", "candidate"]
+                ),
             )
             .order_by(FactCandidate.confidence_score.desc())
         )
@@ -77,8 +79,7 @@ class ProfileDraftService:
             if c.field_key not in best_candidates:
                 best_candidates[c.field_key] = c
 
-        order = 0
-        for field_key, c in best_candidates.items():
+        for order, (field_key, c) in enumerate(best_candidates.items()):
             sel = DraftFieldSelection(
                 id=uuid.uuid4(),
                 workspace_id=workspace_id,
@@ -86,11 +87,12 @@ class ProfileDraftService:
                 field_key=field_key,
                 context_key=c.context_key,
                 selected_fact_candidate_id=c.id,
-                selection_state="accepted" if c.fact_status in ("accepted", "recommended") else "overridden",
+                selection_state="accepted"
+                if c.fact_status in ("accepted", "recommended")
+                else "overridden",
                 display_order=order,
             )
             self._session.add(sel)
-            order += 1
 
         await self._session.flush()
 
@@ -127,9 +129,7 @@ class ProfileDraftService:
         res = await self._session.execute(stmt)
         return res.scalars().all()
 
-    async def get_draft(
-        self, workspace_id: uuid.UUID, draft_id: uuid.UUID
-    ) -> ProfileDraft | None:
+    async def get_draft(self, workspace_id: uuid.UUID, draft_id: uuid.UUID) -> ProfileDraft | None:
         """Get ProfileDraft by ID."""
         stmt = (
             select(ProfileDraft)
@@ -207,7 +207,9 @@ class ProfileDraftService:
                     "code": "UNRESOLVED_CONFLICT",
                     "materiality": conf.materiality,
                     "field_key": conf.field_key,
-                    "message": f"Field '{conf.field_key}' has open material conflict ({conf.status}).",
+                    "message": (
+                        f"Field '{conf.field_key}' has open material conflict ({conf.status})."
+                    ),
                 }
             )
 
@@ -237,12 +239,17 @@ class ProfileDraftService:
         self, workspace_id: uuid.UUID, draft_id: uuid.UUID, actor_id: uuid.UUID
     ) -> ProfileDraft:
         """Mark draft ready for review and create publication review task."""
+        del actor_id
         draft = await self.get_draft(workspace_id, draft_id)
         if not draft:
             raise ValueError(f"ProfileDraft '{draft_id}' not found.")
 
         blockers = await self.check_publication_blockers(workspace_id, draft.company_id)
-        critical_blockers = [b for b in blockers if b.get("materiality") == "critical" or b.get("code") == "MISSING_MANDATORY_FIELD"]
+        critical_blockers = [
+            b
+            for b in blockers
+            if b.get("materiality") == "critical" or b.get("code") == "MISSING_MANDATORY_FIELD"
+        ]
         if critical_blockers:
             raise ValueError(f"Cannot request review: {critical_blockers[0]['message']}")
 

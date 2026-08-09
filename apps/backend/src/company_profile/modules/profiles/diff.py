@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from company_profile.db.models.publication import ProfileVersion
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 class ProfileDiffService:

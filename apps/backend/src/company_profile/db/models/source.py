@@ -253,7 +253,10 @@ class SourceFetchAttempt(Base):
             "outcome_code IN ('success', 'http_error', 'timeout', "
             "'malware_detected', 'size_exceeded', 'decompression_exceeded', "
             "'mime_rejected', 'redirect_blocked', 'max_redirects', "
-            "'policy_blocked', 'retry_exhausted', 'parse_error')",
+            "'policy_blocked', 'retry_exhausted', 'parse_error', "
+            "'connect_error', 'tls_compatibility_failed', "
+            "'tls_certificate_failed', 'tls_handshake_failed', "
+            "'browser_unavailable')",
             name="ck_fetch_attempts_outcome",
         ),
         Index("ix_source_fetch_attempts_source", "workspace_id", "source_id"),

@@ -1,4 +1,4 @@
-"""FastAPI router for profile drafts, draft field selection overrides, and immutable version publication."""
+"""FastAPI router for profile drafts, field selection, and immutable publication."""
 
 from __future__ import annotations
 
@@ -59,7 +59,9 @@ class ProfileDraftResponse(BaseModel):
 class UpdateDraftSelectionRequest(BaseModel):
     field_key: str = Field(..., description="Target field key")
     selected_candidate_id: str | None = Field(None, description="Chosen candidate ID")
-    selection_state: str = Field("overridden", description="'accepted' | 'overridden' | 'rejected' | 'unknown'")
+    selection_state: str = Field(
+        "overridden", description="'accepted' | 'overridden' | 'rejected' | 'unknown'"
+    )
     note: str | None = Field(None, description="Reviewer selection rationale")
 
 
@@ -153,7 +155,9 @@ async def list_company_profile_drafts(
                 "id": str(s.id),
                 "field_key": s.field_key,
                 "context_key": s.context_key,
-                "selected_fact_candidate_id": str(s.selected_fact_candidate_id) if s.selected_fact_candidate_id else None,
+                "selected_fact_candidate_id": str(s.selected_fact_candidate_id)
+                if s.selected_fact_candidate_id
+                else None,
                 "selection_state": s.selection_state,
                 "reviewer_note": s.reviewer_note,
                 "display_order": s.display_order,
@@ -207,7 +211,9 @@ async def assemble_company_profile_draft(
             "id": str(s.id),
             "field_key": s.field_key,
             "context_key": s.context_key,
-            "selected_fact_candidate_id": str(s.selected_fact_candidate_id) if s.selected_fact_candidate_id else None,
+            "selected_fact_candidate_id": str(s.selected_fact_candidate_id)
+            if s.selected_fact_candidate_id
+            else None,
             "selection_state": s.selection_state,
             "reviewer_note": s.reviewer_note,
             "display_order": s.display_order,
@@ -247,14 +253,18 @@ async def get_profile_draft(
     svc = ProfileDraftService(session)
     d = await svc.get_draft(actor.active_workspace.id, draft_id)
     if not d:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile draft not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Profile draft not found."
+        )
 
     sel_list = [
         {
             "id": str(s.id),
             "field_key": s.field_key,
             "context_key": s.context_key,
-            "selected_fact_candidate_id": str(s.selected_fact_candidate_id) if s.selected_fact_candidate_id else None,
+            "selected_fact_candidate_id": str(s.selected_fact_candidate_id)
+            if s.selected_fact_candidate_id
+            else None,
             "selection_state": s.selection_state,
             "reviewer_note": s.reviewer_note,
             "display_order": s.display_order,
@@ -310,7 +320,9 @@ async def update_profile_draft_selection(
             "id": str(s.id),
             "field_key": s.field_key,
             "context_key": s.context_key,
-            "selected_fact_candidate_id": str(s.selected_fact_candidate_id) if s.selected_fact_candidate_id else None,
+            "selected_fact_candidate_id": str(s.selected_fact_candidate_id)
+            if s.selected_fact_candidate_id
+            else None,
             "selection_state": s.selection_state,
             "reviewer_note": s.reviewer_note,
             "display_order": s.display_order,
@@ -503,7 +515,10 @@ async def get_current_company_profile(
     pub_svc = PublicationService(session)
     pv = await pub_svc.get_current_profile(actor.active_workspace.id, company_id)
     if not pv:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active published profile version found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active published profile version found.",
+        )
 
     fv_list = []
     for fv in pv.field_values:
@@ -572,7 +587,9 @@ async def get_profile_version_detail(
     pub_svc = PublicationService(session)
     pv = await pub_svc.get_profile_version(actor.active_workspace.id, version_id)
     if not pv:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile version not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Profile version not found."
+        )
 
     fv_list = []
     for fv in pv.field_values:
@@ -642,7 +659,9 @@ async def withdraw_published_profile(
 
     pub_svc = PublicationService(session)
     try:
-        pv = await pub_svc.withdraw_profile(actor.active_workspace.id, version_id, actor.user_id, body.reason)
+        pv = await pub_svc.withdraw_profile(
+            actor.active_workspace.id, version_id, actor.user_id, body.reason
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 

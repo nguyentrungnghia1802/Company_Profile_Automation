@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
+from urllib.robotparser import RobotFileParser
 
 import httpx
 from sqlalchemy import select
@@ -27,6 +28,11 @@ from company_profile.db.models.source import (
     normalize_url,
 )
 from company_profile.db.transaction import transactional
+from company_profile.integrations.fetch.http_transport import (
+    SecureHttpTransport,
+    TransportFailure,
+    TransportFailureCode,
+)
 from company_profile.integrations.storage.local_storage import LocalObjectStorage
 from company_profile.integrations.storage.mock_malware import MockMalwareScanner
 from company_profile.modules.sources.browser_adapter import PlaywrightBrowserAdapter
@@ -110,6 +116,7 @@ class _HttpResponse:
     content: bytes
     headers: httpx.Headers
     redirect_count: int
+    adapter: str = "httpx"
 
 
 @dataclass(slots=True)
@@ -164,6 +171,12 @@ class WebFetcher:
         self.max_decompressed_bytes = settings.fetch_max_decompressed_bytes
         self.max_redirects = max(0, settings.fetch_max_redirects)
         self.max_retries = max(0, settings.fetch_max_retries)
+        self.http_transport = SecureHttpTransport(
+            timeout=self.timeout,
+            legacy_tls_fallback_enabled=settings.fetch_legacy_tls_fallback_enabled,
+            legacy_tls_security_level=settings.fetch_legacy_tls_security_level,
+            max_response_bytes=min(self.max_bytes, self.max_decompressed_bytes),
+        )
         self._domain_limiter = _DomainLimiter(
             settings.fetch_max_concurrency_per_domain,
             settings.fetch_rate_limit_seconds,
@@ -252,7 +265,7 @@ class WebFetcher:
                         final_url=direct.final_url,
                         redirect_count=direct.redirect_count,
                     )
-                adapter_used = "httpx"
+                adapter_used = direct.adapter
                 content = direct.content
                 response_status = direct.status_code
                 final_url = direct.final_url
@@ -270,6 +283,18 @@ class WebFetcher:
                         response_content_type = rendered.content_type
                         redirect_count = rendered.redirect_count
                         adapter_used = "playwright"
+                    else:
+                        source.status = "failed"
+                        return await self._failure_result(
+                            source,
+                            attempt,
+                            status_code=rendered.status_code,
+                            outcome_code=rendered.outcome_code,
+                            message=rendered.message,
+                            final_url=rendered.final_url,
+                            redirect_count=rendered.redirect_count,
+                            adapter="playwright",
+                        )
 
                 if content is None:
                     source.status = "failed"
@@ -534,106 +559,118 @@ class WebFetcher:
     ) -> _HttpResponse | _FetchFailure:
         current_url = url
         redirect_count = 0
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=False) as client:
-                while True:
-                    safe, safety_reason = validate_url_safety(current_url)
-                    attempt.policy_result = "allowed" if safe else safety_reason
-                    if not safe:
-                        return _FetchFailure(
-                            400,
-                            current_url,
-                            "redirect_blocked",
-                            f"SSRF_REDIRECT_BLOCKED:{safety_reason}",
-                            redirect_count=redirect_count,
-                        )
-                    domain = (urlparse(current_url).hostname or "unknown").lower()
-                    async with self._domain_limiter.acquire(domain):
-                        response = await client.get(
-                            current_url,
-                            headers={
-                                "User-Agent": self.user_agent,
-                                "Accept": ", ".join(sorted(_ALLOWED_MIME_TYPES)),
-                            },
-                        )
-                    attempt.http_status = response.status_code
-                    attempt.final_url = str(response.url or current_url)
-                    attempt.redirect_count = redirect_count
-                    if response.status_code in _REDIRECT_STATUSES:
-                        if redirect_count >= self.max_redirects:
-                            return _FetchFailure(
-                                response.status_code,
-                                current_url,
-                                "max_redirects",
-                                "Maximum redirect count exceeded.",
-                                redirect_count=redirect_count,
-                            )
-                        location = response.headers.get("location")
-                        if not location:
-                            return _FetchFailure(
-                                response.status_code,
-                                current_url,
-                                "http_error",
-                                "Redirect response did not include a location.",
-                                redirect_count=redirect_count,
-                            )
-                        next_url = urljoin(str(response.url or current_url), location)
-                        next_safe, next_reason = validate_url_safety(next_url)
-                        if not next_safe:
-                            return _FetchFailure(
-                                400,
-                                next_url,
-                                "redirect_blocked",
-                                f"SSRF_REDIRECT_BLOCKED:{next_reason}",
-                                redirect_count=redirect_count + 1,
-                            )
-                        current_url = next_url
-                        redirect_count += 1
-                        continue
-
-                    content_type = self._normalized_content_type(
-                        response.headers.get("content-type", ""), str(response.url or current_url)
-                    )
-                    content = response.content
-                    attempt.content_type = content_type
-                    attempt.byte_count = len(content)
-                    if len(content) > self.max_decompressed_bytes:
-                        return _FetchFailure(
-                            response.status_code,
-                            str(response.url or current_url),
-                            "decompression_exceeded"
-                            if response.headers.get("content-encoding")
-                            else "size_exceeded",
-                            "Decoded response exceeded the configured byte limit.",
-                            redirect_count=redirect_count,
-                        )
-                    if response.status_code in _RETRYABLE_STATUSES:
-                        return _FetchFailure(
-                            response.status_code,
-                            str(response.url or current_url),
-                            "http_error",
-                            f"HTTP {response.status_code}",
-                            retryable=True,
-                            redirect_count=redirect_count,
-                        )
-                    return _HttpResponse(
-                        status_code=response.status_code,
-                        final_url=str(response.url or current_url),
-                        content_type=content_type,
-                        content=content,
-                        headers=response.headers,
+        while True:
+            safe, safety_reason = validate_url_safety(current_url)
+            attempt.policy_result = "allowed" if safe else safety_reason
+            if not safe:
+                return _FetchFailure(
+                    400,
+                    current_url,
+                    "redirect_blocked",
+                    f"SSRF_REDIRECT_BLOCKED:{safety_reason}",
+                    redirect_count=redirect_count,
+                )
+            domain = (urlparse(current_url).hostname or "unknown").lower()
+            async with self._domain_limiter.acquire(domain):
+                response = await self.http_transport.get(
+                    current_url,
+                    headers={
+                        "User-Agent": self.user_agent,
+                        "Accept": ", ".join(sorted(_ALLOWED_MIME_TYPES)),
+                    },
+                )
+            if isinstance(response, TransportFailure):
+                return self._transport_failure(response, current_url, redirect_count)
+            adapter = "httpx_legacy_tls" if response.tls_mode == "legacy" else "httpx"
+            attempt.adapter = adapter
+            attempt.http_status = response.status_code
+            attempt.final_url = response.url
+            attempt.redirect_count = redirect_count
+            if response.status_code in _REDIRECT_STATUSES:
+                if redirect_count >= self.max_redirects:
+                    return _FetchFailure(
+                        response.status_code,
+                        current_url,
+                        "max_redirects",
+                        "Maximum redirect count exceeded.",
                         redirect_count=redirect_count,
                     )
-        except httpx.TimeoutException:
-            return _FetchFailure(408, current_url, "timeout", "HTTP request timed out.", True)
-        except httpx.HTTPError as exc:
-            return _FetchFailure(
-                0,
-                current_url,
-                "http_error",
-                f"HTTP client error: {type(exc).__name__}",
-                True,
+                location = response.headers.get("location")
+                if not location:
+                    return _FetchFailure(
+                        response.status_code,
+                        current_url,
+                        "http_error",
+                        "Redirect response did not include a location.",
+                        redirect_count=redirect_count,
+                    )
+                next_url = urljoin(response.url or current_url, location)
+                next_safe, next_reason = validate_url_safety(next_url)
+                if not next_safe:
+                    return _FetchFailure(
+                        400,
+                        next_url,
+                        "redirect_blocked",
+                        f"SSRF_REDIRECT_BLOCKED:{next_reason}",
+                        redirect_count=redirect_count + 1,
+                    )
+                current_url = next_url
+                redirect_count += 1
+                continue
+
+            content_type = self._normalized_content_type(
+                response.headers.get("content-type", ""), response.url or current_url
             )
+            content = response.content
+            attempt.content_type = content_type
+            attempt.byte_count = len(content)
+            if len(content) > self.max_decompressed_bytes:
+                return _FetchFailure(
+                    response.status_code,
+                    response.url or current_url,
+                    "decompression_exceeded"
+                    if response.headers.get("content-encoding")
+                    else "size_exceeded",
+                    "Decoded response exceeded the configured byte limit.",
+                    redirect_count=redirect_count,
+                )
+            if response.status_code in _RETRYABLE_STATUSES:
+                return _FetchFailure(
+                    response.status_code,
+                    response.url or current_url,
+                    "http_error",
+                    f"HTTP {response.status_code}",
+                    retryable=True,
+                    redirect_count=redirect_count,
+                )
+            return _HttpResponse(
+                status_code=response.status_code,
+                final_url=response.url or current_url,
+                content_type=content_type,
+                content=content,
+                headers=response.headers,
+                redirect_count=redirect_count,
+                adapter=adapter,
+            )
+
+    @staticmethod
+    def _transport_failure(
+        failure: TransportFailure, current_url: str, redirect_count: int
+    ) -> _FetchFailure:
+        outcome_code = failure.code.value
+        if failure.code == TransportFailureCode.SSRF_BLOCKED:
+            outcome_code = "redirect_blocked"
+        elif failure.code == TransportFailureCode.HTTP_CLIENT:
+            outcome_code = "http_error"
+        status_code = 408 if failure.code == TransportFailureCode.TIMEOUT else 0
+        return _FetchFailure(
+            status_code,
+            current_url,
+            outcome_code,
+            failure.message,
+            retryable=failure.retryable,
+            redirect_count=redirect_count,
+        )
 
     async def _fetch_browser_fallback(
         self, url: str, attempt: SourceFetchAttempt, redirect_count: int
@@ -649,12 +686,28 @@ class WebFetcher:
                 "policy_blocked",
                 "Browser fallback policy disallows URL.",
             )
+        robots_decision, robots_reason = await self._browser_robots_policy(url)
+        if robots_decision != "allowed":
+            return _FetchFailure(
+                403 if robots_decision == "blocked" else 0,
+                url,
+                "policy_blocked",
+                robots_reason,
+            )
         safe, reason = validate_url_safety(url)
         if not safe:
             return _FetchFailure(400, url, "redirect_blocked", f"SSRF_PREVENTION:{reason}")
 
         self._browser_fallbacks_used += 1
         rendered = await self.browser_adapter.fetch_rendered_page(url)
+        if rendered.http_status == 0 or rendered.reason != "browser_rendered":
+            return _FetchFailure(
+                rendered.http_status,
+                rendered.final_url,
+                "browser_unavailable",
+                rendered.reason or "BROWSER_UNAVAILABLE",
+                redirect_count=redirect_count,
+            )
         final_safe, final_reason = validate_url_safety(rendered.final_url)
         if not final_safe:
             return _FetchFailure(
@@ -693,6 +746,28 @@ class WebFetcher:
             headers=httpx.Headers({"content-type": content_type}),
             redirect_count=redirect_count,
         )
+
+    async def _browser_robots_policy(self, url: str) -> tuple[str, str]:
+        """Resolve robots policy before browser rendering without bypassing access controls."""
+        parsed = urlparse(url)
+        robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
+        response = await self.http_transport.get(
+            robots_url,
+            headers={"User-Agent": self.user_agent, "Accept": "text/plain"},
+        )
+        if isinstance(response, TransportFailure):
+            return "unknown", f"BROWSER_ROBOTS_UNAVAILABLE:{response.code.value.upper()}"
+        if response.status_code in {401, 403}:
+            return "blocked", f"BROWSER_ROBOTS_ACCESS_CONTROL_HTTP_{response.status_code}"
+        if 400 <= response.status_code < 500:
+            return "allowed", f"BROWSER_ROBOTS_NOT_PUBLISHED_HTTP_{response.status_code}"
+        if response.status_code != 200:
+            return "unknown", f"BROWSER_ROBOTS_UNAVAILABLE_HTTP_{response.status_code}"
+        parser = RobotFileParser(robots_url)
+        parser.parse(response.content.decode("utf-8-sig", errors="replace").splitlines())
+        if not parser.can_fetch(self.user_agent, url):
+            return "blocked", "BROWSER_ROBOTS_DISALLOWED"
+        return "allowed", "BROWSER_ROBOTS_ALLOWED"
 
     def _should_use_browser(
         self, status_code: int, content_type: str, content: bytes, url: str
@@ -781,7 +856,12 @@ class WebFetcher:
         attempt.redirect_count = redirect_count
         attempt.outcome_code = outcome_code
         attempt.error_message = message[:500]
-        attempt.retryable = outcome_code in {"timeout", "retry_exhausted"}
+        attempt.retryable = outcome_code in {
+            "timeout",
+            "connect_error",
+            "http_error",
+            "retry_exhausted",
+        }
         attempt.completed_at = datetime.now(UTC)
         await self.session.flush()
         return FetchResult(

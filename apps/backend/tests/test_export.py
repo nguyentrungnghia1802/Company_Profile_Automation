@@ -2,6 +2,7 @@
 
 import json
 import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +27,9 @@ async def test_export_service_json_and_pdf(
         email=f"exp-{uuid.uuid4().hex[:6]}@example.com",
         display_name="Exporter",
     )
-    cp = CompanyProfile(id=uuid.uuid4(), workspace_id=ws.id, company_name="ExportCorp", normalized_name="exportcorp")
+    cp = CompanyProfile(
+        id=uuid.uuid4(), workspace_id=ws.id, company_name="ExportCorp", normalized_name="exportcorp"
+    )
     db_session.add_all([ws, usr, cp])
     await db_session.flush()
 

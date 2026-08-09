@@ -333,7 +333,8 @@ async def test_review_inbox_tasks_cover_ambiguity_provider_and_missing_high_impa
         "company_id": str(company.id),
         "scope": {"mandatory_high_impact_fields": ["identity.tax_id"]},
         "rejected_sources": [
-            {"url": "https://same-name.example", "reason": "ENTITY_MATCH_REVIEW_REQUIRED"}
+            {"url": "https://same-name.example", "reason": "ENTITY_MATCH_REVIEW_REQUIRED"},
+            {"url": "https://unrelated.example", "reason": "LOW_ENTITY_MATCH:0.0"},
         ],
         "source_provider_outcomes": [
             {"provider": "tracuunnt_gdt", "outcome": "unavailable", "reason": "TIMEOUT"}
@@ -355,6 +356,7 @@ async def test_review_inbox_tasks_cover_ambiguity_provider_and_missing_high_impa
     }
     assert len(tasks) == len(second["review_task_ids"])
     assert len({task.title for task in tasks}) == len(tasks)
+    assert not any("unrelated.example" in task.title for task in tasks)
 
 
 @pytest.mark.asyncio

@@ -212,6 +212,7 @@ class ConflictEngine:
     async def resolve_conflict(
         self,
         workspace_id: uuid.UUID,
+        company_id: uuid.UUID,
         conflict_id: uuid.UUID,
         resolution_type: str,
         reason: str,
@@ -230,6 +231,7 @@ class ConflictEngine:
             .options(selectinload(Conflict.candidates))
             .where(
                 Conflict.workspace_id == workspace_id,
+                Conflict.company_id == company_id,
                 Conflict.id == conflict_id,
             )
         )

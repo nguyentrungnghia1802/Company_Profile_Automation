@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
@@ -50,6 +51,7 @@ class Settings(BaseSettings):
     search_provider: str = "disabled"  # disabled | fixture (tests only) | google
     search_api_key: str = ""
     search_engine_id: str = ""
+    trusted_source_live_enabled: bool = False
 
     # --- Fetch ---
     fetch_user_agent: str = "VCPS-Bot/0.1 (+https://example.com/bot)"
@@ -60,6 +62,8 @@ class Settings(BaseSettings):
     fetch_max_retries: int = 2
     fetch_rate_limit_seconds: float = 0.25
     fetch_max_concurrency_per_domain: int = 2
+    fetch_legacy_tls_fallback_enabled: bool = False
+    fetch_legacy_tls_security_level: int = Field(default=1, ge=1, le=2)
     fetch_browser_fallback_max_pages: int = 2
     fetch_browser_fallback_enabled: bool = False
     crawl_max_depth: int = 1

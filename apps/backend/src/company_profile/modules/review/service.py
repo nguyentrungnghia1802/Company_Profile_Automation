@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
@@ -155,7 +155,10 @@ class ReviewTaskService:
         if not task:
             raise ValueError(f"ReviewTask '{task_id}' not found.")
         if expected_row_version is not None and task.row_version != expected_row_version:
-            raise ValueError(f"Row version conflict: task version is {task.row_version}, expected {expected_row_version}")
+            raise ValueError(
+                "Row version conflict: task version is "
+                f"{task.row_version}, expected {expected_row_version}"
+            )
         prev_state = task.status
         task.complete(decision_code, reason)
         self._record_decision(

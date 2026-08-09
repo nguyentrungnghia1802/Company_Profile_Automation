@@ -50,8 +50,11 @@ class MetricsCollector:
         if not self.http_requests_total:
             lines.append('vcps_http_requests_total{method="GET",path="/health",status="200"} 1')
         else:
-            for (method, path, status), count in self.http_requests_total.items():
-                lines.append(f'vcps_http_requests_total{{method="{method}",path="{path}",status="{status}"}} {count}')
+            for (method, path, http_status), count in self.http_requests_total.items():
+                lines.append(
+                    f'vcps_http_requests_total{{method="{method}",path="{path}",'
+                    f'status="{http_status}"}} {count}'
+                )
 
         # HELP and TYPE for jobs_total
         lines.append("# HELP vcps_jobs_total Total operational research jobs executed.")
@@ -68,8 +71,10 @@ class MetricsCollector:
         if not self.ai_runs_total:
             lines.append('vcps_ai_runs_total{provider="mock",status="success"} 12')
         else:
-            for (provider, status), count in self.ai_runs_total.items():
-                lines.append(f'vcps_ai_runs_total{{provider="{provider}",status="{status}"}} {count}')
+            for (provider, ai_status), count in self.ai_runs_total.items():
+                lines.append(
+                    f'vcps_ai_runs_total{{provider="{provider}",status="{ai_status}"}} {count}'
+                )
 
         # HELP and TYPE for average confidence
         lines.append("# HELP vcps_confidence_score_avg Average overall profile confidence score.")

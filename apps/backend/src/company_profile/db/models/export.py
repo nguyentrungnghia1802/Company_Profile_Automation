@@ -22,7 +22,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from company_profile.db.base import GUID, Base
 
 if TYPE_CHECKING:
-    from company_profile.db.models.identity import User, Workspace
     from company_profile.db.models.publication import ProfileVersion
 
 

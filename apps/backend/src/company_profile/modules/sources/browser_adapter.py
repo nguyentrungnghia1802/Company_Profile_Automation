@@ -37,7 +37,7 @@ class PlaywrightBrowserAdapter:
         self.timeout = timeout_seconds
 
     async def fetch_rendered_page(self, url: str) -> RenderedPageResult:
-        """Fetch and render target URL using Playwright if available, or lightweight fallback."""
+        """Fetch a public page with Playwright or return a typed unavailable result."""
         is_safe, safety_reason = validate_url_safety(url)
         if not is_safe:
             return RenderedPageResult(
@@ -104,19 +104,11 @@ class PlaywrightBrowserAdapter:
                 )
 
         except Exception as exc:
-            logger.info("Playwright execution unavailable or failed (%s); using fallback", exc)
-            fallback_safe, fallback_reason = validate_url_safety(url)
-            if not fallback_safe:
-                return RenderedPageResult(
-                    final_url=url,
-                    http_status=400,
-                    content_html="",
-                    reason=f"SSRF_PREVENTION: {fallback_reason}",
-                )
+            logger.info("Playwright execution unavailable or failed: %s", type(exc).__name__)
             return RenderedPageResult(
                 final_url=url,
-                http_status=200,
-                content_html=f"<html><body><!-- Mock fallback render for {url} --></body></html>",
+                http_status=0,
+                content_html="",
                 content_type="text/html",
-                reason="playwright_mock_fallback",
+                reason=f"BROWSER_UNAVAILABLE:{type(exc).__name__}",
             )
