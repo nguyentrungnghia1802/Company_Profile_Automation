@@ -12,16 +12,17 @@ function MainDashboard() {
   const { user, isLoading, login, activeWorkspace } = useAuth();
   const [activeTab, setActiveTab] = useState<"research" | "library" | "review" | "audit">("research");
   const [refreshLibraryKey, setRefreshLibraryKey] = useState(0);
+  const defaultMockToken = process.env.NEXT_PUBLIC_MOCK_AUTH_TOKEN || "mock-token-researcher";
 
   // Auto-login with mock token once on mount
   useEffect(() => {
     const token = localStorage.getItem("vcps_access_token");
     if (!token) {
-      login("mock-demo-token").catch(() => {});
+      login(defaultMockToken).catch(() => {});
     }
-  }, []);
+  }, [defaultMockToken, login]);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("vcps_access_token") || "mock-demo-token" : "mock-demo-token";
+  const token = typeof window !== "undefined" ? localStorage.getItem("vcps_access_token") || defaultMockToken : defaultMockToken;
   const workspaceId = activeWorkspace?.id || "11111111-1111-1111-1111-111111111111";
 
   if (isLoading) {

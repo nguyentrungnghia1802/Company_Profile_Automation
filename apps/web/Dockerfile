@@ -29,6 +29,10 @@ COPY packages/ packages/
 COPY pnpm-workspace.yaml ./
 
 WORKDIR /app/apps/web
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+ARG NEXT_PUBLIC_MOCK_AUTH_TOKEN=mock-token-researcher
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_MOCK_AUTH_TOKEN=${NEXT_PUBLIC_MOCK_AUTH_TOKEN}
 RUN pnpm build
 
 # === Runtime stage ===

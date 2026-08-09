@@ -2371,3 +2371,29 @@ The initial specification baseline had no known defects before this run.
   requires or special-cases the removed duplicate documents.
 - Verification: documentation, requirement-ID, docs-sync, and OpenAPI drift checks passed.
 - Remaining: no work was started on the next roadmap task.
+
+## RUN-20260809-18 — Local mock-auth permission and Compose bootstrap fix
+
+- Roadmap task(s): maintenance fix only; no roadmap task was started.
+- Status: complete.
+- Root cause: the local PostgreSQL volume had no schema or `workspace_members` rows, so the mock
+  subject had no active workspace and therefore no `research:start` capability. No `.env` provider
+  key can grant an application capability.
+- Implemented:
+  - `company_profile.operations.local_bootstrap` creates the current local SQLAlchemy schema and
+    idempotently provisions researcher, reviewer, and workspace-admin mock memberships without
+    seeding company data;
+  - Compose API/worker startup waits for `db-bootstrap` to complete;
+  - `NEXT_PUBLIC_MOCK_AUTH_TOKEN` selects the local mock token, defaulting to `mock-token-researcher`;
+  - worker healthcheck now checks worker process liveness instead of probing the API port.
+- Verification:
+  - local bootstrap regression test — passed;
+  - targeted Ruff — passed;
+  - `docker compose up -d --build` — passed;
+  - `/api/v1/me` with the default mock token returned `research:start` and an active workspace;
+  - database contains the expected identity/membership tables, no company fixtures, and worker is healthy;
+  - web build/typecheck and `docker compose config` — passed.
+- Documentation/configuration updated: `.env.example`, `README.md`, and this Roadmap entry.
+- Production note: production deployments must continue using explicit Alembic migrations; the
+  Compose bootstrap is local-development only.
+- Remaining: no work was started on the next roadmap task.

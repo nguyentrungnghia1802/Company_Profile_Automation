@@ -22,6 +22,25 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # --- Local schema and mock-auth bootstrap ---
+  # This service creates the current development schema and memberships only.
+  # Production deployments must run the explicit Alembic migration workflow.
+  db-bootstrap:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    command: ["python", "-m", "company_profile.operations.local_bootstrap"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://vcps:vcps_dev@postgres:5432/vcps
+      ENVIRONMENT: development
+      AUTH_MODE: mock
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
   # --- API Server ---
   api:
     build:
@@ -44,6 +63,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      db-bootstrap:
+        condition: service_completed_successfully
     volumes:
       - storage_data:/app/data/storage
     restart: unless-stopped
@@ -70,8 +91,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      db-bootstrap:
+        condition: service_completed_successfully
     volumes:
       - storage_data:/app/data/storage
+    # The backend image's default probe targets the API port; the worker has no
+    # HTTP server, so use a process liveness probe instead.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; os.kill(1, 0)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
     restart: unless-stopped
 
   # --- Web (Next.js) ---
@@ -79,10 +110,14 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+        NEXT_PUBLIC_MOCK_AUTH_TOKEN: ${NEXT_PUBLIC_MOCK_AUTH_TOKEN:-mock-token-researcher}
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
+      NEXT_PUBLIC_MOCK_AUTH_TOKEN: ${NEXT_PUBLIC_MOCK_AUTH_TOKEN:-mock-token-researcher}
     depends_on:
       - api
     restart: unless-stopped

@@ -59,7 +59,12 @@ README. The default local providers are disabled; configure real provider creden
 needed. PostgreSQL is published on `localhost:5433` by default so the stack can start when another
 local PostgreSQL service already owns `5432`; set `POSTGRES_HOST_PORT` in `.env` to a free host port
 if `5433` is also occupied. Containers continue to connect to PostgreSQL through
-`postgres:5432`.
+`postgres:5432`. The Compose-only `db-bootstrap` service creates the current local schema and
+deterministic mock-auth memberships; it does not create company fixtures. The default UI token is
+`mock-token-researcher`, which has `research:start`; set `NEXT_PUBLIC_MOCK_AUTH_TOKEN=mock-token-admin`
+for local administration screens and rebuild the web image after changing it. No AI or search key is
+required for the local flow: keep `AI_PROVIDER=disabled` and `SEARCH_PROVIDER=disabled` unless you
+intentionally configure approved real providers.
 
 ## Documentation policy
 
